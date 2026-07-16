@@ -1,37 +1,15 @@
-# Lighthouse Compass 6.1 — Assessment Migration Phase 1
+# Lighthouse Compass 6.2 — Full Assessment Parity
 
-This is a React/Vite clinical assessment application.
+## Major additions
+- Collapsible symptom-domain accordions
+- Mood/depression, anxiety, panic, bipolar, ADHD, OCD, trauma/PTSD, psychosis, eating/body-image, substance-related, adjustment/acute stress, and chronic-pain/health domains
+- Domain-specific symptoms, qualifiers, diagnostic clarifiers, impairment, triggers/context, and patient-specific notes
+- Expanded social/cultural/identity inputs
+- Expanded MSE and risk assessment
+- Conditional Stanley-Brown-style safety-plan inputs
+- Customizable screening measures
+- Diagnostic rationale, medical necessity, and level-of-care narratives
+- Expanded chart-ready documentation outputs
 
-## Included
-- Presenting problems and symptoms
-- Clinical qualifiers and functional impairment
-- Psychiatric history
-- Family history
-- Medical history and medications
-- Substance-use history
-- Trauma history
-- Social history and practical needs
-- Strengths
-- MSE
-- Risk and safety
-- Standardized measures
-- Diagnosis and level-of-care inputs
-- Chart-ready narrative generation
-- Clear, Copy, and Print
-- No database and no PHI storage
-
-## Run locally
-```bash
-npm install
-npm run dev
-```
-
-## Build
-```bash
-npm run build
-```
-
-## Vercel
-- Framework preset: Vite
-- Build command: npm run build
-- Output directory: dist
+## Deploy
+Upload/replace these files in the existing GitHub repository. Vercel will automatically rebuild the production site.
