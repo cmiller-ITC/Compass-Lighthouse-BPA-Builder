@@ -317,17 +317,19 @@ export function buildAllNarratives(data){
  };
 }
 
-function buildChiefComplaint(data){const p=data.presenting;const parts=[];if(p.reasonSeekingCare)parts.push(`The client is seeking care due to ${p.reasonSeekingCare.toLowerCase()}.`);if(p.clientRequest)parts.push(`The client is requesting ${p.clientRequest.toLowerCase()}.`);if(p.patientNarrative)parts.push(sentence(p.patientNarrative));return parts.join(' ')||'Chief complaint information has not yet been entered.'}
+function buildChiefComplaint(data){const p=data.presenting;const parts=[];if(p.reasonSeekingCare&&p.clientRequest)parts.push(`The client is seeking care due to ${p.reasonSeekingCare.toLowerCase()} and is requesting ${p.clientRequest.toLowerCase()}.`);else if(p.reasonSeekingCare)parts.push(`The client is seeking care due to ${p.reasonSeekingCare.toLowerCase()}.`);else if(p.clientRequest)parts.push(`The client is requesting ${p.clientRequest.toLowerCase()}.`);if(p.patientNarrative)parts.push(sentence(p.patientNarrative));return parts.join(' ')||'Chief complaint information has not yet been entered.'}
 
 function activeDomains(data){return Object.entries(data.presenting.domains).filter(([,d])=>d.symptoms.length||d.duration||d.frequency||d.severity||d.context||d.notes||Object.values(d.answers||{}).some(Boolean))}
 
 function buildHPI(data){
- const p=data.presenting, parts=[];
- if(p.concerns.length)parts.push(`The client presents with concerns related to ${listText(p.concerns)}.`);
- const domains=activeDomains(data);
- if(domains.length)parts.push(`Symptom domains endorsed include ${listText(domains.map(([key])=>symptomDomainDefinitions[key].label.toLowerCase()))}.`);
- const q=[];if(p.duration)q.push(`overall duration ${p.duration.toLowerCase()}`);if(p.frequency)q.push(`overall frequency ${p.frequency.toLowerCase()}`);if(p.severity)q.push(`overall severity ${p.severity.toLowerCase()}`);if(p.course)q.push(`course ${p.course.toLowerCase()}`);if(q.length)parts.push(`The broader presentation is characterized by ${listText(q)}.`);
- if(p.impairments.length)parts.push(`Symptoms interfere with ${listText(p.impairments)}.`);
+ const p=data.presenting, domains=activeDomains(data), parts=[];
+ const lead=p.reasonSeekingCare?`The client is seeking care in the context of ${p.reasonSeekingCare.toLowerCase()}`:'The client presents for behavioral health evaluation';
+ const concernPhrase=p.concerns.length?` with concerns involving ${listText(p.concerns.map(x=>x.toLowerCase()))}`:'';
+ parts.push(`${lead}${concernPhrase}.`);
+ if(domains.length){const domainPhrases=domains.map(([key,d])=>{const label=symptomDomainDefinitions[key].label.toLowerCase();const symptoms=d.symptoms.slice(0,7).map(x=>x.toLowerCase());return symptoms.length?`${label} characterized by ${listText(symptoms)}`:label;});parts.push(`The current clinical picture includes ${listText(domainPhrases)}.`);}
+ const qualifiers=[];if(p.duration)qualifiers.push(`have persisted ${p.duration.toLowerCase()}`);if(p.frequency)qualifiers.push(`occur ${p.frequency.toLowerCase()}`);if(p.severity)qualifiers.push(`are described as ${p.severity.toLowerCase()}`);if(p.course)qualifiers.push(`are currently ${p.course.toLowerCase()}`);if(qualifiers.length)parts.push(`Symptoms ${listText(qualifiers)}.`);
+ if(p.impairments.length)parts.push(`The presentation results in clinically meaningful impairment across ${listText(p.impairments.map(x=>x.toLowerCase()))}.`);
+ const contextual=domains.map(([,d])=>d.context||d.notes).filter(Boolean);if(contextual.length)parts.push(sentence(contextual.slice(0,3).join(' ')));
  if(p.patientNarrative)parts.push(sentence(p.patientNarrative));
  return parts.join(' ')||'History of present illness information has not yet been entered.';
 }
