@@ -1,17 +1,12 @@
-# Lighthouse Compass 6.3 — Presenting Problems Intelligence
+# Lighthouse Compass 6.4 — Intelligence Foundation
 
-## New in 6.3
-- Live clinical narrative preview
-- COMAR-oriented readiness score
-- Clinical Coach prompts
-- Domain-specific Clinical Curiosity guidance
-- Improved, less robotic HPI synthesis
-- Collapsible symptom domains with readiness badges
+- Sticky, smoothly scrolling Lighthouse Intelligence panel
+- Narrative / Coach / COMAR / Quality tabs
+- Chief Complaint first
+- Improved paragraph-based HPI synthesis
+- Responsive Clinical Coach
+- COMAR readiness rules
+- Documentation quality scoring
+- Improved contrast and typography
 
-## Build
-```bash
-npm install
-npm run build
-```
-
-No database or PHI storage. Clinician review is required.
+Deploy by replacing the local repository files, committing, and pushing to main.
