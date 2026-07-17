@@ -20,3 +20,33 @@
 .score-hero{padding:15px;margin-bottom:14px;border-radius:15px;background:linear-gradient(145deg,#f8f3fc,#eefafa);border:1px solid #ded5e8}.score-hero.compact .readiness-score{font-size:38px}.requirements-list{display:grid;gap:8px}.requirement-row{display:grid;grid-template-columns:28px 1fr;gap:9px;padding:10px;border-radius:12px;border:1px solid #e4dee9;background:#fff}.requirement-row.met{background:#f2fbf9;border-color:#d1ebe6}.requirement-row.missing{background:#fff8ea;border-color:#eeddb5}.requirement-icon{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;font-weight:950;background:#eee7f5;color:#684b92}.requirement-row.met .requirement-icon{background:#d9f1ec;color:#2f7770}.requirement-row.missing .requirement-icon{background:#f7e8bf;color:#866016}.requirement-row strong{display:block;color:var(--lh-charcoal);font-size:12px}.requirement-row small{display:block;margin-top:3px;color:var(--lh-muted);line-height:1.4}.comar-note{margin-top:13px;padding:11px;border-radius:12px;background:#f2f0f5;color:#5a5360;font-size:11.5px;line-height:1.5}
 .quality-score{font-size:48px;font-weight:950;color:var(--lh-purple-800);line-height:1;margin:8px 0}.quality-label{font-weight:900;font-size:12px}.quality-label.good{color:var(--lh-teal)}.quality-label.warn{color:var(--lh-amber)}.quality-label.needs{color:var(--lh-red)}.quality-bars{display:grid;gap:12px}.quality-metric>div:first-child{display:flex;justify-content:space-between;font-size:12px}.metric-track{height:8px;background:#ece6f1;border-radius:999px;overflow:hidden;margin-top:6px}.metric-track span{display:block;height:100%;background:linear-gradient(90deg,#7654b3,#5bbfbb)}.quality-suggestion{margin-top:16px;padding:12px;border-radius:13px;background:#fff8e9;border:1px solid #eedcb3}.quality-suggestion p{margin:5px 0 0;font-size:12.5px;line-height:1.5}
 @media(max-width:1180px){.workspace-grid{grid-template-columns:minmax(0,1fr) 350px}}@media(max-width:1050px){.workspace-grid{grid-template-columns:1fr}.clinical-side-panel{position:relative;top:auto;height:auto;min-height:0}.intelligence-shell{max-height:720px}}
+
+
+/* Compass 6.5 — Diagnostic & Documentation Intelligence */
+.diagnostic-action-bar{
+ display:flex;justify-content:space-between;align-items:center;gap:20px;
+ padding:16px;margin:20px 0;border:1px solid #d8cbe6;border-radius:16px;
+ background:linear-gradient(135deg,#f8f3fd,#eefaf8)
+}
+.diagnostic-action-bar div{display:grid;gap:4px}
+.diagnostic-action-bar strong{color:#49306f;font-size:15px}
+.diagnostic-action-bar span{color:#696272;font-size:12.5px;line-height:1.45}
+.diagnostic-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.mini-preview{padding:14px;border:1px solid #ded7e7;border-radius:14px;background:#faf8fc}
+.mini-preview h3{margin:0 0 7px;color:#49306f;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.mini-preview p{margin:0;color:#3b3540;font-size:12.5px;line-height:1.55}
+.documentation-toolbar{
+ display:flex;justify-content:space-between;align-items:center;gap:16px;
+ margin-bottom:18px;padding-bottom:15px;border-bottom:1px solid #e5deeb
+}
+.package-tabs{display:flex;flex-wrap:wrap;gap:7px}
+.package-tabs button{background:#f3eef8;color:#5d4774;border:1px solid #ded3e9}
+.package-tabs button.active{background:#64429a;color:white;border-color:#64429a}
+.toolbar-actions{display:flex;gap:8px}
+.output-card textarea{min-height:190px;line-height:1.65;color:#302b35}
+.output-diagnosticRationale textarea,.output-medicalNecessity textarea,.output-levelOfCare textarea,.output-clinicalFormulation textarea,.output-treatmentFocus textarea{min-height:230px}
+@media(max-width:900px){
+ .diagnostic-action-bar,.documentation-toolbar{align-items:stretch;flex-direction:column}
+ .diagnostic-preview-grid{grid-template-columns:1fr}
+ .toolbar-actions{flex-wrap:wrap}
+}

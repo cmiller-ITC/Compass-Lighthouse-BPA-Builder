@@ -259,7 +259,8 @@ export const initialCaseData = {
   ],
   diagnosis: {
     primary: "", secondary: "", ruleOut: "", levelOfCare: "",
-    diagnosticRationale: "", medicalNecessity: "", locRationale: ""
+    confidence: "", status: "", diagnosticRationale: "", medicalNecessity: "",
+    locRationale: "", treatmentFocus: ""
   },
   generated: {}
 };
@@ -290,7 +291,11 @@ export function reducer(state, action) {
       return {...state, measures:[...state.measures,{name:"",score:"",interpretation:"",notes:""}]};
     case "REMOVE_MEASURE":
       return {...state, measures:state.measures.filter((_,i)=>i!==action.index)};
-    case "GENERATE": return {...state, generated:buildAllNarratives(state)};
+    case "GENERATE": {
+      const enriched=applyDiagnosticIntelligence(state);
+      return {...enriched, generated:buildAllNarratives(enriched)};
+    }
+    case "GENERATE_DIAGNOSTIC_INTELLIGENCE": return applyDiagnosticIntelligence(state);
     case "RESET": return structuredClone(initialCaseData);
     default: return state;
   }
@@ -313,7 +318,8 @@ export function buildAllNarratives(data){
   socialHistory:buildSocial(data), strengths:buildStrengths(data), mse:buildMSE(data), risk:buildRisk(data),
   safetyPlan:buildSafetyPlan(data), measures:buildMeasures(data), diagnosticSummary:buildDiagnosticSummary(data),
   diagnosticRationale:buildDiagnosticRationale(data), medicalNecessity:buildMedicalNecessity(data),
-  levelOfCare:buildLevelOfCare(data)
+  levelOfCare:buildLevelOfCare(data), clinicalFormulation:buildClinicalFormulation(data),
+  treatmentFocus:buildTreatmentFocus(data)
  };
 }
 
@@ -364,7 +370,149 @@ function buildMSE(data){const m=data.mse,parts=[];if(m.appearance)parts.push(`Ap
 function buildRisk(data){const r=data.risk,parts=[];if(r.suicideScreen)parts.push(`Suicide-risk screening result: ${r.suicideScreen}.`);if(r.ideation)parts.push(`Suicidal ideation is described as ${r.ideation.toLowerCase()}.`);if(r.intent)parts.push(`Intent is described as ${r.intent.toLowerCase()}.`);if(r.plan)parts.push(`Plan is described as ${r.plan.toLowerCase()}.`);if(r.behavior)parts.push(`Recent suicidal or self-harm behavior is described as ${r.behavior.toLowerCase()}.`);if(r.homicidalIdeation)parts.push(`Homicidal ideation is described as ${r.homicidalIdeation.toLowerCase()}.`);if(r.accessToMeans)parts.push(`Access to potentially lethal means is described as ${r.accessToMeans.toLowerCase()}.`);if(r.protectiveFactors.length)parts.push(`Risk-protective factors include ${listText(r.protectiveFactors)}.`);if(r.overallRisk)parts.push(`Overall clinical risk is assessed as ${r.overallRisk.toLowerCase()}.`);if(r.safetyResponse)parts.push(`Safety response: ${r.safetyResponse}.`);return parts.join(' ')||'Risk-assessment information was not fully entered.'}
 function buildSafetyPlan(data){const r=data.risk;if(r.safetyPlanNeeded!=='Yes')return'No safety plan was generated.';const parts=['Stanley-Brown-style safety plan:'];if(r.warningSigns)parts.push(`1. Warning signs: ${r.warningSigns}.`);if(r.internalCoping)parts.push(`2. Internal coping strategies: ${r.internalCoping}.`);if(r.peoplePlaces)parts.push(`3. People and places for distraction: ${r.peoplePlaces}.`);if(r.supportContacts)parts.push(`4. People to ask for help: ${r.supportContacts}.`);if(r.professionalContacts)parts.push(`5. Professionals and crisis resources: ${r.professionalContacts}.`);if(r.meansSafety)parts.push(`6. Means-safety steps: ${r.meansSafety}.`);return parts.join('\n')}
 function buildMeasures(data){const entered=data.measures.filter(m=>m.score||m.interpretation||m.notes);return entered.length?entered.map(m=>`${m.name||'Measure'}: score ${m.score||'not entered'}${m.interpretation?` (${m.interpretation})`:''}${m.notes?`; ${m.notes}`:''}`).join('; ')+'.':'No standardized measure results were entered.'}
-function buildDiagnosticSummary(data){const d=data.diagnosis,parts=[];if(d.primary)parts.push(`Primary diagnosis: ${d.primary}.`);if(d.secondary)parts.push(`Secondary diagnosis: ${d.secondary}.`);if(d.ruleOut)parts.push(`Rule-out or continued-assessment considerations: ${d.ruleOut}.`);if(d.levelOfCare)parts.push(`Recommended level of care: ${d.levelOfCare}.`);return parts.join(' ')||'Diagnostic and level-of-care information has not yet been entered.'}
-function buildDiagnosticRationale(data){return sentence(data.diagnosis.diagnosticRationale)||'Diagnostic rationale has not yet been entered.'}
-function buildMedicalNecessity(data){if(data.diagnosis.medicalNecessity)return sentence(data.diagnosis.medicalNecessity);const p=data.presenting;const parts=[];if(p.severity)parts.push(`Symptoms are described as ${p.severity.toLowerCase()}`);if(p.impairments.length)parts.push(`and impair ${listText(p.impairments)}`);return parts.length?`Behavioral-health treatment is medically necessary because ${parts.join(' ')}.`:'Medical-necessity rationale has not yet been entered.'}
-function buildLevelOfCare(data){const d=data.diagnosis,parts=[];if(d.levelOfCare)parts.push(`The recommended level of care is ${d.levelOfCare.toLowerCase()}.`);if(d.locRationale)parts.push(sentence(d.locRationale));return parts.join(' ')||'Level-of-care rationale has not yet been entered.'}
+function selectedSymptomDomains(data){
+ return Object.entries(data.presenting.domains).filter(([,domain])=>domain.symptoms.length);
+}
+
+function patientSpecificDetails(data){
+ const p=data.presenting;
+ return [
+  p.patientNarrative,
+  ...selectedSymptomDomains(data).flatMap(([,domain])=>[domain.context,domain.notes]),
+  data.psychiatricHistory.details,
+  data.trauma.details
+ ].map(v=>String(v||'').trim()).filter(Boolean);
+}
+
+function applyDiagnosticIntelligence(data){
+ const next=structuredClone(data);
+ if(!next.diagnosis.diagnosticRationale.trim())next.diagnosis.diagnosticRationale=generateDiagnosticRationale(next);
+ if(!next.diagnosis.medicalNecessity.trim())next.diagnosis.medicalNecessity=generateMedicalNecessity(next);
+ if(!next.diagnosis.locRationale.trim())next.diagnosis.locRationale=generateLevelOfCareRationale(next);
+ if(!next.diagnosis.treatmentFocus.trim())next.diagnosis.treatmentFocus=generateTreatmentFocus(next);
+ return next;
+}
+
+function buildDiagnosticSummary(data){
+ const d=data.diagnosis,parts=[];
+ if(d.primary)parts.push(`Primary diagnosis: ${d.primary}.`);
+ if(d.secondary)parts.push(`Secondary diagnosis: ${d.secondary}.`);
+ if(d.status)parts.push(`Diagnostic status: ${d.status.toLowerCase()}.`);
+ if(d.confidence)parts.push(`Diagnostic confidence is ${d.confidence.toLowerCase()}.`);
+ if(d.ruleOut)parts.push(`Rule-out or continued-assessment considerations include ${d.ruleOut}.`);
+ if(d.levelOfCare)parts.push(`Recommended level of care: ${d.levelOfCare}.`);
+ return parts.join(' ')||'Diagnostic and level-of-care information has not yet been entered.';
+}
+
+function generateDiagnosticRationale(data){
+ const d=data.diagnosis,p=data.presenting,domains=selectedSymptomDomains(data);
+ if(!d.primary)return 'A primary or provisional diagnosis must be entered before a diagnosis-specific justification can be finalized.';
+ const evidence=[];
+ if(domains.length){
+  const domainEvidence=domains.slice(0,5).map(([key,domain])=>{
+   const label=clinicalDomainLabel(key);
+   const symptoms=listText(domain.symptoms.slice(0,6).map(v=>v.toLowerCase()));
+   return `${label} characterized by ${symptoms}`;
+  });
+  evidence.push(listText(domainEvidence));
+ }
+ const course=[];
+ if(p.duration)course.push(durationPhrase(p.duration));
+ if(p.frequency)course.push(frequencyPhrase(p.frequency));
+ if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
+ if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+ const impairment=p.impairments.length?` Symptoms are associated with clinically significant impairment in ${listText(p.impairments.map(v=>v.toLowerCase()))}.`:'';
+ const details=patientSpecificDetails(data);
+ const context=details.length?` Patient-specific context includes ${sentence(details[0])}`:'';
+ const ruleOut=d.ruleOut?` Continued assessment should consider ${d.ruleOut}, including whether another mental disorder, a medical condition, substance effects, or a normative stress response better explains the presentation.`:'';
+ const confidence=d.confidence?` Diagnostic confidence is currently ${d.confidence.toLowerCase()}.`:'';
+ return `The diagnosis of ${d.primary} is supported by ${evidence.length?evidence.join('; '):'the reported clinical presentation'}${course.length?`, with symptoms ${listText(course)}`:''}.${impairment}${context}${confidence}${ruleOut}`.replace(/\.\./g,'.');
+}
+
+function generateMedicalNecessity(data){
+ const p=data.presenting,domains=selectedSymptomDomains(data);
+ const symptomPhrase=domains.length
+  ?listText(domains.slice(0,5).map(([key])=>clinicalDomainLabel(key)))
+  :p.concerns.length?listText(p.concerns.map(v=>v.toLowerCase())):'behavioral-health symptoms';
+ const impairment=p.impairments.length?listText(p.impairments.map(v=>v.toLowerCase())):'daily functioning';
+ const severity=p.severity?`${p.severity.toLowerCase()} `:'';
+ const frequency=p.frequency?` occurring ${p.frequency.toLowerCase()}`:'';
+ const course=p.course?` and ${p.course.toLowerCase()}`:'';
+ const request=p.clientRequest?` The client is seeking ${p.clientRequest.toLowerCase()} to reduce symptom burden and improve functioning.`:'';
+ return `Behavioral-health treatment is medically necessary due to ${severity}${symptomPhrase}${frequency}${course}, resulting in clinically meaningful impairment in ${impairment}. Without appropriate intervention, the current symptom pattern may contribute to continued functional decline, worsening distress, and increased difficulty meeting daily responsibilities.${request}`;
+}
+
+function generateLevelOfCareRationale(data){
+ const d=data.diagnosis,r=data.risk,p=data.presenting;
+ const loc=d.levelOfCare||'routine outpatient psychotherapy';
+ const risk=r.overallRisk?`${r.overallRisk.toLowerCase()} current risk`:'no documented indication of imminent risk';
+ const functioning=p.impairments.length?`impairment in ${listText(p.impairments.map(v=>v.toLowerCase()))}`:'functional impairment requiring treatment';
+ const stability=[];
+ if(data.social.housing)stability.push(`${data.social.housing.toLowerCase()} housing`);
+ if(data.social.supports)stability.push(`${data.social.supports.toLowerCase()} supports`);
+ if(data.strengths.length)stability.push(`protective factors including ${listText(data.strengths.slice(0,4).map(v=>v.toLowerCase()))}`);
+ const support=stability.length?` The client also demonstrates ${listText(stability)}, which informs the feasibility of this recommendation.`:'';
+ return `${loc} is recommended based on ${risk}, ${functioning}, the current symptom severity, and the need for structured clinical intervention.${support} The level of care should be revised if risk, functioning, psychiatric stability, or the ability to participate safely in treatment changes.`;
+}
+
+function generateTreatmentFocus(data){
+ const p=data.presenting,domains=selectedSymptomDomains(data);
+ const targets=[];
+ const keys=domains.map(([key])=>key);
+ if(keys.includes('mood'))targets.push('reduce depressive symptoms and increase behavioral activation');
+ if(keys.includes('anxiety')||keys.includes('panic'))targets.push('improve anxiety management and nervous-system regulation');
+ if(keys.includes('trauma'))targets.push('strengthen stabilization and trauma-informed coping');
+ if(keys.includes('ocd'))targets.push('address obsessive-compulsive patterns using exposure-based and response-prevention strategies when clinically appropriate');
+ if(keys.includes('adhd'))targets.push('improve executive-functioning supports and daily organization');
+ if(keys.includes('adjustment'))targets.push('process adjustment-related stressors and strengthen adaptive coping');
+ if(keys.includes('painHealth'))targets.push('address the interaction among pain, stress, avoidance, and functioning');
+ if(keys.includes('substance'))targets.push('support harm reduction, recovery goals, and relapse-prevention planning');
+ if(!targets.length&&p.concerns.length)targets.push(`address ${listText(p.concerns.slice(0,5).map(v=>v.toLowerCase()))}`);
+ if(p.impairments.length)targets.push(`improve functioning in ${listText(p.impairments.slice(0,5).map(v=>v.toLowerCase()))}`);
+ return `Initial treatment should focus on ${listText(targets)}. Treatment planning should incorporate the client’s stated goals, strengths, cultural context, treatment preferences, risk needs, and response to prior services.`;
+}
+
+function buildDiagnosticRationale(data){
+ return sentence(data.diagnosis.diagnosticRationale)||generateDiagnosticRationale(data);
+}
+
+function buildMedicalNecessity(data){
+ return sentence(data.diagnosis.medicalNecessity)||generateMedicalNecessity(data);
+}
+
+function buildLevelOfCare(data){
+ const d=data.diagnosis;
+ const rationale=sentence(d.locRationale)||generateLevelOfCareRationale(data);
+ return d.levelOfCare?`Recommended level of care: ${d.levelOfCare}.\n\n${rationale}`:rationale;
+}
+
+function buildClinicalFormulation(data){
+ const p=data.presenting;
+ const domains=selectedSymptomDomains(data);
+ const details=patientSpecificDetails(data);
+ const predisposing=[];
+ if(data.psychiatricHistory.diagnoses.length)predisposing.push(`prior behavioral-health diagnoses including ${listText(data.psychiatricHistory.diagnoses.map(v=>v.toLowerCase()))}`);
+ if(data.familyHistory.conditions.length)predisposing.push(`family psychiatric history including ${listText(data.familyHistory.conditions.map(v=>v.toLowerCase()))}`);
+ if(data.trauma.experiences.length)predisposing.push(`a history of ${listText(data.trauma.experiences.map(v=>v.toLowerCase()))}`);
+ if(data.medical.conditions.length)predisposing.push(`medical factors including ${listText(data.medical.conditions.map(v=>v.toLowerCase()))}`);
+
+ const presenting=domains.length
+  ?`${listText(domains.map(([key])=>clinicalDomainLabel(key)))} with associated impairment in ${p.impairments.length?listText(p.impairments.map(v=>v.toLowerCase())):'daily functioning'}`
+  :p.concerns.length?listText(p.concerns.map(v=>v.toLowerCase())):'the current behavioral-health concerns';
+
+ const precipitating=details.length?sentence(details[0]):p.reasonSeekingCare?`The immediate reason for seeking care is ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`:'Specific precipitating factors require further clarification.';
+
+ const perpetuating=[];
+ if(domains.some(([key])=>['anxiety','panic','ocd','trauma','painHealth'].includes(key)))perpetuating.push('avoidance, threat monitoring, or safety behaviors');
+ if(p.impairments.includes('Sleep / energy'))perpetuating.push('sleep and energy disruption');
+ if(p.impairments.includes('Social functioning')||p.impairments.includes('Intimate relationships'))perpetuating.push('interpersonal stress or social withdrawal');
+ if(data.social.finances)perpetuating.push(`${data.social.finances.toLowerCase()} financial stress`);
+ if(data.social.supports&&/limited|no support|inconsistent/i.test(data.social.supports))perpetuating.push('limited or inconsistent support');
+
+ const protective=[...data.strengths,...data.risk.protectiveFactors].filter(Boolean);
+ return `PRESENTING FACTORS\nThe client currently presents with ${presenting}.\n\nPREDISPOSING FACTORS\n${predisposing.length?`Relevant vulnerability factors include ${listText(predisposing)}.`:'Predisposing factors require continued assessment.'}\n\nPRECIPITATING FACTORS\n${precipitating}\n\nPERPETUATING FACTORS\n${perpetuating.length?`Factors that may maintain or intensify the presentation include ${listText(perpetuating)}.`:'Perpetuating factors require continued clarification.'}\n\nPROTECTIVE FACTORS\n${protective.length?`Protective factors and treatment assets include ${listText([...new Set(protective)].map(v=>v.toLowerCase()))}.`:'Protective factors should be further identified with the client.'}`;
+}
+
+function buildTreatmentFocus(data){
+ return sentence(data.diagnosis.treatmentFocus)||generateTreatmentFocus(data);
+}
