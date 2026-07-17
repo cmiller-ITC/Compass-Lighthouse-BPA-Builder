@@ -295,7 +295,7 @@ export function reducer(state, action) {
       const enriched=applyDiagnosticIntelligence(state);
       return {...enriched, generated:buildAllNarratives(enriched)};
     }
-    case "GENERATE_DIAGNOSTIC_INTELLIGENCE": return applyDiagnosticIntelligence(state);
+    case "GENERATE_DIAGNOSTIC_INTELLIGENCE": return regenerateDiagnosticIntelligence(state);
     case "RESET": return structuredClone(initialCaseData);
     default: return state;
   }
@@ -390,6 +390,15 @@ function applyDiagnosticIntelligence(data){
  if(!next.diagnosis.medicalNecessity.trim())next.diagnosis.medicalNecessity=generateMedicalNecessity(next);
  if(!next.diagnosis.locRationale.trim())next.diagnosis.locRationale=generateLevelOfCareRationale(next);
  if(!next.diagnosis.treatmentFocus.trim())next.diagnosis.treatmentFocus=generateTreatmentFocus(next);
+ return next;
+}
+
+function regenerateDiagnosticIntelligence(data){
+ const next=structuredClone(data);
+ next.diagnosis.diagnosticRationale=generateDiagnosticRationale(next);
+ next.diagnosis.medicalNecessity=generateMedicalNecessity(next);
+ next.diagnosis.locRationale=generateLevelOfCareRationale(next);
+ next.diagnosis.treatmentFocus=generateTreatmentFocus(next);
  return next;
 }
 
