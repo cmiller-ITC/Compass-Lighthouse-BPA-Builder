@@ -90,3 +90,101 @@
 
 /* Compass 7.0.1 */
 .preview-section p{white-space:pre-wrap;color:#2f2a34}
+
+
+/* Compass 7.1 — Assessment Journey & Lighthouse Experience */
+:root{
+ --sunrise-gold:#e8b36c;
+ --sunrise-peach:#efc39f;
+ --sea-deep:#173d56;
+ --sea-glass:#5b9695;
+ --night-purple:#442f70;
+}
+.lighthouse-hero{
+ position:relative;min-height:390px;margin-bottom:22px;border-radius:26px;overflow:hidden;
+ display:grid;grid-template-columns:minmax(360px,1.15fr) minmax(320px,.85fr);
+ background:#37275e;box-shadow:0 22px 55px rgba(43,30,65,.2)
+}
+.lighthouse-scene{position:relative;min-height:390px}
+.lighthouse-scene svg{display:block;width:100%;height:100%;object-fit:cover}
+.scene-caption{
+ position:absolute;left:20px;bottom:18px;display:grid;gap:2px;padding:9px 12px;
+ border:1px solid rgba(255,255,255,.25);border-radius:13px;background:rgba(23,43,57,.42);
+ backdrop-filter:blur(10px);color:white
+}
+.scene-caption span{font-size:9px;text-transform:uppercase;letter-spacing:.12em;opacity:.75}
+.scene-caption strong{font-size:12px}
+.lighthouse-hero-copy{
+ display:flex;flex-direction:column;justify-content:center;padding:42px 42px 42px 28px;
+ color:white;background:linear-gradient(120deg,rgba(55,39,94,.35),rgba(55,39,94,.96))
+}
+.lighthouse-hero-copy .eyebrow{color:#f5d6a3}
+.lighthouse-hero-copy h1{margin:8px 0 14px;font-size:38px;line-height:1.08;letter-spacing:-.03em}
+.lighthouse-hero-copy p{margin:0;max-width:520px;color:#f2edf7;font-size:15px;line-height:1.65}
+.hero-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px}
+.hero-actions button{background:linear-gradient(135deg,#f4cc86,#e8a85f);color:#3b2b42}
+.hero-actions span{font-size:11px;color:#e5ddec}
+.journey-overview-card{
+ margin-bottom:18px;padding:20px;border:1px solid #ddd3e7;border-radius:20px;background:linear-gradient(145deg,#fff,#faf6fd);
+ box-shadow:0 12px 32px rgba(55,39,94,.08)
+}
+.journey-overview-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px}
+.journey-overview-head h2{margin:4px 0 0;color:#3f2d57;font-size:20px}
+.journey-overall-score{font-size:30px;font-weight:950;color:#5c4380}
+.journey-line{display:grid;grid-template-columns:repeat(8,1fr);gap:7px}
+.journey-stop{
+ position:relative;display:grid;justify-items:center;gap:5px;padding:10px 4px;background:transparent;color:#696172;
+ border:0;border-radius:13px;box-shadow:none
+}
+.journey-stop:hover{transform:none;background:#f5f0f8}
+.journey-stop::before{content:'';position:absolute;top:22px;left:-50%;width:100%;height:3px;background:#e1dae8;z-index:0}
+.journey-stop:first-child::before{display:none}
+.journey-stop.complete::before{background:#74aaa4}
+.journey-dot{position:relative;z-index:1;display:grid;place-items:center;width:29px;height:29px;border-radius:50%;background:#ece7f0;color:#7c7186;font-size:11px;font-weight:950}
+.journey-stop.complete .journey-dot{background:#d8efeb;color:#2c746c}
+.journey-stop.current .journey-dot{background:#f5d49c;color:#7a561e;box-shadow:0 0 0 5px rgba(232,179,108,.18)}
+.journey-stop strong{font-size:10px;text-align:center}
+.journey-stop small{font-size:8px;text-transform:uppercase;letter-spacing:.06em}
+.module-card{position:relative;overflow:hidden}
+.module-card::after{content:'';position:absolute;right:-28px;bottom:-35px;width:90px;height:90px;border-radius:50%;background:linear-gradient(145deg,rgba(91,150,149,.12),rgba(111,74,151,.1))}
+.module-card-icon{font-size:25px}
+.module-card p{min-height:52px;color:#6d6574;font-size:12px;line-height:1.45}
+.five-tabs{grid-template-columns:repeat(5,1fr)}
+.five-tabs button{font-size:9px;padding-left:2px;padding-right:2px}
+.assessment-journey{display:grid;gap:13px}
+.journey-hero-mini{padding:14px;border:1px solid #ddd4e6;border-radius:15px;background:linear-gradient(145deg,#f8f2fc,#edf9f7)}
+.journey-score-row{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:6px 0 10px}
+.journey-score-row strong{font-size:34px;color:#4c3570;line-height:1}
+.journey-score-row span{font-size:10px;color:#6b6470;text-align:right}
+.current-stop-card,.next-stop-card{padding:14px;border-radius:15px}
+.current-stop-card{border:1px solid #d8cbe5;background:#faf7fd}
+.next-stop-card{border:1px solid #efd9ac;background:#fff8e9}
+.journey-status-label{font-size:9px;font-weight:950;text-transform:uppercase;letter-spacing:.09em;color:#77599b}
+.current-stop-card h4,.next-stop-card h4{margin:6px 0;color:#3e3150;font-size:14px}
+.current-stop-card p,.next-stop-card p{margin:0;color:#57505d;font-size:12px;line-height:1.5}
+.next-stop-card small{display:block;margin-top:9px;color:#795f32;line-height:1.4}
+.current-stop-checks{display:grid;gap:4px;margin-top:10px;color:#5d5364;font-size:11px}
+.journey-step-list{display:grid;gap:7px}
+.journey-step-row{display:grid;grid-template-columns:27px 1fr;align-items:center;gap:8px;padding:8px 9px;border-radius:11px;background:#f7f4f9}
+.step-status-icon{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#e8e2ed;color:#766c7e;font-weight:950}
+.journey-step-row.complete .step-status-icon{background:#d9efeb;color:#2f7770}
+.journey-step-row.current .step-status-icon{background:#f7e5bd;color:#805c20}
+.journey-step-row strong{display:block;color:#3c3542;font-size:11px}
+.journey-step-row small{display:block;color:#837a89;font-size:9px;margin-top:2px}
+.final-review-notice{padding:12px;margin-bottom:12px;border:1px solid #d8d1e2;border-radius:13px;background:#f7f4fa}
+.final-review-notice strong{color:#503b6c;font-size:11px;text-transform:uppercase}
+.final-review-notice p{margin:5px 0 0;color:#5c5562;font-size:11.5px;line-height:1.5}
+.requirement-row.upcoming{background:#f5f3f7;border-color:#e1dce5}
+.requirement-row.upcoming .requirement-icon{background:#e7e2eb;color:#776e7e}
+.requirement-row.upcoming small{color:#7c7482}
+@media(max-width:1200px){
+ .lighthouse-hero{grid-template-columns:1fr}
+ .lighthouse-scene{min-height:310px}
+ .lighthouse-hero-copy{padding:30px}
+ .journey-line{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:720px){
+ .lighthouse-hero-copy h1{font-size:30px}
+ .journey-line{grid-template-columns:repeat(2,1fr)}
+ .journey-stop::before{display:none}
+}

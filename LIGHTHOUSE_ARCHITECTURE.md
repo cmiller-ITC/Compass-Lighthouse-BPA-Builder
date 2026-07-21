@@ -60,3 +60,15 @@ Lighthouse supports clinical judgment by collecting structured evidence once and
 
 ## Separation rule
 Chart-ready narrative, Clinical Coach guidance, and documentation-quality feedback are separate data products. Coaching language must never appear in chart-ready outputs.
+
+
+## Lighthouse Experience Principle — Assessment Journey
+
+Never tell clinicians they are missing information they have not yet had the opportunity to collect.
+
+The live interface separates:
+- Narrative: what the record currently says
+- Clinical Coach: questions, scripts, and teaching
+- Assessment Journey: where the clinician is and what comes next
+- Quality Review: opportunities to strengthen the current work
+- Final COMAR Review: whole-assessment readiness before signing

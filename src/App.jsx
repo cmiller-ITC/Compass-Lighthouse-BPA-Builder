@@ -25,34 +25,125 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.0.1 Live Evidence Propagation</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.1 Assessment Journey</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
-function Home({data,setModule}){const p=data.presenting;const active=Object.values(p.domains).filter(d=>d.symptoms.length||d.notes||d.context).length;return <Page><section className="hero"><div className="eyebrow">Lighthouse Compass 7.0.1</div><h1>Live Evidence Propagation & Narrative Refinement</h1><p>Every meaningful detail is heard immediately. One living clinical story updates as the clinician types.</p><div className="stats"><Stat label="Concerns" value={p.concerns.length}/><Stat label="Active symptom domains" value={active}/><Stat label="Impairments" value={p.impairments.length}/><Stat label="Generated sections" value={Object.keys(data.generated).length}/></div></section><div className="home-grid">{NAV.slice(1,8).map(([id,icon,label])=><article className="card" key={id}><h3>{icon} {label}</h3><button onClick={()=>setModule(id)}>Open</button></article>)}</div></Page>}
+function Home({data,setModule}){
+ const journey=buildAssessmentJourney(data,'home');
+ const p=data.presenting;
+ const active=Object.values(p.domains).filter(d=>d.symptoms.length||d.notes||d.context).length;
+ return <Page>
+  <section className="lighthouse-hero">
+   <LighthouseScene progress={journey.overallProgress}/>
+   <div className="lighthouse-hero-copy">
+    <div className="eyebrow">Lighthouse Compass 7.1</div>
+    <h1>Helping clinicians illuminate the path forward.</h1>
+    <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
+    <div className="hero-actions">
+     <button onClick={()=>setModule(journey.nextStep?.id||'presenting')}>🧭 {journey.completedCount?'Continue Assessment':'Begin Assessment'}</button>
+     <span>{journey.overallProgress}% of the assessment journey established</span>
+    </div>
+   </div>
+  </section>
+  <section className="journey-overview-card">
+   <div className="journey-overview-head">
+    <div><div className="section-kicker">Assessment Journey</div><h2>Build understanding one meaningful step at a time.</h2></div>
+    <div className="journey-overall-score">{journey.overallProgress}%</div>
+   </div>
+   <div className="journey-line">{journey.steps.map((step,index)=><button key={step.id} className={`journey-stop ${step.status}`} onClick={()=>setModule(step.id)}>
+    <span className="journey-dot">{step.status==='complete'?'✓':index+1}</span>
+    <strong>{step.shortLabel}</strong>
+    <small>{step.status==='complete'?'Complete':step.status==='current'?'Next up':'Upcoming'}</small>
+   </button>)}</div>
+  </section>
+  <div className="stats"><Stat label="Concerns" value={meaningful(p.concerns).length}/><Stat label="Active symptom domains" value={active}/><Stat label="Impairments" value={meaningful(p.impairments).length}/><Stat label="Generated sections" value={Object.keys(data.generated).length}/></div>
+  <div className="home-grid">{NAV.slice(1,9).map(([id,icon,label])=><article className="card module-card" key={id}><div className="module-card-icon">{icon}</div><h3>{label}</h3><p>{journey.steps.find(step=>step.id===id)?.why||'Continue the client’s clinical story.'}</p><button onClick={()=>setModule(id)}>Open</button></article>)}</div>
+ </Page>
+}
+
+function LighthouseScene({progress=0}){
+ const beamOpacity=progress>=85?.85:progress>=55?.55:.24;
+ return <div className="lighthouse-scene" aria-hidden="true">
+  <svg viewBox="0 0 900 520" role="img">
+   <defs>
+    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0%" stopColor="#442f70"/>
+     <stop offset="46%" stopColor="#a56d99"/>
+     <stop offset="76%" stopColor="#efb486"/>
+     <stop offset="100%" stopColor="#f9dfbb"/>
+    </linearGradient>
+    <linearGradient id="seaGradient" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0%" stopColor="#587b91"/>
+     <stop offset="100%" stopColor="#173d56"/>
+    </linearGradient>
+    <linearGradient id="beamGradient" x1="0" y1=".5" x2="1" y2=".5">
+     <stop offset="0%" stopColor="#fff7d5" stopOpacity=".9"/>
+     <stop offset="100%" stopColor="#fff7d5" stopOpacity="0"/>
+    </linearGradient>
+    <filter id="softGlow"><feGaussianBlur stdDeviation="8"/></filter>
+   </defs>
+   <rect width="900" height="330" fill="url(#skyGradient)"/>
+   <circle cx="690" cy="165" r="55" fill="#ffdba4" opacity=".75"/>
+   <circle cx="690" cy="165" r="86" fill="#ffdba4" opacity=".16" filter="url(#softGlow)"/>
+   <path d="M0 310 C160 285 270 330 420 308 C570 286 715 322 900 288 L900 520 L0 520Z" fill="url(#seaGradient)"/>
+   <path d="M0 345 C160 325 265 365 420 342 C590 318 740 360 900 330" fill="none" stroke="#d9eef1" strokeOpacity=".32" strokeWidth="5"/>
+   <path d="M0 405 C150 380 280 430 455 396 C635 362 735 420 900 383" fill="none" stroke="#f4dbbf" strokeOpacity=".18" strokeWidth="4"/>
+   <path d="M45 476 C150 400 235 405 315 438 C375 462 430 468 520 520 L0 520Z" fill="#182f3c"/>
+   <path d="M80 488 C185 420 255 433 335 468 C375 486 408 500 455 520 L20 520Z" fill="#263c48"/>
+   <g transform="translate(200 175)">
+    <path d="M62 250 L83 54 L138 54 L158 250Z" fill="#f4eee5"/>
+    <path d="M92 54 L98 250 L122 250 L128 54Z" fill="#ded4cf" opacity=".8"/>
+    <rect x="76" y="39" width="70" height="25" rx="4" fill="#1c3040"/>
+    <rect x="89" y="11" width="44" height="32" rx="3" fill="#f7c970"/>
+    <path d="M82 11 L111 -5 L140 11Z" fill="#293a4a"/>
+    <rect x="101" y="88" width="19" height="29" rx="9" fill="#5b4a69"/>
+    <rect x="101" y="148" width="19" height="29" rx="9" fill="#5b4a69"/>
+    <rect x="101" y="210" width="19" height="40" rx="9" fill="#493b52"/>
+    <path d="M48 250 H172 L188 268 H30Z" fill="#152b37"/>
+    <path d="M145 27 L650 -18 L650 98 L145 43Z" fill="url(#beamGradient)" opacity={beamOpacity}/>
+    <circle cx="111" cy="27" r="18" fill="#fff4b5" opacity={Math.min(.95,beamOpacity+.15)}/>
+   </g>
+   <g fill="#fff" opacity=".5">
+    <circle cx="96" cy="96" r="2"/><circle cx="135" cy="55" r="1.6"/><circle cx="790" cy="76" r="2"/><circle cx="828" cy="120" r="1.4"/>
+   </g>
+  </svg>
+  <div className="scene-caption"><span>Assessment light</span><strong>{progress>=85?'Beacon shining':progress>=55?'Clarity emerging':'Dawn is beginning'}</strong></div>
+ </div>
+}
 
 function Presenting({data,set,toggle}){const p=data.presenting;const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Presenting Problems & Areas of Concern"><div className="section-kicker">Start with the client’s story</div><Grid columns={2}><Select label="Reason Seeking Care Now" value={p.reasonSeekingCare} onChange={v=>set('presenting.reasonSeekingCare',v)} options={['New onset symptoms','Worsening symptoms','Return to treatment','Life transition / adjustment stress','Relationship or family conflict','Work or school impairment','Diagnostic clarification']}/><Select label="Client Request" value={p.clientRequest} onChange={v=>set('presenting.clientRequest',v)} options={['Start individual therapy','Restart individual therapy','Diagnostic clarification','Coping skills and support','Treatment planning','Medication evaluation','Higher level of care assessment']}/></Grid><TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/></Card><Card title="Primary Areas of Concern"><Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card><Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card><Card title="Functional Impairment"><div className="section-kicker">Connect symptoms to daily life and medical necessity</div><Checks options={impairmentOptions} selected={p.impairments} onToggle={v=>toggle('presenting.impairments',v)}/></Card></div><ClinicalSidePanel data={data} section="presenting"/></div></Page>}
 
-function SymptomDomains({data,set,toggle,dispatch}){const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Collapsible Symptom Domains"><div className="info">Open only the categories relevant to the client. Each domain combines symptoms, qualifiers, DSM-oriented clarifiers, functional impact, and patient-specific examples.</div><div className="accordion-stack">{Object.entries(symptomDomainDefinitions).map(([key,def])=>{const d=data.presenting.domains[key];const count=d.symptoms.length;const complete=count>0&&d.duration&&d.frequency&&d.severity&&d.impairment.length>0;return <details className="accordion" key={key}><summary><span className="summary-title">{def.icon} {def.label}</span><span className={`badge ${complete?'complete':count?'has-data':''}`}>{complete?'COMAR Ready':count?`${count} selected`:'Not assessed'}</span></summary><div className="accordion-body"><h3>Symptoms / Features</h3><Checks options={def.symptoms} selected={d.symptoms} onToggle={v=>toggle(`presenting.domains.${key}.symptoms`,v)}/><h3>Domain Qualifiers</h3><Grid columns={3}><Select label="Duration" value={d.duration} onChange={v=>set(`presenting.domains.${key}.duration`,v)} options={['Less than 2 weeks','2 weeks–1 month','1–6 months','6–12 months','More than 1 year','Chronic / longstanding','Episodic','Unclear']}/><Select label="Frequency" value={d.frequency} onChange={v=>set(`presenting.domains.${key}.frequency`,v)} options={['Occasional','Weekly','Several days per week','Most days','Daily','Nearly constant','Episodic','Unclear']}/><Select label="Severity" value={d.severity} onChange={v=>set(`presenting.domains.${key}.severity`,v)} options={['Mild','Moderate','Moderately severe','Severe','Variable','Unclear']}/></Grid><h3>Diagnostic Clarifiers</h3><Grid columns={2}>{def.questions.map(([qid,label,options])=><Select key={qid} label={label} value={d.answers[qid]||''} onChange={v=>dispatch({type:'SET_DOMAIN_ANSWER',domain:key,question:qid,value:v})} options={options}/>)}</Grid><h3>Domain-Specific Functional Impact</h3><Checks options={impairmentOptions} selected={d.impairment} onToggle={v=>toggle(`presenting.domains.${key}.impairment`,v)}/><Grid columns={2}><TextArea label="Context / Triggers / Pattern" value={d.context} onChange={v=>set(`presenting.domains.${key}.context`,v)}/><TextArea label="Patient-Specific Details / Examples" value={d.notes} onChange={v=>set(`presenting.domains.${key}.notes`,v)}/></Grid><DomainCoach domainKey={key} domain={d}/></div></details>})}</div></Card></div><ClinicalSidePanel data={data} section="symptoms"/></div></Page>}
+function SymptomDomains({data,set,toggle,dispatch}){const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Collapsible Symptom Domains"><div className="info">Open only the categories relevant to the client. Each domain combines symptoms, qualifiers, DSM-oriented clarifiers, functional impact, and patient-specific examples.</div><div className="accordion-stack">{Object.entries(symptomDomainDefinitions).map(([key,def])=>{const d=data.presenting.domains[key];const count=d.symptoms.length;const complete=count>0&&d.duration&&d.frequency&&d.severity&&d.impairment.length>0;return <details className="accordion" key={key}><summary><span className="summary-title">{def.icon} {def.label}</span><span className={`badge ${complete?'complete':count?'has-data':''}`}>{complete?'Domain established':count?`${count} selected`:'Not assessed'}</span></summary><div className="accordion-body"><h3>Symptoms / Features</h3><Checks options={def.symptoms} selected={d.symptoms} onToggle={v=>toggle(`presenting.domains.${key}.symptoms`,v)}/><h3>Domain Qualifiers</h3><Grid columns={3}><Select label="Duration" value={d.duration} onChange={v=>set(`presenting.domains.${key}.duration`,v)} options={['Less than 2 weeks','2 weeks–1 month','1–6 months','6–12 months','More than 1 year','Chronic / longstanding','Episodic','Unclear']}/><Select label="Frequency" value={d.frequency} onChange={v=>set(`presenting.domains.${key}.frequency`,v)} options={['Occasional','Weekly','Several days per week','Most days','Daily','Nearly constant','Episodic','Unclear']}/><Select label="Severity" value={d.severity} onChange={v=>set(`presenting.domains.${key}.severity`,v)} options={['Mild','Moderate','Moderately severe','Severe','Variable','Unclear']}/></Grid><h3>Diagnostic Clarifiers</h3><Grid columns={2}>{def.questions.map(([qid,label,options])=><Select key={qid} label={label} value={d.answers[qid]||''} onChange={v=>dispatch({type:'SET_DOMAIN_ANSWER',domain:key,question:qid,value:v})} options={options}/>)}</Grid><h3>Domain-Specific Functional Impact</h3><Checks options={impairmentOptions} selected={d.impairment} onToggle={v=>toggle(`presenting.domains.${key}.impairment`,v)}/><Grid columns={2}><TextArea label="Context / Triggers / Pattern" value={d.context} onChange={v=>set(`presenting.domains.${key}.context`,v)}/><TextArea label="Patient-Specific Details / Examples" value={d.notes} onChange={v=>set(`presenting.domains.${key}.notes`,v)}/></Grid><DomainCoach domainKey={key} domain={d}/></div></details>})}</div></Card></div><ClinicalSidePanel data={data} section="symptoms"/></div></Page>}
 
 function ClinicalSidePanel({data,section='presenting'}){
  const [activeTab,setActiveTab]=useState('narrative');
  const intelligence=buildSectionIntelligence(data,section);
  const masterStory=buildMasterClinicalStory(data);
- const tabs=[['narrative','📝','Narrative'],['coach','💡','Coach'],['comar','🟢','COMAR'],['quality','⭐','Quality']];
+ const journey=buildAssessmentJourney(data,section);
+ const finalReview=buildFinalComarReview(data);
+ const headerScore=activeTab==='journey'?journey.overallProgress:activeTab==='final'?finalReview.score:intelligence.quality.score;
+ const tabs=[
+  ['narrative','📝','Narrative'],
+  ['coach','💡','Coach'],
+  ['journey','🧭','Journey'],
+  ['quality','⭐','Quality'],
+  ['final','📋','Final']
+ ];
  return <aside className="clinical-side-panel" aria-label="Lighthouse Intelligence">
   <section className="intelligence-shell">
    <div className="intelligence-header">
-    <div><div className="side-label">Lighthouse Intelligence</div><h3>{intelligence.title}</h3></div>
-    <div className={`mini-score ${intelligence.score>=85?'good':intelligence.score>=55?'warn':'needs'}`}>{intelligence.score}%</div>
+    <div><div className="side-label">Lighthouse Intelligence</div><h3>{activeTab==='journey'?'Assessment Journey':activeTab==='final'?'Final COMAR Review':intelligence.title}</h3></div>
+    <div className={`mini-score ${headerScore>=85?'good':headerScore>=55?'warn':'needs'}`}>{headerScore}%</div>
    </div>
-   <div className="intelligence-tabs" role="tablist">
+   <div className="intelligence-tabs five-tabs" role="tablist">
     {tabs.map(([id,icon,label])=><button key={id} type="button" className={activeTab===id?'active':''} onClick={()=>setActiveTab(id)} role="tab" aria-selected={activeTab===id}><span>{icon}</span>{label}</button>)}
    </div>
    <div className="intelligence-tab-content">
     {activeTab==='narrative'&&<SectionNarrative intelligence={intelligence} masterStory={masterStory}/>}
     {activeTab==='coach'&&<SectionCoach intelligence={intelligence}/>}
-    {activeTab==='comar'&&<SectionComar intelligence={intelligence}/>}
+    {activeTab==='journey'&&<AssessmentJourney journey={journey}/>}
     {activeTab==='quality'&&<SectionQuality intelligence={intelligence}/>}
+    {activeTab==='final'&&<FinalComarReview review={finalReview} section={section}/>}
    </div>
   </section>
  </aside>
@@ -80,24 +171,56 @@ function SectionCoach({intelligence}){
   <GuidanceBlock icon="🗣️" title="Clinician Scripting" items={intelligence.scripts}/>
   <GuidanceBlock icon="💡" title="Clinical Pearl" items={intelligence.pearls}/>
   <GuidanceBlock icon="📝" title="Documentation Tip" items={intelligence.documentationTips}/>
-  {intelligence.prompts.map((item,i)=><div className={`coach-item ${item.priority||'standard'}`} key={`prompt-${i}`}><strong>{item.priority==='high'?'Priority':'Clinical Coach'}</strong><span>{item.text}</span></div>)}
+  {intelligence.prompts.map((item,i)=><div className={`coach-item ${item.priority||'standard'}`} key={`prompt-${i}`}><strong>{item.priority==='high'?'Important to explore':'Clinical Coach'}</strong><span>{item.text}</span></div>)}
  </div>
 }
 function GuidanceBlock({icon,title,items}){if(!items?.length)return null;return <details className="guidance-block" open><summary>{icon} {title}</summary><div>{items.map((item,i)=><p key={i}>{item}</p>)}</div></details>}
 
-function SectionComar({intelligence}){
- return <div className="comar-review">
-  <div className="score-hero compact"><div className="side-label">Section readiness</div><div className="readiness-score">{intelligence.score}%</div><div className="progress-track"><span style={{width:`${intelligence.score}%`}}/></div></div>
-  <div className="requirements-list">{intelligence.requirements.map(item=><div className={`requirement-row ${item.met?'met':'missing'}`} key={item.label}><span className="requirement-icon">{item.met?'✓':'!'}</span><div><strong>{item.label}</strong><small>{item.detail}</small></div></div>)}</div>
-  <div className="comar-note">{intelligence.comarFocus}</div>
+function AssessmentJourney({journey}){
+ return <div className="assessment-journey">
+  <div className="journey-hero-mini">
+   <div className="side-label">Overall journey</div>
+   <div className="journey-score-row"><strong>{journey.overallProgress}%</strong><span>{journey.completedCount} of {journey.steps.length} steps established</span></div>
+   <div className="progress-track journey-track"><span style={{width:`${journey.overallProgress}%`}}/></div>
+  </div>
+  {journey.currentStep&&<section className="current-stop-card">
+   <div className="journey-status-label">{journey.currentStep.status==='complete'?'Current step established':'You are here'}</div>
+   <h4>{journey.currentStep.icon} {journey.currentStep.label}</h4>
+   <p>{journey.currentStep.why}</p>
+   <div className="current-stop-checks">{journey.currentStep.goals.map((goal,i)=><span key={i}>• {goal}</span>)}</div>
+  </section>}
+  {journey.nextStep&&<section className="next-stop-card">
+   <div className="journey-status-label">Next up</div>
+   <h4>{journey.nextStep.icon} {journey.nextStep.label}</h4>
+   <p>{journey.nextStep.why}</p>
+   <small>Nothing is wrong or overdue—this information is collected in the next part of the interview.</small>
+  </section>}
+  <div className="journey-step-list">{journey.steps.map(step=><div className={`journey-step-row ${step.status}`} key={step.id}>
+   <span className="step-status-icon">{step.status==='complete'?'✓':step.status==='current'?'→':'○'}</span>
+   <div><strong>{step.label}</strong><small>{step.status==='complete'?'Established':step.status==='current'?'Current focus':'Upcoming'}</small></div>
+  </div>)}</div>
  </div>
 }
+
 function SectionQuality({intelligence}){
  return <div className="quality-review">
   <div className="score-hero"><div className="side-label">Documentation quality</div><div className="quality-score">{intelligence.quality.score}%</div><div className={`quality-label ${intelligence.quality.score>=85?'good':intelligence.quality.score>=65?'warn':'needs'}`}>{intelligence.quality.label}</div></div>
   <div className="quality-bars">{intelligence.quality.metrics.map(metric=><div className="quality-metric" key={metric.label}><div><span>{metric.label}</span><strong>{metric.score}%</strong></div><div className="metric-track"><span style={{width:`${metric.score}%`}}/></div></div>)}</div>
   <div className="golden-thread-card"><strong>Golden Thread</strong><p>{intelligence.goldenThread}</p></div>
-  {intelligence.quality.suggestion&&<div className="quality-suggestion"><strong>Highest-value improvement</strong><p>{intelligence.quality.suggestion}</p></div>}
+  {intelligence.quality.suggestion&&<div className="quality-suggestion"><strong>Opportunity to strengthen</strong><p>{intelligence.quality.suggestion}</p></div>}
+ </div>
+}
+
+function FinalComarReview({review,section}){
+ const early=!['diagnosis','documentation'].includes(section);
+ return <div className="final-review">
+  {early&&<div className="final-review-notice"><strong>Final review comes later</strong><p>This tab previews the whole-assessment requirements. Items from future sections are shown as <em>upcoming</em>, not as errors.</p></div>}
+  <div className="score-hero compact"><div className="side-label">Whole-assessment readiness</div><div className="readiness-score">{review.score}%</div><div className="progress-track"><span style={{width:`${review.score}%`}}/></div></div>
+  <div className="requirements-list">{review.items.map(item=><div className={`requirement-row ${item.status}`} key={item.label}>
+   <span className="requirement-icon">{item.status==='met'?'✓':item.status==='upcoming'?'→':'!'}</span>
+   <div><strong>{item.label}</strong><small>{item.detail}</small></div>
+  </div>)}</div>
+  <div className="comar-note">Use this as decision support before signing. It does not replace clinical judgment, supervisory review, organizational policy, or the official record.</div>
  </div>
 }
 
@@ -105,6 +228,76 @@ function hasMeaningfulSelection(values=[]){return values.some(value=>!['None rep
 function selectionStatus(values=[]){if(values.includes('None reported')||values.includes('None reported / no current behavioral-health concern'))return'None reported';if(values.some(v=>v.startsWith('Unknown')))return'Unknown';if(values.some(v=>v.startsWith('Not applicable')))return'Not applicable';return hasMeaningfulSelection(values)?naturalList(values.filter(v=>!v.startsWith('None')&&!v.startsWith('Not applicable')).map(v=>v.toLowerCase())):''}
 function pct(items){return Math.round(items.filter(Boolean).length/Math.max(items.length,1)*100)}
 function safeText(value){return String(value||'').trim()}
+const JOURNEY_STEPS=[
+ {id:'presenting',icon:'📝',label:'Presenting Concerns',shortLabel:'Presenting',why:'Establish why the client is seeking care and how life is being affected.',goals:['Reason for seeking care','Client priorities','Overall course and impairment']},
+ {id:'symptoms',icon:'🧩',label:'Symptom Evidence',shortLabel:'Symptoms',why:'Describe the symptom patterns that support clinical understanding and diagnosis.',goals:['Relevant symptom clusters','Duration, frequency, and severity','Patient-specific examples']},
+ {id:'history',icon:'📚',label:'Psychiatric & Family History',shortLabel:'History',why:'Identify prior episodes, treatment response, vulnerability, and family context.',goals:['Prior diagnoses and services','Treatment response and risk history','Family psychiatric history']},
+ {id:'medical',icon:'🩺',label:'Medical & Substance Context',shortLabel:'Medical',why:'Consider biological contributors, medications, sleep, pain, and substance factors.',goals:['Medical conditions and follow-up','Medication reconciliation','Substance-use screening']},
+ {id:'social',icon:'🌿',label:'Trauma, Social Context & Strengths',shortLabel:'Social',why:'Understand the client’s environment, supports, barriers, identity, and resilience.',goals:['Trauma disposition and impact','Housing, work, relationships, and practical needs','Strengths and supports']},
+ {id:'mse',icon:'🧠',label:'Mental Status, Risk & Safety',shortLabel:'Risk',why:'Describe current clinical status and match safety planning to assessed risk.',goals:['Mental status examination','Acute and chronic risk','Protective factors and safety response']},
+ {id:'diagnosis',icon:'🔎',label:'Measures, Diagnosis & Formulation',shortLabel:'Diagnosis',why:'Integrate evidence into diagnosis, medical necessity, level of care, and treatment direction.',goals:['Baseline measures','Diagnostic rationale and rule-outs','Medical necessity and level of care']},
+ {id:'documentation',icon:'📄',label:'Documentation & Final Review',shortLabel:'Review',why:'Confirm the Golden Thread and prepare the clinician-reviewed documentation package.',goals:['Integrated clinical package','Golden Thread consistency','Final COMAR and quality review']}
+];
+
+function sectionEstablished(data,id){
+ const p=data.presenting;
+ const active=Object.values(p.domains).filter(d=>d.symptoms.length||d.context.trim()||d.notes.trim());
+ const meaningfulNeeds=data.social.needs.length>0;
+ const meaningfulStrengths=data.strengths.length>0;
+ const mseCore=[data.mse.appearance,data.mse.behavior,data.mse.orientation,data.mse.speech,data.mse.mood,data.mse.affect,data.mse.thoughtProcess,data.mse.thoughtContent,data.mse.perception,data.mse.insight,data.mse.judgment];
+ const checks={
+  presenting:Boolean(p.reasonSeekingCare||p.patientNarrative.trim())&&p.concerns.length>0&&Boolean(p.duration||p.frequency||p.severity||p.course),
+  symptoms:active.length>0&&active.some(d=>d.symptoms.length)&&active.some(d=>d.duration||d.frequency||d.severity),
+  history:data.psychiatricHistory.diagnoses.length>0&&data.psychiatricHistory.services.length>0&&data.familyHistory.conditions.length>0,
+  medical:data.medical.conditions.length>0&&Boolean(data.medical.sleep||data.medical.pain||data.medical.providerFollowUp),
+  social:data.trauma.experiences.length>0&&Boolean(data.social.housing||data.social.employment||data.social.supports)&&meaningfulNeeds&&meaningfulStrengths,
+  mse:mseCore.filter(Boolean).length>=8&&Boolean(data.risk.suicideScreen||data.risk.ideation)&&Boolean(data.risk.overallRisk),
+  diagnosis:Boolean(data.diagnosis.primary)&&Boolean(data.diagnosis.levelOfCare)&&Boolean(data.diagnosis.diagnosticRationale||data.diagnosis.medicalNecessity),
+  documentation:Object.keys(data.generated).length>0
+ };
+ return Boolean(checks[id]);
+}
+function buildAssessmentJourney(data,currentSection='home'){
+ const raw=JOURNEY_STEPS.map(step=>({...step,complete:sectionEstablished(data,step.id)}));
+ const firstIncomplete=raw.findIndex(step=>!step.complete);
+ const currentIndex=currentSection==='home'?(firstIncomplete===-1?raw.length-1:firstIncomplete):Math.max(0,raw.findIndex(step=>step.id===currentSection));
+ const steps=raw.map((step,index)=>({...step,status:step.complete?'complete':index===currentIndex?'current':'upcoming'}));
+ const completedCount=raw.filter(step=>step.complete).length;
+ const overallProgress=Math.round(completedCount/raw.length*100);
+ const currentStep=steps.find(step=>step.id===currentSection)||(steps.find(step=>step.status==='current'));
+ const nextStep=steps.find((step,index)=>index>currentIndex&&!step.complete)||(!currentStep?.complete?currentStep:null);
+ return {steps,completedCount,overallProgress,currentStep,nextStep};
+}
+function buildFinalComarReview(data){
+ const p=data.presenting;
+ const active=Object.values(p.domains).filter(d=>d.symptoms.length||d.context.trim()||d.notes.trim());
+ const reached=id=>{
+  const order=JOURNEY_STEPS.map(step=>step.id);
+  const firstIncomplete=order.findIndex(step=>!sectionEstablished(data,step));
+  const index=order.indexOf(id);
+  return firstIncomplete===-1||index<=firstIncomplete;
+ };
+ const specs=[
+  ['Presenting problem and reason for care','presenting',Boolean(p.reasonSeekingCare||p.patientNarrative.trim()),'Clarify why services are being sought now.'],
+  ['Symptom evidence and course','symptoms',active.length>0&&Boolean(p.duration||active.some(d=>d.duration)), 'Document the relevant symptom pattern, duration, frequency, severity, and course.'],
+  ['Functional impairment','symptoms',meaningful(p.impairments).length>0||active.some(d=>meaningful(d.impairment).length>0),'Connect symptoms to daily functioning.'],
+  ['Psychiatric and family history','history',data.psychiatricHistory.diagnoses.length>0&&data.familyHistory.conditions.length>0,'Document findings, none reported, or unavailable history.'],
+  ['Medical and substance context','medical',data.medical.conditions.length>0&&Boolean(data.substance.alcohol&&data.substance.cannabis),'Assess relevant biological and substance contributors.'],
+  ['Trauma, social context, and strengths','social',data.trauma.experiences.length>0&&data.social.needs.length>0&&data.strengths.length>0,'Identify environmental factors, barriers, supports, and strengths.'],
+  ['MSE, risk formulation, and response','mse',Boolean(data.risk.overallRisk)&&Boolean(data.risk.safetyResponse),'Match risk findings to the documented safety response.'],
+  ['Diagnosis and clinical rationale','diagnosis',Boolean(data.diagnosis.primary&&data.diagnosis.diagnosticRationale),'Connect diagnosis to symptoms, duration, impairment, and rule-outs.'],
+  ['Medical necessity and level of care','diagnosis',Boolean(data.diagnosis.medicalNecessity&&data.diagnosis.levelOfCare&&data.diagnosis.locRationale),'Explain why treatment and the selected level of care are appropriate now.'],
+  ['Golden Thread and final package','documentation',Boolean(data.generated.goldenThread&&data.generated.clinicalFormulation),'Confirm that assessment findings connect to diagnosis, impairment, and treatment direction.']
+ ];
+ const items=specs.map(([label,step,met,missingDetail])=>{
+  if(met)return{label,status:'met',detail:'Established in the current assessment.'};
+  if(!reached(step))return{label,status:'upcoming',detail:`Collected later during ${JOURNEY_STEPS.find(s=>s.id===step)?.label}.`};
+  return{label,status:'missing',detail:missingDetail};
+ });
+ const score=Math.round(items.filter(item=>item.status==='met').length/items.length*100);
+ return {items,score};
+}
+
 function buildEvidenceMap(data){
  const activeDomains=Object.entries(data.presenting.domains).filter(([,d])=>d.symptoms.length);
  const measures=data.measures.filter(m=>m.name&&m.score);
@@ -236,7 +429,7 @@ function enrichWithDynamicCoach(result,data,e,section){
   if(!data.risk.ideation)addPrompt('Depressive symptoms are active. Complete direct assessment of suicidal ideation and protective factors.','high');
  }
  if(keys.includes('anxiety')){
-  addQuestion('Is the worry difficult to control, present across multiple areas of life, and occurring more days than not for at least 6 months?');
+  addQuestion('Is the worry difficult to control and present across multiple areas of life?');
  }
  if(keys.includes('panic')){
   addQuestion('Are panic attacks expected or unexpected, and has the client changed behavior because of fear of another attack?');
