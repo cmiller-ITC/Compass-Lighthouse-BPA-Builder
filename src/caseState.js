@@ -269,7 +269,12 @@ export function reducer(state, action) {
   switch (action.type) {
     case "SET": return setPath(state, action.path, action.value);
     case "TOGGLE": {
-      const current = getPath(state, action.path) || [];
+      const rawCurrent = getPath(state, action.path);
+      const current = Array.isArray(rawCurrent)
+        ? rawCurrent
+        : rawCurrent === undefined || rawCurrent === null || rawCurrent === ""
+          ? []
+          : [rawCurrent];
       const exclusive = ["None reported","Not applicable","None identified","None identified yet",
         "None reported / no current behavioral-health concern","Unknown / records unavailable",
         "Unknown / family history unavailable","Unknown / not yet assessed",
@@ -369,9 +374,12 @@ function buildChiefComplaint(data){
  const p=data.presenting;if(p.patientNarrative.trim())return normalizeClinicalText(p.patientNarrative,{fragmentLead:'The client reports'});
  const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:(p.reasonSeekingCare?[p.reasonSeekingCare]:[]);const reason=reasons.length?listText(reasons.map(reasonToClinicalPhrase)):'behavioral-health concerns';
  const requests=Array.isArray(p.clientRequest)?p.clientRequest:(p.clientRequest?[p.clientRequest]:[]);const request=requests.length?` The client hopes to ${listText(requests.map(v=>v.toLowerCase()))}.`:'';
- return p.reasonSeekingCare||p.clientRequest?`The client presents in response to ${reason}.${request}`:'Chief complaint information has not yet been entered.';
+ return hasSelections(p.reasonSeekingCare)||hasSelections(p.clientRequest)?`The client presents in response to ${reason}.${request}`:'Chief complaint information has not yet been entered.';
 }
 function activeDomains(data){return Object.entries(data.presenting.domains).filter(([,d])=>d.symptoms.length||d.duration||d.frequency||d.severity||d.context||d.notes||Object.values(d.answers||{}).some(Boolean))}
+function asArray(value){return Array.isArray(value)?value:(value===undefined||value===null||value===''?[]:[value])}
+function hasSelections(value){return asArray(value).length>0}
+
 function reasonToClinicalPhrase(reason){const map={'Symptoms have recently worsened':'a recent worsening of symptoms','New symptoms have developed':'the emergence of new symptoms','Symptoms are interfering with daily functioning':'increasing interference with daily functioning','Difficulty coping independently':'difficulty managing current concerns independently','Symptoms are no longer manageable':'symptoms that no longer feel manageable','Returning to treatment after a break':'a return to treatment after a period without services','Major life transition or adjustment':'distress associated with a major life transition','Relationship conflict or separation':'relationship conflict or separation','Grief, loss, or bereavement':'grief, loss, or bereavement','Work or school stress':'work- or school-related stress','Job loss or employment instability':'job loss or employment instability','Financial stress':'financial stress','Caregiver or parenting stress':'caregiver or parenting stress','Medical diagnosis, chronic illness, or pain':'a medical diagnosis, chronic illness, or pain-related stress','Pregnancy, postpartum, or reproductive transition':'a pregnancy, postpartum, or reproductive transition','Housing instability or relocation':'housing instability or relocation','Legal or court-related stress':'legal or court-related stress','Diagnostic clarification':'a need for diagnostic clarification','Medication-related evaluation or coordination':'a need for medication-related evaluation or coordination','Referral from another provider':'referral from another provider','School, employer, or EAP referral':'a school, employer, or EAP referral','Court or probation referral':'a court or probation referral','Family encouragement or concern':'encouragement or concern from family','Step-down or aftercare following higher level of care':'continued care following a higher level of treatment','Desire for healthier coping skills':'a desire to develop healthier coping skills','Desire to better understand symptoms or patterns':'a desire to better understand symptoms or patterns','Trauma recovery or processing past experiences':'a desire to recover from trauma or process past experiences','Improve emotional regulation':'a desire to improve emotional regulation','Improve relationships or communication':'a desire to improve relationships or communication','Personal growth or relapse prevention':'personal growth or relapse-prevention goals'};return map[reason]||reason.toLowerCase()}
 function durationPhrase(value){const map={'Less than 1 month':'present for less than one month','1–6 months':'present for approximately one to six months','More than 6 months':'present for more than six months','More than 1 year':'present for more than one year','Chronic / longstanding':'longstanding','Less than 2 weeks':'present for less than two weeks','2 weeks–1 month':'present for approximately two weeks to one month','6–12 months':'present for approximately six to twelve months','Episodic':'episodic','Unclear':'of unclear duration'};return map[value]||`present for ${String(value).toLowerCase()}`}
 function frequencyPhrase(value){const map={'Occasional':'occurring occasionally','Weekly':'occurring weekly','Several days per week':'occurring several days per week','Most days':'occurring most days','Daily':'occurring daily','Nearly constant':'nearly constant','Episodic':'episodic','Unclear':'of unclear frequency'};return map[value]||`occurring ${String(value).toLowerCase()}`}
@@ -537,7 +545,7 @@ function generateMedicalNecessity(data){
  const severity=p.severity?`${p.severity.toLowerCase()} `:'';
  const frequency=p.frequency?` occurring ${p.frequency.toLowerCase()}`:'';
  const course=p.course?` and ${p.course.toLowerCase()}`:'';
- const request=p.clientRequest?` The client is seeking ${p.clientRequest.toLowerCase()} to reduce symptom burden and improve functioning.`:'';
+ const requests=asArray(p.clientRequest);const request=requests.length?` The client hopes to ${listText(requests.map(value=>String(value).toLowerCase()))}.`:'';
  return `Behavioral-health treatment is medically necessary due to ${severity}${symptomPhrase}${frequency}${course}, resulting in clinically meaningful impairment in ${impairment}. Without appropriate intervention, the current symptom pattern may contribute to continued functional decline, worsening distress, and increased difficulty meeting daily responsibilities.${request}`;
 }
 
