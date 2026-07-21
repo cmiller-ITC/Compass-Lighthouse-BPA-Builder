@@ -27,7 +27,7 @@ export const symptomDomainDefinitions = {
       "Worry across multiple domains", "Reassurance seeking", "Avoidance"
     ],
     questions: [
-      ["sixMonths", "Worry present more days than not for 6+ months?", ["Yes", "No", "Unclear"]],
+      ["sixMonths", "Has the client experienced excessive worry more days than not for at least 6 months?", ["Yes", "No", "Unclear"]],
       ["control", "Worry experienced as difficult to control?", ["Yes", "No", "Unclear"]],
       ["medicalRuleOut", "Medical / substance contributors assessed?", ["Yes", "No", "Unclear"]]
     ]
@@ -319,8 +319,20 @@ function getPath(obj,path){return path.split('.').reduce((acc,key)=>acc?.[key],o
 export function listText(items=[]){const c=items.filter(Boolean);if(!c.length)return'';if(c.length===1)return c[0];if(c.length===2)return`${c[0]} and ${c[1]}`;return`${c.slice(0,-1).join(', ')}, and ${c.at(-1)}`}
 function sentence(v){const t=String(v||'').trim();return !t?'':/[.!?]$/.test(t)?t:`${t}.`}
 
+function cleanChartOutput(value){
+ return String(value||'')
+  .replace(/\s*a patient-specific example would further strengthen[^.]*\./gi,'')
+  .replace(/\s*consider documenting[^.]*\./gi,'')
+  .replace(/\s*consider adding[^.]*\./gi,'')
+  .replace(/\s*this would strengthen[^.]*\./gi,'')
+  .replace(/\s*documentation should[^.]*\./gi,'')
+  .replace(/[ \t]+/g,' ')
+  .replace(/ \n/g,'\n')
+  .trim();
+}
+
 export function buildAllNarratives(data){
- return {
+ const outputs={
   chiefComplaint:buildChiefComplaint(data), hpi:buildHPI(data), symptomDomains:buildSymptomDomainNarrative(data),
   psychiatricHistory:buildPsychHistory(data), familyHistory:buildFamilyHistory(data), medicalHistory:buildMedical(data),
   medications:buildMedications(data), substanceUse:buildSubstance(data), traumaHistory:buildTrauma(data),
@@ -330,6 +342,7 @@ export function buildAllNarratives(data){
   levelOfCare:buildLevelOfCare(data), clinicalFormulation:buildClinicalFormulation(data),
   treatmentFocus:buildTreatmentFocus(data), goldenThread:buildGoldenThread(data)
  };
+ return Object.fromEntries(Object.entries(outputs).map(([key,value])=>[key,cleanChartOutput(value)]));
 }
 
 function buildChiefComplaint(data){
@@ -368,7 +381,18 @@ function buildSymptomDomainNarrative(data){
 }
 
 function buildPsychHistory(data){const h=data.psychiatricHistory,parts=[];if(h.diagnoses.length)parts.push(`Psychiatric history is significant for ${listText(h.diagnoses)}.`);if(h.services.length)parts.push(`Previous behavioral-health services include ${listText(h.services)}.`);if(h.hospitalization)parts.push(`Psychiatric hospitalization history is described as ${h.hospitalization.toLowerCase()}.`);if(h.suicideAttempts)parts.push(`Suicide-attempt history is described as ${h.suicideAttempts.toLowerCase()}.`);if(h.nssi)parts.push(`Nonsuicidal self-injury history is described as ${h.nssi.toLowerCase()}.`);if(h.treatmentResponse)parts.push(`Prior treatment response is described as ${h.treatmentResponse.toLowerCase()}.`);if(h.details)parts.push(sentence(h.details));return parts.join(' ')||'Psychiatric history was not fully documented during this evaluation.'}
-function buildFamilyHistory(data){const f=data.familyHistory,parts=[];if(f.conditions.length)parts.push(`Family psychiatric and behavioral-health history is significant for ${listText(f.conditions)}.`);if(f.relationshipPattern)parts.push(`Family relationships are described as ${f.relationshipPattern.toLowerCase()}.`);if(f.supportLevel)parts.push(`Family support is described as ${f.supportLevel.toLowerCase()}.`);if(f.details)parts.push(sentence(f.details));return parts.join(' ')||'Family psychiatric history was not fully documented during this evaluation.'}
+function buildFamilyHistory(data){
+ const f=data.familyHistory;
+ if(f.conditions.includes('None reported'))return 'The client reports no known family psychiatric, substance-use, suicide, or psychiatric-hospitalization history.';
+ if(f.conditions.some(v=>v.startsWith('Unknown')))return 'Family psychiatric history is currently unknown or unavailable.';
+ const conditions=f.conditions.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));
+ const parts=[];
+ if(conditions.length)parts.push(`Family psychiatric history is notable for ${listText(conditions.map(v=>v.toLowerCase()))}.`);
+ if(f.details)parts.push(sentence(f.details));
+ if(f.supportLevel)parts.push(`The current level of family support is described as ${f.supportLevel.toLowerCase()}.`);
+ return parts.join(' ')||'Family psychiatric history has not yet been documented.';
+}
+
 function buildMedical(data){const m=data.medical,parts=[];if(m.conditions.length)parts.push(`Medical history is significant for ${listText(m.conditions)}.`);if(m.sleep)parts.push(`Sleep is described as ${m.sleep.toLowerCase()}.`);if(m.pain)parts.push(`Pain concerns are described as ${m.pain.toLowerCase()}.`);if(m.allergies)parts.push(`Allergy information: ${m.allergies}.`);if(m.providerFollowUp)parts.push(`Current medical follow-up is described as ${m.providerFollowUp.toLowerCase()}.`);if(m.details)parts.push(sentence(m.details));return parts.join(' ')||'Medical and biological history was not fully documented during this evaluation.'}
 function buildMedications(data){const meds=data.medical.medications.filter(m=>m.name.trim());return meds.length?meds.map(m=>{const d=[m.dose,m.frequency,m.indication].filter(Boolean).join(', ');return d?`${m.name} (${d})`:m.name}).join('; ')+'.':'No current medications were entered.'}
 function buildSubstance(data){const s=data.substance,rows=[['Alcohol',s.alcohol],['Cannabis',s.cannabis],['Nicotine/tobacco/vaping',s.nicotine],['Opioids',s.opioids],['Stimulants',s.stimulants],['Sedatives/benzodiazepines',s.sedatives],['Other substances',s.other]].filter(([,v])=>v),parts=[];if(rows.length)parts.push(`Substance-use history includes ${rows.map(([n,v])=>`${n}: ${v}`).join('; ')}.`);if(s.treatmentHistory)parts.push(`Substance-use treatment history is described as ${s.treatmentHistory.toLowerCase()}.`);if(s.recoverySupports)parts.push(`Recovery supports include ${s.recoverySupports}.`);if(s.details)parts.push(sentence(s.details));return parts.join(' ')||'Substance-use history was not fully documented during this evaluation.'}

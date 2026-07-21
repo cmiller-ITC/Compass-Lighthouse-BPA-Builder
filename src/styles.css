@@ -67,3 +67,23 @@
 .field input::placeholder,.field textarea::placeholder{color:#938a9c;opacity:1;font-style:italic}
 .output-goldenThread textarea{min-height:270px}
 @media(max-width:1200px){.workspace-grid{grid-template-columns:minmax(0,1fr) 365px}}
+
+
+/* Compass 7.0 — Unified Clinical Intelligence */
+.master-story-label{
+ display:inline-flex;align-items:center;gap:7px;
+ margin-bottom:2px;padding:7px 10px;border-radius:999px;
+ background:linear-gradient(135deg,#eee5fa,#e9f7f5);
+ color:#51367b;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.08em
+}
+.section-contribution{
+ margin-top:3px;border:1px solid #ddd4e7;border-radius:13px;background:#faf8fc;overflow:hidden
+}
+.section-contribution summary{
+ cursor:pointer;padding:11px 12px;color:#5b4277;font-size:11px;font-weight:900;
+ text-transform:uppercase;letter-spacing:.055em;list-style:none
+}
+.section-contribution summary::-webkit-details-marker{display:none}
+.section-contribution[open] summary{border-bottom:1px solid #e4ddea;background:#f4eff8}
+.section-contribution>div{padding:13px 12px 2px}
+.preview-section p{color:#2f2a34}

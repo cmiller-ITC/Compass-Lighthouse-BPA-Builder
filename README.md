@@ -1,15 +1,16 @@
-# Lighthouse Compass 6.6 — Clinical Integration & Golden Thread
+# Lighthouse Compass 7.0 — Unified Clinical Intelligence Engine
 
-## New in this release
-- Shared clinical evidence mapping across assessment sections
-- Page-specific Lighthouse Intelligence panels on History, Medical/Substance, Social/Trauma, MSE/Risk, Diagnosis, and Documentation
-- Expanded Suggested Questions, Clinician Scripting, Clinical Pearls, and Documentation Tips
-- Live Golden Thread guidance
-- New generated Golden Thread narrative
-- Better propagation of measures, treatment history, family history, medical factors, trauma, supports, strengths, and risk into clinical reasoning
-- “None reported,” “Not applicable,” and “Unknown” choices added across key checkbox groups
-- Exclusive checkbox logic prevents contradictory selections
-- More descriptive prompts for social, education, support, cultural, identity, military, and caregiving fields
+## Major changes
+- One unified clinical story now appears across every Lighthouse Intelligence panel
+- Symptom Domains no longer loses the broader Chief Complaint, HPI, impairment, history, and formulation context
+- Family psychiatric history is pulled into the master story and generated Family History narrative
+- Psychiatric history, treatment response, medical factors, trauma, social context, strengths, risk, and measures feed the same evidence chain
+- Dynamic Clinical Coach prompts respond to selected symptom combinations and clinical factors
+- Coaching language and quality suggestions are separated from chart-ready narrative
+- The leaked functional-impairment coaching sentence is removed
+- The GAD duration question now reads naturally
+- Section-specific narrative contributions remain available in an expandable panel
+- `LIGHTHOUSE_ARCHITECTURE.md` documents the Enter Once / Pull Forward Everywhere foundation
 
 All generated content is clinician decision support and must be reviewed and individualized.
 No server-side PHI storage is included.
