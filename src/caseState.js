@@ -27,7 +27,7 @@ export const symptomDomainDefinitions = {
       "Worry across multiple domains", "Reassurance seeking", "Avoidance"
     ],
     questions: [
-      ["sixMonths", "Has the client experienced excessive worry more days than not for at least 6 months?", ["Yes", "No", "Unclear"]],
+      ["sixMonths", "Is excessive worry present across several areas of life?", ["Yes", "No", "Unclear"]],
       ["control", "Worry experienced as difficult to control?", ["Yes", "No", "Unclear"]],
       ["medicalRuleOut", "Medical / substance contributors assessed?", ["Yes", "No", "Unclear"]]
     ]

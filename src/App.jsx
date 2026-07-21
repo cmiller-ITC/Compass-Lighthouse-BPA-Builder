@@ -4,8 +4,20 @@ import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState"
 import "./styles.css";
 
 const NAV=[['home','🏠','Home'],['presenting','📝','Presenting'],['symptoms','🧩','Symptom Domains'],['history','📚','History'],['medical','🩺','Medical / Substance'],['social','🌿','Trauma / Social / Strengths'],['mse','🧠','MSE / Risk'],['diagnosis','🔎','Measures / Diagnosis'],['documentation','📄','Documentation']];
-const concernOptions=['None reported / no current behavioral-health concern','Depression / low mood','Anxiety','Panic symptoms','Bipolar / mood instability','OCD symptoms','ADHD / executive functioning','Trauma-related concerns','Psychosis / perceptual concerns','Eating / body-image concerns','Substance-use concerns','Grief / loss','Relationship stress','Work / school stress','Adjustment / life transition','Burnout','Chronic pain / health stress','Self-esteem / identity concerns'];
-const impairmentOptions=['None reported','Not applicable','Occupational functioning','Academic functioning','Family relationships','Intimate relationships','Social functioning','Financial functioning','Housing stability','Self-care / ADLs','Sleep / energy','Parenting / caregiving','Physical health','Decision-making','Daily routines'];
+const concernOptions=[
+'None reported / no current behavioral-health concern',
+'Depression / low mood','Anxiety','Panic symptoms','Bipolar / mood instability',
+'Trauma-related concerns','OCD symptoms','ADHD / executive functioning',
+'Psychosis / perceptual concerns','Eating / body-image concerns','Substance-use concerns',
+'Grief / loss','Adjustment / life transition','Relationship stress',
+'Work / school stress','Burnout','Chronic pain / health stress','Self-esteem / identity concerns'
+];
+const impairmentOptions=[
+'None reported','Not applicable',
+'Self-care / ADLs','Daily routines','Sleep / energy','Decision-making','Physical health',
+'Occupational functioning','Academic functioning','Financial functioning','Housing stability',
+'Family relationships','Intimate relationships','Social functioning','Parenting / caregiving'
+];
 const psychDx=['None reported','Unknown / records unavailable','Major depressive disorder','Generalized anxiety disorder','Panic disorder','Bipolar disorder','ADHD','OCD','PTSD','Psychotic disorder','Eating disorder','Substance-use disorder','Personality disorder','Adjustment disorder','Other / unspecified'];
 const services=['None reported','Unknown / records unavailable','Outpatient therapy','Medication management','Psychiatric hospitalization','Partial hospitalization','Intensive outpatient','Crisis stabilization','Emergency behavioral-health evaluation','Substance-use treatment','Residential treatment'];
 const familyConditions=['None reported','Unknown / family history unavailable','Depression','Anxiety','Bipolar disorder','ADHD / executive functioning','Trauma / adverse experiences','Substance-use disorder','Psychosis','Suicide attempt / death by suicide','Psychiatric hospitalization','Medical illness impacting mental health'];
@@ -25,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.1 Assessment Journey</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.2 Clinical Craftsmanship</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -36,11 +48,11 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.1</div>
+    <div className="eyebrow">Lighthouse Compass 7.2</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
-     <button onClick={()=>setModule(journey.nextStep?.id||'presenting')}>🧭 {journey.completedCount?'Continue Assessment':'Begin Assessment'}</button>
+     <button onClick={()=>setModule(journey.completedCount===0?'presenting':(journey.nextStep?.id||'documentation'))}>🧭 {journey.completedCount?'Continue Assessment':'Begin Assessment'}</button>
      <span>{journey.overallProgress}% of the assessment journey established</span>
     </div>
    </div>
@@ -113,7 +125,28 @@ function LighthouseScene({progress=0}){
 
 function Presenting({data,set,toggle}){const p=data.presenting;const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Presenting Problems & Areas of Concern"><div className="section-kicker">Start with the client’s story</div><Grid columns={2}><Select label="Reason Seeking Care Now" value={p.reasonSeekingCare} onChange={v=>set('presenting.reasonSeekingCare',v)} options={['New onset symptoms','Worsening symptoms','Return to treatment','Life transition / adjustment stress','Relationship or family conflict','Work or school impairment','Diagnostic clarification']}/><Select label="Client Request" value={p.clientRequest} onChange={v=>set('presenting.clientRequest',v)} options={['Start individual therapy','Restart individual therapy','Diagnostic clarification','Coping skills and support','Treatment planning','Medication evaluation','Higher level of care assessment']}/></Grid><TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/></Card><Card title="Primary Areas of Concern"><Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card><Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card><Card title="Functional Impairment"><div className="section-kicker">Connect symptoms to daily life and medical necessity</div><Checks options={impairmentOptions} selected={p.impairments} onToggle={v=>toggle('presenting.impairments',v)}/></Card></div><ClinicalSidePanel data={data} section="presenting"/></div></Page>}
 
-function SymptomDomains({data,set,toggle,dispatch}){const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Collapsible Symptom Domains"><div className="info">Open only the categories relevant to the client. Each domain combines symptoms, qualifiers, DSM-oriented clarifiers, functional impact, and patient-specific examples.</div><div className="accordion-stack">{Object.entries(symptomDomainDefinitions).map(([key,def])=>{const d=data.presenting.domains[key];const count=d.symptoms.length;const complete=count>0&&d.duration&&d.frequency&&d.severity&&d.impairment.length>0;return <details className="accordion" key={key}><summary><span className="summary-title">{def.icon} {def.label}</span><span className={`badge ${complete?'complete':count?'has-data':''}`}>{complete?'Domain established':count?`${count} selected`:'Not assessed'}</span></summary><div className="accordion-body"><h3>Symptoms / Features</h3><Checks options={def.symptoms} selected={d.symptoms} onToggle={v=>toggle(`presenting.domains.${key}.symptoms`,v)}/><h3>Domain Qualifiers</h3><Grid columns={3}><Select label="Duration" value={d.duration} onChange={v=>set(`presenting.domains.${key}.duration`,v)} options={['Less than 2 weeks','2 weeks–1 month','1–6 months','6–12 months','More than 1 year','Chronic / longstanding','Episodic','Unclear']}/><Select label="Frequency" value={d.frequency} onChange={v=>set(`presenting.domains.${key}.frequency`,v)} options={['Occasional','Weekly','Several days per week','Most days','Daily','Nearly constant','Episodic','Unclear']}/><Select label="Severity" value={d.severity} onChange={v=>set(`presenting.domains.${key}.severity`,v)} options={['Mild','Moderate','Moderately severe','Severe','Variable','Unclear']}/></Grid><h3>Diagnostic Clarifiers</h3><Grid columns={2}>{def.questions.map(([qid,label,options])=><Select key={qid} label={label} value={d.answers[qid]||''} onChange={v=>dispatch({type:'SET_DOMAIN_ANSWER',domain:key,question:qid,value:v})} options={options}/>)}</Grid><h3>Domain-Specific Functional Impact</h3><Checks options={impairmentOptions} selected={d.impairment} onToggle={v=>toggle(`presenting.domains.${key}.impairment`,v)}/><Grid columns={2}><TextArea label="Context / Triggers / Pattern" value={d.context} onChange={v=>set(`presenting.domains.${key}.context`,v)}/><TextArea label="Patient-Specific Details / Examples" value={d.notes} onChange={v=>set(`presenting.domains.${key}.notes`,v)}/></Grid><DomainCoach domainKey={key} domain={d}/></div></details>})}</div></Card></div><ClinicalSidePanel data={data} section="symptoms"/></div></Page>}
+const symptomGroupLibrary={
+mood:[['Mood & Self-Perception',['Depressed mood','Hopelessness','Worthlessness / excessive guilt']],['Interest & Motivation',['Loss of interest / pleasure','Social withdrawal']],['Energy & Cognition',['Fatigue / low energy','Difficulty concentrating']],['Biological / Behavioral',['Sleep disturbance','Appetite / weight changes','Psychomotor agitation / slowing']],['Safety',['Suicidal ideation']]],
+anxiety:[['Core Worry',['Excessive worry','Difficulty controlling worry','Worry across multiple domains']],['Cognitive / Emotional',['Feeling keyed up / on edge','Irritability','Difficulty concentrating due to anxiety']],['Physical',['Restlessness','Fatigue','Muscle tension','Sleep disturbance due to anxiety']],['Behavioral Responses',['Reassurance seeking','Avoidance']]],
+panic:[['Panic Experience',['Abrupt surge of fear','Fear of losing control','Fear of dying']],['Cardiorespiratory',['Heart pounding / rapid heart rate','Shortness of breath','Chest discomfort']],['Autonomic / Physical',['Sweating','Trembling / shaking','Nausea / abdominal distress','Dizziness / lightheadedness','Chills / heat sensations','Numbness / tingling']],['Dissociative / Behavioral',['Derealization / depersonalization','Avoidance due to panic']]],
+bipolar:[['Mood & Energy Change',['Elevated / expansive mood','Persistently irritable mood','Increased energy / activity','Marked change from baseline']],['Sleep / Speech / Thought',['Decreased need for sleep','Pressured speech','Racing thoughts / flight of ideas','Distractibility']],['Behavior & Functioning',['Grandiosity','Increased goal-directed activity','Risk-taking / impulsivity','Psychotic symptoms during mood episode']]],
+adhd:[['Attention',['Sustained attention difficulty','Careless mistakes','Not listening / losing track','Easily distracted']],['Organization & Follow-Through',['Task follow-through difficulty','Disorganization','Task initiation difficulty','Avoids sustained mental effort']],['Memory & Time',['Loses items','Forgetfulness','Time blindness','Working-memory difficulty']],['Hyperactivity / Impulsivity',['Fidgeting / restlessness','Interrupting / impulsivity','Emotional impulsivity']]],
+ocd:[['Obsessions / Themes',['Intrusive unwanted thoughts / images / urges','Contamination concerns','Symmetry / order concerns']],['Compulsions / Rituals',['Checking rituals','Cleaning / washing rituals','Mental rituals','Counting / repeating','Compulsions / rituals']],['Avoidance / Accommodation',['Avoidance related to obsessions','Reassurance seeking','Family accommodation']],['Insight',['Poor insight into OCD symptoms']]],
+trauma:[['Intrusion',['Intrusive memories','Nightmares','Flashbacks','Psychological distress at reminders','Physiological reactivity to reminders']],['Avoidance',['Avoidance of trauma memories','Avoidance of external reminders']],['Mood / Beliefs / Connection',['Negative beliefs / self-blame','Persistent negative emotional state','Emotional numbing / detachment']],['Arousal / Reactivity',['Hypervigilance','Exaggerated startle','Irritability / anger','Sleep disturbance related to trauma']],['Dissociation',['Dissociation / depersonalization / derealization']]],
+psychosis:[['Perceptual Experiences',['Auditory hallucinations','Visual hallucinations','Other hallucinations']],['Beliefs / Reality Testing',['Delusions','Paranoia / suspiciousness','Ideas of reference','Impaired reality testing']],['Organization / Negative Symptoms',['Disorganized speech','Disorganized behavior','Catatonic features','Negative symptoms']]],
+eating:[['Restriction / Avoidance',['Restrictive intake','Avoidance of eating with others','Sensory / aversive food restriction']],['Binge / Loss of Control',['Binge eating','Loss of control eating']],['Compensatory Behaviors',['Self-induced vomiting','Laxative / diuretic misuse','Compensatory exercise']],['Body Image / Medical Impact',['Fear of weight gain','Body-image disturbance','Weight / shape overvaluation','Medical consequences']]],
+substance:[['Control / Craving',['Using more than intended','Unsuccessful efforts to cut down','Craving','Time spent obtaining / using / recovering']],['Functional Consequences',['Role impairment','Continued use despite relationship problems','Reduced activities','Hazardous use']],['Physical / Emotional Pattern',['Continued use despite health effects','Tolerance','Withdrawal','Use to cope with emotions / sleep']]],
+adjustment:[['Stressor Link',['Emotional distress linked to identifiable stressor','Functional decline after life transition','Symptoms exceed expected response']],['Emotional Response',['Anxiety after stressor','Depressed mood after stressor','Mixed anxiety and depressed mood','Grief-related distress']],['Behavioral / Acute Response',['Conduct disturbance','Acute stress response']]],
+painHealth:[['Pain / Health Experience',['Chronic pain','Health anxiety','Fear of bodily sensations','Medical trauma']],['Fear / Avoidance Cycle',['Activity avoidance','Pain catastrophizing','Frequent reassurance seeking']],['Functional / Emotional Impact',['Functional limitations','Sleep disruption due to symptoms','Mood changes related to health','Identity loss related to illness']]]
+};
+function GroupedSymptomChecks({domainKey,options,selected,onToggle}){
+ const configured=symptomGroupLibrary[domainKey]||[['Symptoms / Features',options]];
+ const used=new Set(configured.flatMap(([,items])=>items));
+ const remainder=options.filter(item=>!used.has(item));
+ const groups=remainder.length?[...configured,['Other Relevant Features',remainder]]:configured;
+ return <div className="symptom-group-grid">{groups.map(([label,items])=><section className="symptom-group" key={label}><h4>{label}</h4><Checks options={items} selected={selected} onToggle={onToggle}/></section>)}</div>;
+}
+function SymptomDomains({data,set,toggle,dispatch}){const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Collapsible Symptom Domains"><div className="info">Open only the categories relevant to the client. Each domain combines symptoms, qualifiers, DSM-oriented clarifiers, functional impact, and patient-specific examples.</div><div className="accordion-stack">{Object.entries(symptomDomainDefinitions).map(([key,def])=>{const d=data.presenting.domains[key];const count=d.symptoms.length;const complete=count>0&&d.duration&&d.frequency&&d.severity&&d.impairment.length>0;return <details className="accordion" key={key}><summary><span className="summary-title">{def.icon} {def.label}</span><span className={`badge ${complete?'complete':count?'has-data':''}`}>{complete?'Domain established':count?`${count} selected`:'Not assessed'}</span></summary><div className="accordion-body"><h3>Symptoms / Features</h3><GroupedSymptomChecks domainKey={key} options={def.symptoms} selected={d.symptoms} onToggle={v=>toggle(`presenting.domains.${key}.symptoms`,v)}/><h3>Domain Qualifiers</h3><Grid columns={3}><Select label="Duration" value={d.duration} onChange={v=>set(`presenting.domains.${key}.duration`,v)} options={['Less than 2 weeks','2 weeks–1 month','1–6 months','6–12 months','More than 1 year','Chronic / longstanding','Episodic','Unclear']}/><Select label="Frequency" value={d.frequency} onChange={v=>set(`presenting.domains.${key}.frequency`,v)} options={['Occasional','Weekly','Several days per week','Most days','Daily','Nearly constant','Episodic','Unclear']}/><Select label="Severity" value={d.severity} onChange={v=>set(`presenting.domains.${key}.severity`,v)} options={['Mild','Moderate','Moderately severe','Severe','Variable','Unclear']}/></Grid><h3>Diagnostic Clarifiers</h3><Grid columns={2}>{def.questions.map(([qid,label,options])=><Select key={qid} label={label} value={d.answers[qid]||''} onChange={v=>dispatch({type:'SET_DOMAIN_ANSWER',domain:key,question:qid,value:v})} options={options}/>)}</Grid><h3>Domain-Specific Functional Impact</h3><Checks options={impairmentOptions} selected={d.impairment} onToggle={v=>toggle(`presenting.domains.${key}.impairment`,v)}/><Grid columns={2}><TextArea label="Context / Triggers / Pattern" value={d.context} onChange={v=>set(`presenting.domains.${key}.context`,v)}/><TextArea label="Patient-Specific Details / Examples" value={d.notes} onChange={v=>set(`presenting.domains.${key}.notes`,v)}/></Grid><DomainCoach domainKey={key} domain={d}/></div></details>})}</div></Card></div><ClinicalSidePanel data={data} section="symptoms"/></div></Page>}
 
 function ClinicalSidePanel({data,section='presenting'}){
  const [activeTab,setActiveTab]=useState('narrative');
@@ -150,17 +183,16 @@ function ClinicalSidePanel({data,section='presenting'}){
 }
 
 function SectionNarrative({intelligence,masterStory}){
- const hasMaster=masterStory.some(item=>item.text);
- return hasMaster
-  ?<div className="document-preview">
-    <div className="master-story-label">Unified Clinical Story</div>
-    {masterStory.map(item=><PreviewSection key={item.title} title={item.title} text={item.text}/>)}
-    {intelligence.narratives.some(item=>item.text)&&<details className="section-contribution">
-      <summary>View this section’s contribution</summary>
-      <div>{intelligence.narratives.map(item=><PreviewSection key={`section-${item.title}`} title={item.title} text={item.text}/>)}</div>
-    </details>}
-   </div>
-  :<div className="empty-intelligence">Begin entering assessment information to see the unified clinical story develop across every page.</div>
+ const hasMaster=masterStory.some(item=>item.text||item.domains?.length);
+ return hasMaster?<div className="document-preview">
+  <div className="master-story-label">Current Clinical Story</div>
+  {masterStory.map(item=><NarrativeStorySection key={item.title} item={item}/>)}
+  {intelligence.narratives.some(item=>item.text)&&<details className="section-contribution"><summary>View this section’s working contribution</summary><div>{intelligence.narratives.map(item=><PreviewSection key={`section-${item.title}`} title={item.title} text={item.text}/>)}</div></details>}
+ </div>:<div className="empty-intelligence"><strong>Your clinical story will appear here.</strong><span>As the interview develops, Lighthouse will organize the client’s information into a concise, chart-ready story.</span></div>;
+}
+function NarrativeStorySection({item}){
+ if(item.domains?.length)return <section className="preview-section symptom-story-section"><h4>{item.title}</h4><div className="domain-story-stack">{item.domains.map(domain=><article className="domain-story-card" key={domain.title}><h5>{domain.icon} {domain.title}</h5>{domain.paragraphs.map((paragraph,index)=><p key={index}>{paragraph}</p>)}</article>)}</div></section>;
+ return <PreviewSection title={item.title} text={item.text}/>;
 }
 function PreviewSection({title,text}){if(!text)return null;return <section className="preview-section"><h4>{title}</h4><p>{text}</p></section>}
 
@@ -376,32 +408,66 @@ function buildLiveHPI(data){
 }
 function buildMasterClinicalStory(data){
  const p=data.presenting,d=data.diagnosis,domains=liveDomainEvidence(data);
- const psychDx=naturalDisposition(data.psychiatricHistory.diagnoses,{none:'The client reports no prior psychiatric diagnoses.',unknown:'Prior psychiatric history is currently unknown or unavailable.',present:items=>`Prior psychiatric history includes ${naturalList(items.map(v=>v.toLowerCase()))}.`});
- const services=naturalDisposition(data.psychiatricHistory.services,{none:'The client reports no prior behavioral-health treatment.',unknown:'Prior treatment history is currently unknown or unavailable.',present:items=>`Previous behavioral-health services include ${naturalList(items.map(v=>v.toLowerCase()))}.`});
- const family=naturalDisposition(data.familyHistory.conditions,{none:'The client reports no known family psychiatric, substance-use, suicide, or psychiatric-hospitalization history.',unknown:'Family psychiatric history is currently unknown or unavailable.',present:items=>`Family psychiatric history is notable for ${naturalList(items.map(v=>v.toLowerCase()))}.`});
- const medical=naturalDisposition(data.medical.conditions,{none:'The client reports no significant medical conditions.',unknown:'Medical history is currently unknown or has not yet been fully assessed.',present:items=>`Medical history includes ${naturalList(items.map(v=>v.toLowerCase()))}.`});
- const trauma=(()=>{if(data.trauma.experiences.includes('No trauma disclosed'))return'No trauma history was disclosed during the current assessment.';if(data.trauma.experiences.includes('Trauma history deferred'))return'Trauma-history assessment was deferred and may be revisited as clinically appropriate.';const items=meaningful(data.trauma.experiences);return items.length?`Trauma history includes ${naturalList(items.map(v=>v.toLowerCase()))}.`:''})();
- const social=[data.social.housing&&`Housing is described as ${data.social.housing.toLowerCase()}.`,data.social.employment&&`Employment status is described as ${data.social.employment.toLowerCase()}.`,data.social.finances&&`Financial stress is described as ${data.social.finances.toLowerCase()}.`,data.social.relationships&&`Relationship context is described as ${data.social.relationships.toLowerCase()}.`,data.social.supports&&`The support system is described as ${data.social.supports.toLowerCase()}.`,data.social.education&&`Education and learning context: ${data.social.education}.`,data.social.parenting&&`Parenting or caregiving context: ${data.social.parenting}.`,data.social.culturalFactors&&`Cultural factors relevant to care include ${data.social.culturalFactors}.`,data.social.spiritualFactors&&`Spiritual or values-based factors include ${data.social.spiritualFactors}.`,data.social.identityFactors&&`Identity-related factors include ${data.social.identityFactors}.`,data.social.militaryHistory&&`Military history: ${data.social.militaryHistory}.`].filter(Boolean);
- const strengths=[...new Set([...meaningful(data.strengths),...meaningful(data.risk.protectiveFactors)])];
- const measures=data.measures.filter(m=>m.name&&m.score);
- const clinicalPicture=domains.map(domain=>{const dp=[];if(domain.symptoms.length)dp.push(`${domain.label} include ${naturalList(domain.symptoms.slice(0,7).map(v=>v.toLowerCase()))}`);if(domain.context)dp.push(`These concerns are associated with ${domain.context}`);if(domain.notes)dp.push(`The client describes ${domain.notes}`);return dp.length?`${dp.join('. ')}.`:''}).filter(Boolean).join(' ');
- const impacts=[...new Set([...meaningful(p.impairments),...domains.flatMap(d=>d.impairment)])];const examples=domains.flatMap(d=>[d.notes,d.context]).filter(Boolean);const impairment=impacts.length?`The current presentation is interfering with ${naturalList(impacts.map(v=>v.toLowerCase()))}.${examples.length?` ${chartSentence(examples[0])}`:''}`:'';
- const formulationFactors=[];if(family)formulationFactors.push('family psychiatric history');if(psychDx)formulationFactors.push('prior psychiatric history');if(medical)formulationFactors.push('medical or biological factors');if(trauma)formulationFactors.push('trauma-related factors');if(social.length)formulationFactors.push('current psychosocial context');if(strengths.length)formulationFactors.push('identified strengths and protective factors');
+ const domainStories=domains.map(domain=>{
+  const paragraphs=[],qualifiers=[];
+  if(domain.duration)qualifiers.push(durationPhrase(domain.duration));
+  if(domain.frequency)qualifiers.push(frequencyPhrase(domain.frequency));
+  if(domain.severity)qualifiers.push(`${domain.severity.toLowerCase()} in severity`);
+  if(domain.symptoms.length)paragraphs.push(`${domain.label} include ${naturalList(domain.symptoms.slice(0,8).map(value=>value.toLowerCase()))}${qualifiers.length?`, with symptoms ${naturalList(qualifiers)}`:''}.`);
+  if(domain.context)paragraphs.push(`Relevant context, triggers, or patterns include ${chartSentence(domain.context)}`);
+  if(domain.notes)paragraphs.push(`The client describes ${chartSentence(domain.notes)}`);
+  return {title:domain.label,icon:symptomDomainDefinitions[domain.key]?.icon||'•',paragraphs};
+ }).filter(domain=>domain.paragraphs.length);
+
+ const impacts=[...new Set([...meaningful(p.impairments),...domains.flatMap(domain=>domain.impairment)])];
+ const example=domains.map(domain=>domain.notes).find(Boolean);
+ const functionalImpact=impacts.length?`Symptoms are interfering with ${naturalList(impacts.map(value=>value.toLowerCase()))}.${example?` ${chartSentence(example)}`:''}`:'';
+
+ const psychiatric=naturalDisposition(data.psychiatricHistory.diagnoses,{none:'The client reports no prior psychiatric diagnoses.',unknown:'Prior psychiatric history is currently unknown or unavailable.',present:items=>`Prior psychiatric history includes ${naturalList(items.map(value=>value.toLowerCase()))}.`});
+ const services=naturalDisposition(data.psychiatricHistory.services,{none:'The client reports no prior behavioral-health treatment.',unknown:'Prior treatment history is currently unknown or unavailable.',present:items=>`Previous behavioral-health services include ${naturalList(items.map(value=>value.toLowerCase()))}.`});
+ const family=naturalDisposition(data.familyHistory.conditions,{none:'The client reports no known family psychiatric, substance-use, suicide, or psychiatric-hospitalization history.',unknown:'Family psychiatric history is currently unknown or unavailable.',present:items=>`Family psychiatric history is notable for ${naturalList(items.map(value=>value.toLowerCase()))}.`});
+ const medical=naturalDisposition(data.medical.conditions,{none:'The client reports no significant medical conditions.',unknown:'Medical history is currently unknown or has not yet been fully assessed.',present:items=>`Medical history includes ${naturalList(items.map(value=>value.toLowerCase()))}.`});
+ const trauma=data.trauma.experiences.includes('No trauma disclosed')?'No trauma history was disclosed during the current assessment.':data.trauma.experiences.includes('Trauma history deferred')?'Trauma-history assessment was deferred and may be revisited as clinically appropriate.':meaningful(data.trauma.experiences).length?`Trauma history includes ${naturalList(meaningful(data.trauma.experiences).map(value=>value.toLowerCase()))}.`:'';
+
+ const psychosocial=joinSentences([
+  psychiatric,services,
+  data.psychiatricHistory.treatmentResponse&&`Prior treatment response is described as ${data.psychiatricHistory.treatmentResponse.toLowerCase()}.`,
+  data.psychiatricHistory.details,family,data.familyHistory.details,medical,data.medical.details,
+  trauma,data.trauma.details,
+  data.social.housing&&`Housing is described as ${data.social.housing.toLowerCase()}.`,
+  data.social.employment&&`Employment status is described as ${data.social.employment.toLowerCase()}.`,
+  data.social.finances&&`Financial stress is described as ${data.social.finances.toLowerCase()}.`,
+  data.social.relationships&&`Relationship context is described as ${data.social.relationships.toLowerCase()}.`,
+  data.social.supports&&`The support system is described as ${data.social.supports.toLowerCase()}.`
+ ]);
+
+ const protective=[...new Set([...meaningful(data.strengths),...meaningful(data.risk.protectiveFactors)])];
+ const factors=[];
+ if(family)factors.push('family psychiatric vulnerability');
+ if(psychiatric)factors.push('prior psychiatric history');
+ if(medical)factors.push('medical or biological context');
+ if(trauma)factors.push('trauma-related factors');
+ if(data.social.housing||data.social.employment||data.social.finances||data.social.relationships)factors.push('current psychosocial stressors');
+ if(protective.length)factors.push('identified strengths and protective factors');
+ const formulation=factors.length?`The developing formulation integrates ${naturalList(factors)} with the client’s symptom pattern and functional impairment.${protective.length?` Protective factors include ${naturalList(protective.map(value=>value.toLowerCase()))}.`:''}`:'';
+
+ const concerns=meaningful(p.concerns),course=[];
+ if(p.duration)course.push(durationPhrase(p.duration));
+ if(p.frequency)course.push(frequencyPhrase(p.frequency));
+ if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
+ if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+
  return [
   {title:'Chief Complaint',text:p.patientNarrative.trim()?chartSentence(p.patientNarrative):(p.reasonSeekingCare?`The client is seeking care in response to ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`:'')},
-  {title:'History of Present Illness',text:buildLiveHPI(data)},
-  {title:'Current Clinical Picture',text:clinicalPicture},
-  {title:'Functional Impairment',text:impairment},
-  {title:'Psychiatric & Treatment History',text:joinSentences([psychDx,services,data.psychiatricHistory.treatmentResponse&&`Prior treatment response is described as ${data.psychiatricHistory.treatmentResponse.toLowerCase()}.`,data.psychiatricHistory.details])},
-  {title:'Family Psychiatric History',text:joinSentences([family,data.familyHistory.details,data.familyHistory.supportLevel&&`Family support is described as ${data.familyHistory.supportLevel.toLowerCase()}.`])},
-  {title:'Medical / Biological Context',text:joinSentences([medical,data.medical.sleep&&`Sleep is described as ${data.medical.sleep.toLowerCase()}.`,data.medical.pain&&`Pain is described as ${data.medical.pain.toLowerCase()}.`,data.medical.providerFollowUp&&`Medical follow-up is ${data.medical.providerFollowUp.toLowerCase()}.`,data.medical.details])},
-  {title:'Trauma & Social Context',text:joinSentences([trauma,data.trauma.details,...social])},
-  {title:'Strengths & Protective Factors',text:strengths.length?`Identified strengths and protective factors include ${naturalList(strengths.map(v=>v.toLowerCase()))}.`:''},
-  {title:'Measures',text:measures.length?`Standardized measures include ${naturalList(measures.map(m=>`${m.name} score ${m.score}${m.interpretation?` (${m.interpretation.toLowerCase()})`:''}`))}.`:''},
-  {title:'Integrated Formulation',text:formulationFactors.length?`The developing formulation integrates ${naturalList(formulationFactors)} with the current symptom pattern, functional impairment, and treatment needs.`:''},
+  {title:'History of Present Illness',text:concerns.length?`The primary concerns include ${naturalList(concerns.map(value=>value.toLowerCase()))}${course.length?`, with symptoms ${naturalList(course)}`:''}.`:''},
+  {title:'Clinical Symptom Picture',domains:domainStories},
+  {title:'Functional Impact',text:functionalImpact},
+  {title:'Psychosocial & Clinical Context',text:psychosocial},
+  {title:'Integrated Formulation',text:formulation},
   {title:'Diagnostic Support',text:d.primary?joinSentences([`The current clinical impression is ${d.primary}${d.confidence?`, with ${d.confidence.toLowerCase()} confidence`:''}.`,d.diagnosticRationale]):''},
+  {title:'Medical Necessity',text:d.medicalNecessity},
   {title:'Treatment Direction',text:joinSentences([d.treatmentFocus,!d.treatmentFocus&&p.clientRequest?`The client is seeking ${p.clientRequest.toLowerCase()} to reduce symptoms and improve functioning.`:''])}
- ].filter(item=>item.text);
+ ].filter(item=>item.text||item.domains?.length);
 }
 
 function buildSectionIntelligence(data,section){
@@ -457,6 +523,29 @@ function enrichWithDynamicCoach(result,data,e,section){
  if(section==='diagnosis'&&!data.diagnosis.ruleOut){
   addPrompt('Document important differential or rule-out considerations when clinically relevant.');
  }
+
+ const pushUnique=(collection,text)=>{if(text&&!collection.includes(text))collection.push(text)};
+ if(keys.includes('ocd')){
+  pushUnique(result.scripts,'“When the intrusive thought appears, what do you feel compelled to do so you can feel safe or certain?”');
+  pushUnique(result.documentationTips,'Document the obsession, feared outcome, compulsion, temporary relief, and functional cost as separate parts of the OCD cycle.');
+ }
+ if(keys.includes('trauma')){
+  pushUnique(result.scripts,'“You do not need to describe every detail. I am most interested in how the experience continues to affect safety and daily life.”');
+  pushUnique(result.documentationTips,'Document current trauma impact without collecting unnecessary graphic detail.');
+ }
+ if(keys.includes('adhd')){
+  pushUnique(result.scripts,'“What happens when you know what you need to do, but your brain still will not let you begin?”');
+  pushUnique(result.documentationTips,'Clarify childhood onset, cross-setting impairment, and overlap with anxiety, depression, trauma, sleep, or medical concerns.');
+ }
+ if(keys.includes('painHealth')){
+  pushUnique(result.scripts,'“What activities has pain taught you to fear or avoid?”');
+  pushUnique(result.documentationTips,'Describe the interaction among symptoms, fear, avoidance, attention, sleep, and functional limitations.');
+ }
+ if(keys.includes('bipolar')){
+  pushUnique(result.scripts,'“Have there been periods when you needed much less sleep and still felt unusually energized or activated?”');
+  pushUnique(result.documentationTips,'Differentiate decreased need for sleep from insomnia and establish a distinct change from baseline.');
+ }
+
  return result;
 }
 function intelligenceBase(title,requirements,options={}){

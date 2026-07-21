@@ -188,3 +188,18 @@
  .journey-line{grid-template-columns:repeat(2,1fr)}
  .journey-stop::before{display:none}
 }
+
+/* Compass 7.2 — Clinical Craftsmanship */
+.symptom-group-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:17px}
+.symptom-group{padding:13px;border:1px solid #e1d9e8;border-radius:15px;background:linear-gradient(145deg,#fff,#faf8fc)}
+.symptom-group h4{margin:0 0 9px;color:#573d78;font-size:11px;text-transform:uppercase;letter-spacing:.065em}
+.symptom-group .checks{display:grid;grid-template-columns:1fr;gap:7px}
+.domain-story-stack{display:grid;gap:12px}
+.domain-story-card{padding:13px 14px;border:1px solid #ded6e6;border-radius:14px;background:linear-gradient(145deg,#fff,#faf7fc)}
+.domain-story-card h5{margin:0 0 7px;color:#4c356c;font-size:12px}
+.domain-story-card p{margin:0 0 7px;color:#332e38;font-size:13px;line-height:1.58}
+.domain-story-card p:last-child{margin-bottom:0}
+.empty-intelligence{display:grid;gap:6px}
+.empty-intelligence strong{color:#4b3765;font-size:13px}
+.empty-intelligence span{font-size:12px;line-height:1.55}
+@media(max-width:720px){.symptom-group-grid{grid-template-columns:1fr}}
