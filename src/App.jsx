@@ -1,5 +1,5 @@
 
-import { useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
 import "./styles.css";
 
@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.2.1 Narrative Domain Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.3 Visual Experience</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.2.1</div>
+    <div className="eyebrow">Lighthouse Compass 7.3</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -144,42 +144,67 @@ function GroupedSymptomChecks({domainKey,options,selected,onToggle}){
  const used=new Set(configured.flatMap(([,items])=>items));
  const remainder=options.filter(item=>!used.has(item));
  const groups=remainder.length?[...configured,['Other Relevant Features',remainder]]:configured;
- return <div className="symptom-group-grid">{groups.map(([label,items])=><section className="symptom-group" key={label}><h4>{label}</h4><Checks options={items} selected={selected} onToggle={onToggle}/></section>)}</div>;
+ return <div className="symptom-group-grid">{groups.map(([label,items])=><section className={`symptom-group tone-${Math.abs(label.length)%5}`} key={label}><h4>{label}</h4><Checks options={items} selected={selected} onToggle={onToggle}/></section>)}</div>;
 }
 function SymptomDomains({data,set,toggle,dispatch}){const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Collapsible Symptom Domains"><div className="info">Open only the categories relevant to the client. Each domain combines symptoms, qualifiers, DSM-oriented clarifiers, functional impact, and patient-specific examples.</div><div className="accordion-stack">{Object.entries(symptomDomainDefinitions).map(([key,def])=>{const d=data.presenting.domains[key];const count=d.symptoms.length;const complete=count>0&&d.duration&&d.frequency&&d.severity&&d.impairment.length>0;return <details className="accordion" key={key}><summary><span className="summary-title">{def.icon} {def.label}</span><span className={`badge ${complete?'complete':count?'has-data':''}`}>{complete?'Domain established':count?`${count} selected`:'Not assessed'}</span></summary><div className="accordion-body"><h3>Symptoms / Features</h3><GroupedSymptomChecks domainKey={key} options={def.symptoms} selected={d.symptoms} onToggle={v=>toggle(`presenting.domains.${key}.symptoms`,v)}/><h3>Domain Qualifiers</h3><Grid columns={3}><Select label="Duration" value={d.duration} onChange={v=>set(`presenting.domains.${key}.duration`,v)} options={['Less than 2 weeks','2 weeks–1 month','1–6 months','6–12 months','More than 1 year','Chronic / longstanding','Episodic','Unclear']}/><Select label="Frequency" value={d.frequency} onChange={v=>set(`presenting.domains.${key}.frequency`,v)} options={['Occasional','Weekly','Several days per week','Most days','Daily','Nearly constant','Episodic','Unclear']}/><Select label="Severity" value={d.severity} onChange={v=>set(`presenting.domains.${key}.severity`,v)} options={['Mild','Moderate','Moderately severe','Severe','Variable','Unclear']}/></Grid><h3>Diagnostic Clarifiers</h3><Grid columns={2}>{def.questions.map(([qid,label,options])=><Select key={qid} label={label} value={d.answers[qid]||''} onChange={v=>dispatch({type:'SET_DOMAIN_ANSWER',domain:key,question:qid,value:v})} options={options}/>)}</Grid><h3>Domain-Specific Functional Impact</h3><Checks options={impairmentOptions} selected={d.impairment} onToggle={v=>toggle(`presenting.domains.${key}.impairment`,v)}/><Grid columns={2}><TextArea label="Context / Triggers / Pattern" value={d.context} onChange={v=>set(`presenting.domains.${key}.context`,v)}/><TextArea label="Patient-Specific Details / Examples" value={d.notes} onChange={v=>set(`presenting.domains.${key}.notes`,v)}/></Grid><DomainCoach domainKey={key} domain={d}/></div></details>})}</div></Card></div><ClinicalSidePanel data={data} section="symptoms"/></div></Page>}
 
 function ClinicalSidePanel({data,section='presenting'}){
  const [activeTab,setActiveTab]=useState('narrative');
+ const [collapsed,setCollapsed]=useState(false);
+ const [focusMode,setFocusMode]=useState(false);
+ const scrollRef=useRef(null);
  const intelligence=buildSectionIntelligence(data,section);
  const masterStory=buildMasterClinicalStory(data);
  const journey=buildAssessmentJourney(data,section);
  const finalReview=buildFinalComarReview(data);
  const headerScore=activeTab==='journey'?journey.overallProgress:activeTab==='final'?finalReview.score:intelligence.quality.score;
  const tabs=[
-  ['narrative','📝','Narrative'],
+  ['narrative','📝','Story'],
   ['coach','💡','Coach'],
   ['journey','🧭','Journey'],
   ['quality','⭐','Quality'],
   ['final','📋','Final']
  ];
- return <aside className="clinical-side-panel" aria-label="Lighthouse Intelligence">
-  <section className="intelligence-shell">
-   <div className="intelligence-header">
-    <div><div className="side-label">Lighthouse Intelligence</div><h3>{activeTab==='journey'?'Assessment Journey':activeTab==='final'?'Final COMAR Review':intelligence.title}</h3></div>
-    <div className={`mini-score ${headerScore>=85?'good':headerScore>=55?'warn':'needs'}`}>{headerScore}%</div>
-   </div>
-   <div className="intelligence-tabs five-tabs" role="tablist">
-    {tabs.map(([id,icon,label])=><button key={id} type="button" className={activeTab===id?'active':''} onClick={()=>setActiveTab(id)} role="tab" aria-selected={activeTab===id}><span>{icon}</span>{label}</button>)}
-   </div>
-   <div className="intelligence-tab-content">
-    {activeTab==='narrative'&&<SectionNarrative intelligence={intelligence} masterStory={masterStory}/>}
-    {activeTab==='coach'&&<SectionCoach intelligence={intelligence}/>}
-    {activeTab==='journey'&&<AssessmentJourney journey={journey}/>}
-    {activeTab==='quality'&&<SectionQuality intelligence={intelligence}/>}
-    {activeTab==='final'&&<FinalComarReview review={finalReview} section={section}/>}
-   </div>
-  </section>
- </aside>
+ useEffect(()=>{
+  scrollRef.current?.scrollTo({top:0,behavior:'smooth'});
+ },[activeTab,section]);
+ const chooseTab=id=>{setActiveTab(id);if(collapsed)setCollapsed(false)};
+ return <>
+  {focusMode&&<button type="button" className="panel-backdrop" aria-label="Close focus view" onClick={()=>setFocusMode(false)}/>}
+  <aside className={`clinical-side-panel ${collapsed?'collapsed':''} ${focusMode?'focus-mode':''}`} aria-label="Lighthouse Intelligence">
+   {collapsed
+    ?<button type="button" className="panel-reopen" onClick={()=>setCollapsed(false)} aria-label="Open Lighthouse Intelligence">
+      <span>💡</span><strong>Open Intelligence</strong>
+     </button>
+    :<section className="intelligence-shell">
+      <div className="intelligence-header">
+       <div className="intelligence-title">
+        <div className="side-label">Lighthouse Intelligence</div>
+        <h3>{activeTab==='journey'?'Assessment Journey':activeTab==='final'?'Final COMAR Review':intelligence.title}</h3>
+       </div>
+       <div className="intelligence-header-actions">
+        <div className={`mini-score ${headerScore>=85?'good':headerScore>=55?'warn':'needs'}`}>{headerScore}%</div>
+        <button type="button" className="panel-icon-button" onClick={()=>setFocusMode(!focusMode)} title={focusMode?'Return to workspace':'Open focus view'} aria-label={focusMode?'Return to workspace':'Open focus view'}>{focusMode?'↙':'⛶'}</button>
+        <button type="button" className="panel-icon-button" onClick={()=>setCollapsed(true)} title="Hide panel" aria-label="Hide panel">−</button>
+       </div>
+      </div>
+      <div className="intelligence-tabs five-tabs" role="tablist">
+       {tabs.map(([id,icon,label])=><button key={id} type="button" className={activeTab===id?'active':''} onClick={()=>chooseTab(id)} role="tab" aria-selected={activeTab===id}><span>{icon}</span><em>{label}</em></button>)}
+      </div>
+      <div className="intelligence-tab-content" ref={scrollRef}>
+       {activeTab==='narrative'&&<SectionNarrative intelligence={intelligence} masterStory={masterStory}/>}
+       {activeTab==='coach'&&<SectionCoach intelligence={intelligence}/>}
+       {activeTab==='journey'&&<AssessmentJourney journey={journey}/>}
+       {activeTab==='quality'&&<SectionQuality intelligence={intelligence}/>}
+       {activeTab==='final'&&<FinalComarReview review={finalReview} section={section}/>}
+      </div>
+      <div className="panel-footer">
+       <span>Scroll inside this panel independently</span>
+       <button type="button" className="panel-top-button" onClick={()=>scrollRef.current?.scrollTo({top:0,behavior:'smooth'})}>↑ Top</button>
+      </div>
+     </section>}
+  </aside>
+ </>;
 }
 
 function SectionNarrative({intelligence,masterStory}){
@@ -187,7 +212,7 @@ function SectionNarrative({intelligence,masterStory}){
  return hasMaster?<div className="document-preview">
   <div className="master-story-label">Current Clinical Story</div>
   {masterStory.map(item=><NarrativeStorySection key={item.title} item={item}/>)}
-  {intelligence.narratives.some(item=>item.text)&&<details className="section-contribution"><summary>View this section’s working contribution</summary><div>{intelligence.narratives.map(item=><PreviewSection key={`section-${item.title}`} title={item.title} text={item.text}/>)}</div></details>}
+  {intelligence.narratives.some(item=>item.text)&&<details className="section-contribution"><summary><span>Section contribution</span><small>Show the evidence gathered on this page</small></summary><div>{intelligence.narratives.map(item=><PreviewSection key={`section-${item.title}`} title={item.title} text={item.text}/>)}</div></details>}
  </div>:<div className="empty-intelligence"><strong>Your clinical story will appear here.</strong><span>As the interview develops, Lighthouse will organize the client’s information into a concise, chart-ready story.</span></div>;
 }
 function NarrativeStorySection({item}){

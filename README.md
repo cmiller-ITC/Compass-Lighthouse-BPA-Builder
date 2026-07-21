@@ -1,14 +1,20 @@
-# Lighthouse Compass 7.2.1 — Narrative Domain & Formulation Hotfix
+# Lighthouse Compass 7.3 — Visual Experience & Panel Refinement
 
-## Fixed
-- Trauma symptoms entered in Trauma / Social now appear in the live Clinical Symptom Picture
-- Trauma details also propagate into the trauma narrative card
-- Every symptom domain uses domain-specific clinical wording
-- Optional duration, frequency, or severity fields no longer suppress a domain
-- Clinical Formulation now performs formulation rather than saying that it “integrates” factors
-- Generated 5 Ps formulation was rewritten into one coherent clinical paragraph
-- Multiple active symptom domains remain separately displayed
-- Subtle colored accents improve domain-card scanning
+## Improvements
+- Wider, more spacious clinical workspace
+- Right-side Lighthouse Intelligence panel has independent, smooth scrolling
+- Panel tabs no longer squeeze together and can scroll horizontally
+- Focus View expands the panel for comfortable reading
+- Hide / reopen controls let clinicians reclaim form space
+- Top button returns the active panel tab to the beginning
+- Panel automatically scrolls to the top when changing tabs or sections
+- Responsive layout stacks the panel below the form before content becomes cramped
+- Forms, fields, cards, accordions, and checkboxes have more breathing room
+- Symptom groups use soft color-coded accents
+- Narrative cards, Clinical Coach panels, and section contributions have cleaner hierarchy
+- Improved focus states, hover feedback, shadows, spacing, and mobile behavior
+
+This release changes presentation and interaction only; clinical logic from 7.2.1 is preserved.
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.
