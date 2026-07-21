@@ -50,3 +50,20 @@
  .diagnostic-preview-grid{grid-template-columns:1fr}
  .toolbar-actions{flex-wrap:wrap}
 }
+
+
+/* Compass 6.6 — Clinical Integration & Golden Thread */
+.coach-library{display:grid;gap:11px}
+.guidance-block{border:1px solid #ded6e7;border-radius:13px;background:#fbf9fd;overflow:hidden}
+.guidance-block summary{cursor:pointer;padding:11px 12px;color:#49306f;font-size:12px;font-weight:900;list-style:none}
+.guidance-block summary::-webkit-details-marker{display:none}
+.guidance-block[open] summary{border-bottom:1px solid #e6dfeb;background:#f5f0fa}
+.guidance-block>div{padding:10px 12px}
+.guidance-block p{margin:0 0 8px;color:#39333f;font-size:12.5px;line-height:1.5}
+.guidance-block p:last-child{margin-bottom:0}
+.golden-thread-card{margin-top:16px;padding:13px;border:1px solid #cfe5df;border-radius:13px;background:#f0faf7}
+.golden-thread-card strong{color:#286e66;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.golden-thread-card p{margin:6px 0 0;color:#345b57;font-size:12.5px;line-height:1.5}
+.field input::placeholder,.field textarea::placeholder{color:#938a9c;opacity:1;font-style:italic}
+.output-goldenThread textarea{min-height:270px}
+@media(max-width:1200px){.workspace-grid{grid-template-columns:minmax(0,1fr) 365px}}

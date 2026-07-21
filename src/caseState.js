@@ -270,9 +270,18 @@ export function reducer(state, action) {
     case "SET": return setPath(state, action.path, action.value);
     case "TOGGLE": {
       const current = getPath(state, action.path) || [];
-      const next = current.includes(action.value)
-        ? current.filter((item) => item !== action.value)
-        : [...current, action.value];
+      const exclusive = ["None reported","Not applicable","None identified","None identified yet",
+        "None reported / no current behavioral-health concern","Unknown / records unavailable",
+        "Unknown / family history unavailable","Unknown / not yet assessed",
+        "Not applicable / no current trauma symptoms"];
+      let next;
+      if(current.includes(action.value)){
+        next=current.filter((item)=>item!==action.value);
+      }else if(exclusive.includes(action.value)){
+        next=[action.value];
+      }else{
+        next=[...current.filter((item)=>!exclusive.includes(item)),action.value];
+      }
       return setPath(state, action.path, next);
     }
     case "SET_DOMAIN_ANSWER": {
@@ -319,7 +328,7 @@ export function buildAllNarratives(data){
   safetyPlan:buildSafetyPlan(data), measures:buildMeasures(data), diagnosticSummary:buildDiagnosticSummary(data),
   diagnosticRationale:buildDiagnosticRationale(data), medicalNecessity:buildMedicalNecessity(data),
   levelOfCare:buildLevelOfCare(data), clinicalFormulation:buildClinicalFormulation(data),
-  treatmentFocus:buildTreatmentFocus(data)
+  treatmentFocus:buildTreatmentFocus(data), goldenThread:buildGoldenThread(data)
  };
 }
 
@@ -433,9 +442,13 @@ function generateDiagnosticRationale(data){
  const impairment=p.impairments.length?` Symptoms are associated with clinically significant impairment in ${listText(p.impairments.map(v=>v.toLowerCase()))}.`:'';
  const details=patientSpecificDetails(data);
  const context=details.length?` Patient-specific context includes ${sentence(details[0])}`:'';
+ const scoredMeasures=data.measures.filter(m=>m.name&&m.score).map(m=>`${m.name} score ${m.score}${m.interpretation?` (${m.interpretation.toLowerCase()})`:''}`);
+ const measures=scoredMeasures.length?` Standardized assessment findings include ${listText(scoredMeasures)}.`:'';
+ const history=data.psychiatricHistory.diagnoses.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));
+ const historyLink=history.length?` The diagnostic history includes ${listText(history.map(v=>v.toLowerCase()))}.`:'';
  const ruleOut=d.ruleOut?` Continued assessment should consider ${d.ruleOut}, including whether another mental disorder, a medical condition, substance effects, or a normative stress response better explains the presentation.`:'';
  const confidence=d.confidence?` Diagnostic confidence is currently ${d.confidence.toLowerCase()}.`:'';
- return `The diagnosis of ${d.primary} is supported by ${evidence.length?evidence.join('; '):'the reported clinical presentation'}${course.length?`, with symptoms ${listText(course)}`:''}.${impairment}${context}${confidence}${ruleOut}`.replace(/\.\./g,'.');
+ return `The diagnosis of ${d.primary} is supported by ${evidence.length?evidence.join('; '):'the reported clinical presentation'}${course.length?`, with symptoms ${listText(course)}`:''}.${impairment}${context}${measures}${historyLink}${confidence}${ruleOut}`.replace(/\.\./g,'.');
 }
 
 function generateMedicalNecessity(data){
@@ -520,6 +533,17 @@ function buildClinicalFormulation(data){
 
  const protective=[...data.strengths,...data.risk.protectiveFactors].filter(Boolean);
  return `PRESENTING FACTORS\nThe client currently presents with ${presenting}.\n\nPREDISPOSING FACTORS\n${predisposing.length?`Relevant vulnerability factors include ${listText(predisposing)}.`:'Predisposing factors require continued assessment.'}\n\nPRECIPITATING FACTORS\n${precipitating}\n\nPERPETUATING FACTORS\n${perpetuating.length?`Factors that may maintain or intensify the presentation include ${listText(perpetuating)}.`:'Perpetuating factors require continued clarification.'}\n\nPROTECTIVE FACTORS\n${protective.length?`Protective factors and treatment assets include ${listText([...new Set(protective)].map(v=>v.toLowerCase()))}.`:'Protective factors should be further identified with the client.'}`;
+}
+
+function buildGoldenThread(data){
+ const p=data.presenting,d=data.diagnosis;
+ const domains=selectedSymptomDomains(data);
+ const findings=domains.length?listText(domains.slice(0,5).map(([key])=>clinicalDomainLabel(key))):p.concerns.length?listText(p.concerns.map(v=>v.toLowerCase())):'assessment findings not yet fully documented';
+ const impairment=p.impairments.filter(v=>!['None reported','Not applicable'].includes(v));
+ const diagnosis=d.primary||'diagnosis not yet entered';
+ const treatment=d.treatmentFocus||generateTreatmentFocus(data);
+ const measure=data.measures.filter(m=>m.name&&m.score).map(m=>`${m.name} (${m.score})`);
+ return `ASSESSMENT FINDINGS\n${findings}.\n\nDIAGNOSIS / CLINICAL IMPRESSION\n${diagnosis}.\n\nFUNCTIONAL IMPAIRMENT\n${impairment.length?listText(impairment.map(v=>v.toLowerCase())):'Functional impairment requires further clarification'}.\n\nINITIAL TREATMENT LINKAGE\n${sentence(treatment)}\n\nOUTCOME TRACKING\n${measure.length?`Baseline measures include ${listText(measure)}.`:'Select baseline measures and planned reassessment intervals to complete the outcome-tracking link.'}`;
 }
 
 function buildTreatmentFocus(data){
