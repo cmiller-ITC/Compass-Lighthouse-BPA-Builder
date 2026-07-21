@@ -367,8 +367,8 @@ export function buildAllNarratives(data){
 
 function buildChiefComplaint(data){
  const p=data.presenting;if(p.patientNarrative.trim())return normalizeClinicalText(p.patientNarrative,{fragmentLead:'The client reports'});
- const reason=p.reasonSeekingCare?reasonToClinicalPhrase(p.reasonSeekingCare):'behavioral-health concerns';
- const request=p.clientRequest?` The client is seeking ${p.clientRequest.toLowerCase()}.`:'';
+ const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:(p.reasonSeekingCare?[p.reasonSeekingCare]:[]);const reason=reasons.length?listText(reasons.map(reasonToClinicalPhrase)):'behavioral-health concerns';
+ const requests=Array.isArray(p.clientRequest)?p.clientRequest:(p.clientRequest?[p.clientRequest]:[]);const request=requests.length?` The client hopes to ${listText(requests.map(v=>v.toLowerCase()))}.`:'';
  return p.reasonSeekingCare||p.clientRequest?`The client presents in response to ${reason}.${request}`:'Chief complaint information has not yet been entered.';
 }
 function activeDomains(data){return Object.entries(data.presenting.domains).filter(([,d])=>d.symptoms.length||d.duration||d.frequency||d.severity||d.context||d.notes||Object.values(d.answers||{}).some(Boolean))}
@@ -405,7 +405,7 @@ function buildHPI(data){
   ...domains.flatMap(([,d])=>d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)))
  ])];
  if(impacts.length)paragraphs.push(`Symptoms are interfering with ${listText(impacts.map(v=>v.toLowerCase()))}.`);
- if(p.clientRequest)paragraphs.push(`The client is seeking ${p.clientRequest.toLowerCase()} to address the reported symptoms and associated impairment.`);
+ if(Array.isArray(p.clientRequest)?p.clientRequest.length:p.clientRequest){const requests=Array.isArray(p.clientRequest)?p.clientRequest:[p.clientRequest];paragraphs.push(`The client hopes to ${listText(requests.map(v=>v.toLowerCase()))}.`);}
  return paragraphs.join('\n\n')||'History of present illness information has not yet been entered.';
 }
 
@@ -597,7 +597,7 @@ function buildClinicalFormulation(data){
  if(impairments.length)current.push(`functional disruption involving ${listText(impairments.map(v=>v.toLowerCase()))}`);
 
  const presentContext=[];
- if(p.reasonSeekingCare)presentContext.push(reasonToClinicalPhrase(p.reasonSeekingCare));
+ if(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare){const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare];presentContext.push(...reasons.map(reasonToClinicalPhrase));}
  if(data.social.employment)presentContext.push(`${data.social.employment.toLowerCase()} employment circumstances`);
  if(data.social.finances)presentContext.push(`${data.social.finances.toLowerCase()} financial stress`);
  if(data.social.relationships)presentContext.push(`${data.social.relationships.toLowerCase()} relationship circumstances`);
@@ -624,7 +624,7 @@ function buildClinicalFormulation(data){
  ])];
 
  return [
-  current.length?`From a bird’s-eye view, the client is currently presenting with ${listText(current)}.`:'',
+  current.length?`The client is currently presenting with ${listText(current)}.`:'',
   presentContext.length?`These difficulties are occurring in the present-day context of ${listText(presentContext)}.`:'',
   history.length?`Earlier experiences and background factors that may help explain the current presentation include ${listText(history)}.`:'',
   maintaining.length?`The current pattern may be reinforced by ${listText([...new Set(maintaining)])}.`:'',

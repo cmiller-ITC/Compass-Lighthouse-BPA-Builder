@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.4.1 Presenting Runtime Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.4.2 Multi-Theme Presenting</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.4.1</div>
+    <div className="eyebrow">Lighthouse Compass 7.4.2</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -166,27 +166,68 @@ const clientRequestGroups=[
  ]}
 ];
 
-function ClinicalChoiceGroups({label,helper,value,onChange,groups}){
+function ClinicalChoiceGroups({label,helper,values,onToggle,groups,priorityLabel}){
+ const selected=Array.isArray(values)?values:[];
+ const count=selected.length;
  return <section className="clinical-choice-field">
-  <div className="choice-heading"><div><span>{label}</span><small>{helper}</small></div>{value&&<button type="button" className="clear-choice" onClick={()=>onChange('')}>Clear</button>}</div>
-  <div className="choice-group-stack">{groups.map(group=><details className="choice-group" key={group.label} open>
-   <summary><span className="choice-group-icon">{group.icon}</span><strong>{group.label}</strong><small>{group.options.includes(value)?'Selected here':'Choose one'}</small></summary>
-   <div className="choice-options">{group.options.map(option=><button type="button" key={option} className={`choice-option ${value===option?'selected':''}`} onClick={()=>onChange(option)}>
-    <span className="choice-radio">{value===option?'✓':''}</span><span>{option}</span>
-   </button>)}</div>
-  </details>)}</div>
+  <div className="choice-heading">
+   <div><span>{label}</span><small>{helper}</small></div>
+   <div className="choice-count">{count} selected</div>
+  </div>
+  <div className="choice-guidance">
+   <strong>Main themes</strong>
+   <span>Select every umbrella area that applies, then choose the specific items underneath.</span>
+  </div>
+  <div className="choice-group-stack">{groups.map((group,index)=>{
+   const groupCount=group.options.filter(option=>selected.includes(option)).length;
+   return <details className={`choice-group theme-${index%4}`} key={group.label} open>
+    <summary>
+     <span className="choice-group-icon">{group.icon}</span>
+     <span className="choice-group-title"><strong>{group.label}</strong><small>Main theme · select all that apply</small></span>
+     <span className="choice-group-count">{groupCount?`${groupCount} selected`:'Open'}</span>
+    </summary>
+    <div className="choice-options">{group.options.map(option=>{
+     const isSelected=selected.includes(option);
+     return <button type="button" key={option} className={`choice-option ${isSelected?'selected':''}`} onClick={()=>onToggle(option)}>
+      <span className="choice-radio">{isSelected?'✓':''}</span><span>{option}</span>
+     </button>
+    })}</div>
+   </details>
+  })}</div>
+  <div className="priority-reminder"><span>⭐</span><div><strong>{priorityLabel}</strong><p>After selecting all relevant items, ask the client which one or two are having the greatest impact right now.</p></div></div>
  </section>
 }
 
-function Presenting({data,set,toggle}){const p=data.presenting;return <Page><div className="workspace-grid"><div>
+function Presenting({data,set,toggle}){const p=data.presenting;
+ const reasonSelections=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:(p.reasonSeekingCare?[p.reasonSeekingCare]:[]);
+ const requestSelections=Array.isArray(p.clientRequest)?p.clientRequest:(p.clientRequest?[p.clientRequest]:[]);
+ return <Page><div className="workspace-grid"><div>
  <Card title="What Brought the Client In Today?">
-  <div className="section-kicker">Understand why services are being sought now—not simply which symptoms are present</div>
+  <div className="section-kicker">Identify the major themes contributing to the decision to seek care now</div>
+  <div className="presenting-intro-grid">
+   <div className="presenting-guide-card"><span>1</span><div><strong>Select the themes</strong><p>More than one reason may be contributing to the client’s decision to seek care.</p></div></div>
+   <div className="presenting-guide-card"><span>2</span><div><strong>Clarify what matters most</strong><p>Ask which one or two concerns feel most urgent, disruptive, or important today.</p></div></div>
+  </div>
   <div className="presenting-choice-grid">
-   <ClinicalChoiceGroups label="Reason for Seeking Care Now" helper="What changed, intensified, or prompted the client to seek help at this time?" value={p.reasonSeekingCare} onChange={v=>set('presenting.reasonSeekingCare',v)} groups={reasonSeekingCareGroups}/>
-   <ClinicalChoiceGroups label="What the Client Hopes Will Be Different" helper="What does the client want treatment to help them accomplish?" value={p.clientRequest} onChange={v=>set('presenting.clientRequest',v)} groups={clientRequestGroups}/>
+   <ClinicalChoiceGroups
+    label="Why Now?"
+    helper="What changed, intensified, or became difficult enough that the client sought help?"
+    values={reasonSelections}
+    onToggle={v=>toggle('presenting.reasonSeekingCare',v)}
+    groups={reasonSeekingCareGroups}
+    priorityLabel="Primary reasons for seeking care"
+   />
+   <ClinicalChoiceGroups
+    label="What Would the Client Like to Be Different?"
+    helper="Which broad outcomes does the client hope treatment will support?"
+    values={requestSelections}
+    onToggle={v=>toggle('presenting.clientRequest',v)}
+    groups={clientRequestGroups}
+    priorityLabel="Most important treatment outcomes"
+   />
   </div>
   <TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/>
-  <div className="presenting-prompt-strip"><span>💬</span><div><strong>Try asking</strong><p>“What made now feel like the right time to reach out?” and “If therapy were helpful, what would begin to feel different in your life?”</p></div></div>
+  <div className="presenting-prompt-strip"><span>💬</span><div><strong>Suggested language</strong><p>“Several things may be contributing to your decision to seek help. Which of these are affecting you right now?” Then ask, “Of everything you selected, which one or two would make the biggest difference if they improved?”</p></div></div>
  </Card>
  <Card title="Primary Areas of Concern"><Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card>
  <Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card>
@@ -624,7 +665,7 @@ function buildMasterClinicalStory(data){
  if(meaningful(data.medical.conditions).length)relevantHistory.push('relevant medical or biological factors');
 
  const presentContext=[];
- if(p.reasonSeekingCare)presentContext.push(reasonToClinicalPhrase(p.reasonSeekingCare));
+ if(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare){const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare];presentContext.push(...reasons.map(reasonToClinicalPhrase));}
  if(data.social.employment)presentContext.push(`${data.social.employment.toLowerCase()} employment context`);
  if(data.social.finances)presentContext.push(`${data.social.finances.toLowerCase()} financial stress`);
  if(data.social.relationships)presentContext.push(`${data.social.relationships.toLowerCase()} relationship context`);
@@ -641,7 +682,7 @@ function buildMasterClinicalStory(data){
 
  const formulation=currentThemes.length
   ?[
-    `From a bird’s-eye view, the client is currently presenting with ${naturalList(currentThemes)}.`,
+    `The client is currently presenting with ${naturalList(currentThemes)}.`,
     presentContext.length?`These difficulties are occurring in the present-day context of ${naturalList(presentContext)}.`:'',
     relevantHistory.length?`Earlier experiences and background factors that may help explain the current presentation include ${naturalList(relevantHistory)}.`:'',
     maintaining.length?`The current pattern may be reinforced by ${naturalList([...new Set(maintaining)])}.`:'',
@@ -655,7 +696,7 @@ function buildMasterClinicalStory(data){
  if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
 
  return [
-  {title:'Chief Complaint',text:p.patientNarrative.trim()?normalizeClinicalFreeText(p.patientNarrative,{fragmentLead:'The client reports'}):(p.reasonSeekingCare?`The client is seeking care in response to ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`:'')},
+  {title:'Chief Complaint',text:p.patientNarrative.trim()?normalizeClinicalFreeText(p.patientNarrative,{fragmentLead:'The client reports'}):(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare?true:false)?`The client is seeking care in response to ${naturalList((Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare]).map(reasonToClinicalPhrase))}.`:''},
   {title:'History of Present Illness',text:concerns.length?`The primary concerns include ${naturalList(concerns.map(value=>value.toLowerCase()))}${course.length?`, with symptoms ${naturalList(course)}`:''}.`:''},
   {title:'Clinical Symptom Picture',domains:domainStories},
   {title:'Functional Impact',text:functionalImpact},
@@ -663,7 +704,7 @@ function buildMasterClinicalStory(data){
   {title:'Clinical Conceptualization',text:formulation},
   {title:'Diagnostic Support',text:d.primary?joinSentences([`The current clinical impression is ${d.primary}${d.confidence?`, with ${d.confidence.toLowerCase()} confidence`:''}.`,d.diagnosticRationale]):''},
   {title:'Medical Necessity',text:d.medicalNecessity},
-  {title:'Treatment Direction',text:joinSentences([d.treatmentFocus,!d.treatmentFocus&&p.clientRequest?`The client is seeking ${p.clientRequest.toLowerCase()} to reduce symptoms and improve functioning.`:''])}
+  {title:'Treatment Direction',text:joinSentences([d.treatmentFocus,!d.treatmentFocus&&(Array.isArray(p.clientRequest)?p.clientRequest.length:p.clientRequest)?`The client hopes to ${naturalList((Array.isArray(p.clientRequest)?p.clientRequest:[p.clientRequest]).map(value=>value.toLowerCase()))}.`:''])}
  ].filter(item=>item.text||item.domains?.length);
 }
 

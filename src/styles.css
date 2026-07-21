@@ -435,3 +435,58 @@ textarea{min-height:118px;line-height:1.62}
 .coastal-photo-scene svg{filter:saturate(1.04) contrast(1.02)}
 .lighthouse-hero{background:#302442}
 @media(max-width:1050px){.presenting-choice-grid{grid-template-columns:1fr}}
+
+
+/* Compass 7.4.2 — Multi-Theme Presenting & Selected-State Polish */
+.presenting-intro-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0 20px}
+.presenting-guide-card{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:13px 14px;border:1px solid #ddd3e6;border-radius:15px;background:linear-gradient(145deg,#fff,#f7f4fa)}
+.presenting-guide-card>span{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#6b4c91;color:#fff;font-weight:950}
+.presenting-guide-card strong{font-size:11px;color:#4c3765}
+.presenting-guide-card p{margin:4px 0 0;font-size:10.5px;line-height:1.45;color:#6f6874}
+.choice-count{padding:6px 9px;border-radius:999px;background:#eee8f3;color:#694d82;font-size:9px;font-weight:950;white-space:nowrap}
+.choice-guidance{display:grid;gap:3px;padding:11px 12px;margin-bottom:10px;border-left:4px solid #7a5aa2;border-radius:10px;background:#f6f1f9}
+.choice-guidance strong{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#60457d}
+.choice-guidance span{font-size:10.5px;line-height:1.45;color:#6c6371}
+.choice-group summary{grid-template-columns:30px minmax(0,1fr) auto;padding:14px}
+.choice-group-title{display:grid;gap:3px}
+.choice-group-title strong{font-size:12px;color:#43324f}
+.choice-group-title small{font-size:8.5px;color:#887f8c;text-transform:uppercase;letter-spacing:.045em}
+.choice-group-count{padding:5px 8px;border-radius:999px;background:#f0ebf3;color:#755e83;font-size:8px;font-weight:900}
+.choice-group.theme-0{border-left:5px solid #8b6bb2}
+.choice-group.theme-1{border-left:5px solid #4f918e}
+.choice-group.theme-2{border-left:5px solid #d6a45e}
+.choice-group.theme-3{border-left:5px solid #b77b93}
+.choice-option{position:relative;overflow:hidden;transform:none!important}
+.choice-option:hover{transform:none!important}
+.choice-option.selected{
+ border-color:#cdbfda;background:linear-gradient(135deg,#f6f1fa,#eef8f6);
+ box-shadow:none;transform:none!important;
+}
+.choice-option.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#6f9f9a}
+.priority-reminder{display:grid;grid-template-columns:32px 1fr;gap:9px;margin-top:11px;padding:11px 12px;border:1px solid #eadbb8;border-radius:13px;background:#fff9ec}
+.priority-reminder>span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#f4e2b9}
+.priority-reminder strong{font-size:9px;text-transform:uppercase;letter-spacing:.065em;color:#6b4d28}
+.priority-reminder p{margin:3px 0 0;font-size:10px;line-height:1.4;color:#665d68}
+
+/* Universal checkbox selected state */
+.checks label{
+ position:relative;overflow:hidden;transform:none!important;
+ box-shadow:none!important;
+}
+.checks label:hover{transform:none!important}
+.checks label:has(input:checked){
+ border-color:#c9bdd5;
+ background:linear-gradient(135deg,#f8f3fb,#eef8f6);
+ box-shadow:none!important;
+}
+.checks label:has(input:checked)::before{
+ content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#6c9d98;
+}
+.checks label:has(input:checked) input{accent-color:#5d8e89}
+.symptom-group.tone-0 .checks label:has(input:checked)::before{background:#8b6bb2}
+.symptom-group.tone-1 .checks label:has(input:checked)::before{background:#4f918e}
+.symptom-group.tone-2 .checks label:has(input:checked)::before{background:#d6a45e}
+.symptom-group.tone-3 .checks label:has(input:checked)::before{background:#b77b93}
+.symptom-group.tone-4 .checks label:has(input:checked)::before{background:#547f9a}
+.checks input{width:17px;height:17px}
+@media(max-width:900px){.presenting-intro-grid{grid-template-columns:1fr}}
