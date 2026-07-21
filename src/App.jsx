@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.3.1 Narrative Polish</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.4 Presenting Experience</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.3.1</div>
+    <div className="eyebrow">Lighthouse Compass 7.4</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -74,56 +74,67 @@ function Home({data,setModule}){
 }
 
 function LighthouseScene({progress=0}){
- const beamOpacity=progress>=85?.85:progress>=55?.55:.24;
- return <div className="lighthouse-scene" aria-hidden="true">
-  <svg viewBox="0 0 900 520" role="img">
+ const beamOpacity=progress>=85?.92:progress>=55?.62:.3;
+ return <div className="lighthouse-scene coastal-photo-scene" aria-hidden="true">
+  <svg viewBox="0 0 1000 600" role="img">
    <defs>
-    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
-     <stop offset="0%" stopColor="#442f70"/>
-     <stop offset="46%" stopColor="#a56d99"/>
-     <stop offset="76%" stopColor="#efb486"/>
-     <stop offset="100%" stopColor="#f9dfbb"/>
-    </linearGradient>
-    <linearGradient id="seaGradient" x1="0" y1="0" x2="0" y2="1">
-     <stop offset="0%" stopColor="#587b91"/>
-     <stop offset="100%" stopColor="#173d56"/>
-    </linearGradient>
-    <linearGradient id="beamGradient" x1="0" y1=".5" x2="1" y2=".5">
-     <stop offset="0%" stopColor="#fff7d5" stopOpacity=".9"/>
-     <stop offset="100%" stopColor="#fff7d5" stopOpacity="0"/>
-    </linearGradient>
-    <filter id="softGlow"><feGaussianBlur stdDeviation="8"/></filter>
+    <linearGradient id="photoSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2f3151"/><stop offset="35%" stopColor="#736287"/><stop offset="68%" stopColor="#d99b8f"/><stop offset="100%" stopColor="#f4cf9b"/></linearGradient>
+    <linearGradient id="photoSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#617f8d"/><stop offset="55%" stopColor="#31596c"/><stop offset="100%" stopColor="#173847"/></linearGradient>
+    <linearGradient id="cliffLight" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#6a655f"/><stop offset="100%" stopColor="#1d2b31"/></linearGradient>
+    <linearGradient id="towerShade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#cfc6ba"/><stop offset="45%" stopColor="#fff8ec"/><stop offset="100%" stopColor="#b7ada2"/></linearGradient>
+    <linearGradient id="photoBeam" x1="0" y1=".5" x2="1" y2=".5"><stop offset="0%" stopColor="#fff8ca" stopOpacity=".95"/><stop offset="55%" stopColor="#fff0b0" stopOpacity=".35"/><stop offset="100%" stopColor="#fff0b0" stopOpacity="0"/></linearGradient>
+    <filter id="mist"><feGaussianBlur stdDeviation="15"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="9"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .08"/></feComponentTransfer></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="10"/></filter>
    </defs>
-   <rect width="900" height="330" fill="url(#skyGradient)"/>
-   <circle cx="690" cy="165" r="55" fill="#ffdba4" opacity=".75"/>
-   <circle cx="690" cy="165" r="86" fill="#ffdba4" opacity=".16" filter="url(#softGlow)"/>
-   <path d="M0 310 C160 285 270 330 420 308 C570 286 715 322 900 288 L900 520 L0 520Z" fill="url(#seaGradient)"/>
-   <path d="M0 345 C160 325 265 365 420 342 C590 318 740 360 900 330" fill="none" stroke="#d9eef1" strokeOpacity=".32" strokeWidth="5"/>
-   <path d="M0 405 C150 380 280 430 455 396 C635 362 735 420 900 383" fill="none" stroke="#f4dbbf" strokeOpacity=".18" strokeWidth="4"/>
-   <path d="M45 476 C150 400 235 405 315 438 C375 462 430 468 520 520 L0 520Z" fill="#182f3c"/>
-   <path d="M80 488 C185 420 255 433 335 468 C375 486 408 500 455 520 L20 520Z" fill="#263c48"/>
-   <g transform="translate(200 175)">
-    <path d="M62 250 L83 54 L138 54 L158 250Z" fill="#f4eee5"/>
-    <path d="M92 54 L98 250 L122 250 L128 54Z" fill="#ded4cf" opacity=".8"/>
-    <rect x="76" y="39" width="70" height="25" rx="4" fill="#1c3040"/>
-    <rect x="89" y="11" width="44" height="32" rx="3" fill="#f7c970"/>
-    <path d="M82 11 L111 -5 L140 11Z" fill="#293a4a"/>
-    <rect x="101" y="88" width="19" height="29" rx="9" fill="#5b4a69"/>
-    <rect x="101" y="148" width="19" height="29" rx="9" fill="#5b4a69"/>
-    <rect x="101" y="210" width="19" height="40" rx="9" fill="#493b52"/>
-    <path d="M48 250 H172 L188 268 H30Z" fill="#152b37"/>
-    <path d="M145 27 L650 -18 L650 98 L145 43Z" fill="url(#beamGradient)" opacity={beamOpacity}/>
-    <circle cx="111" cy="27" r="18" fill="#fff4b5" opacity={Math.min(.95,beamOpacity+.15)}/>
+   <rect width="1000" height="355" fill="url(#photoSky)"/>
+   <ellipse cx="735" cy="185" rx="170" ry="74" fill="#f4bd91" opacity=".18" filter="url(#mist)"/>
+   <circle cx="755" cy="178" r="48" fill="#ffd6a0" opacity=".78"/>
+   <circle cx="755" cy="178" r="92" fill="#ffd7a2" opacity=".16" filter="url(#glow)"/>
+   <path d="M0 335 C155 315 280 352 420 329 C600 299 755 350 1000 312 L1000 600 L0 600Z" fill="url(#photoSea)"/>
+   <g fill="none" strokeLinecap="round">
+    <path d="M-10 392 C145 360 278 410 445 376 C640 337 790 410 1010 361" stroke="#dcebed" strokeOpacity=".25" strokeWidth="7"/>
+    <path d="M-20 455 C170 420 315 478 510 433 C705 389 842 467 1020 423" stroke="#f1d7bb" strokeOpacity=".16" strokeWidth="5"/>
+    <path d="M60 515 C205 484 360 530 525 502 C704 470 822 522 980 489" stroke="#d8ecec" strokeOpacity=".12" strokeWidth="4"/>
    </g>
-   <g fill="#fff" opacity=".5">
-    <circle cx="96" cy="96" r="2"/><circle cx="135" cy="55" r="1.6"/><circle cx="790" cy="76" r="2"/><circle cx="828" cy="120" r="1.4"/>
+   <path d="M0 600 L0 486 C86 442 168 419 242 432 C325 447 368 502 452 528 C500 543 548 558 615 600Z" fill="url(#cliffLight)"/>
+   <path d="M0 600 L0 535 C85 493 165 481 252 505 C319 524 380 571 438 600Z" fill="#26363b"/>
+   <g transform="translate(238 190)">
+    <path d="M55 300 L83 70 L151 70 L181 300Z" fill="url(#towerShade)"/>
+    <path d="M84 70 L98 300" stroke="#8b8179" strokeOpacity=".45" strokeWidth="3"/>
+    <path d="M152 70 L136 300" stroke="#746e69" strokeOpacity=".35" strokeWidth="3"/>
+    <rect x="73" y="47" width="88" height="31" rx="5" fill="#202d35"/>
+    <rect x="91" y="13" width="52" height="41" rx="4" fill="#f6c66f"/>
+    <rect x="96" y="18" width="42" height="30" rx="3" fill="#fff1a9" opacity=".92"/>
+    <path d="M84 13 L117 -8 L151 13Z" fill="#26343b"/>
+    <rect x="104" y="104" width="22" height="34" rx="10" fill="#4a4656"/>
+    <rect x="103" y="170" width="23" height="34" rx="10" fill="#4b4655"/>
+    <rect x="101" y="244" width="28" height="56" rx="12" fill="#403947"/>
+    <path d="M44 300 H194 L213 324 H23Z" fill="#17262c"/>
+    <path d="M159 30 L790 -22 L790 118 L159 52Z" fill="url(#photoBeam)" opacity={beamOpacity}/>
+    <circle cx="117" cy="34" r="23" fill="#fff6bd" opacity={Math.min(.98,beamOpacity+.08)} filter="url(#glow)"/>
    </g>
+   <g opacity=".28" filter="url(#mist)"><ellipse cx="260" cy="360" rx="240" ry="38" fill="#f1edf0"/><ellipse cx="710" cy="344" rx="300" ry="42" fill="#e8eef0"/></g>
+   <rect width="1000" height="600" filter="url(#grain)" opacity=".55"/>
   </svg>
-  <div className="scene-caption"><span>Assessment light</span><strong>{progress>=85?'Beacon shining':progress>=55?'Clarity emerging':'Dawn is beginning'}</strong></div>
+  <div className="scene-caption"><span>Compass · Dawn</span><strong>{progress>=85?'The path is illuminated':progress>=55?'Clarity is taking shape':'Understanding begins here'}</strong></div>
  </div>
 }
 
-function Presenting({data,set,toggle}){const p=data.presenting;const readiness=getPresentingReadiness(data);return <Page><div className="workspace-grid"><div><Card title="Presenting Problems & Areas of Concern"><div className="section-kicker">Start with the client’s story</div><Grid columns={2}><Select label="Reason Seeking Care Now" value={p.reasonSeekingCare} onChange={v=>set('presenting.reasonSeekingCare',v)} options={['New onset symptoms','Worsening symptoms','Return to treatment','Life transition / adjustment stress','Relationship or family conflict','Work or school impairment','Diagnostic clarification']}/><Select label="Client Request" value={p.clientRequest} onChange={v=>set('presenting.clientRequest',v)} options={['Start individual therapy','Restart individual therapy','Diagnostic clarification','Coping skills and support','Treatment planning','Medication evaluation','Higher level of care assessment']}/></Grid><TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/></Card><Card title="Primary Areas of Concern"><Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card><Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card><Card title="Functional Impairment"><div className="section-kicker">Connect symptoms to daily life and medical necessity</div><Checks options={impairmentOptions} selected={p.impairments} onToggle={v=>toggle('presenting.impairments',v)}/></Card></div><ClinicalSidePanel data={data} section="presenting"/></div></Page>}
+function Presenting({data,set,toggle}){const p=data.presenting;return <Page><div className="workspace-grid"><div>
+ <Card title="What Brought the Client In Today?">
+  <div className="section-kicker">Understand why services are being sought now—not simply which symptoms are present</div>
+  <div className="presenting-choice-grid">
+   <ClinicalChoiceGroups label="Reason for Seeking Care Now" helper="What changed, intensified, or prompted the client to seek help at this time?" value={p.reasonSeekingCare} onChange={v=>set('presenting.reasonSeekingCare',v)} groups={reasonSeekingCareGroups}/>
+   <ClinicalChoiceGroups label="What the Client Hopes Will Be Different" helper="What does the client want treatment to help them accomplish?" value={p.clientRequest} onChange={v=>set('presenting.clientRequest',v)} groups={clientRequestGroups}/>
+  </div>
+  <TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/>
+  <div className="presenting-prompt-strip"><span>💬</span><div><strong>Try asking</strong><p>“What made now feel like the right time to reach out?” and “If therapy were helpful, what would begin to feel different in your life?”</p></div></div>
+ </Card>
+ <Card title="Primary Areas of Concern"><Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card>
+ <Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card>
+ <Card title="Functional Impairment"><div className="section-kicker">Connect symptoms to daily life and medical necessity</div><Checks options={impairmentOptions} selected={p.impairments} onToggle={v=>toggle('presenting.impairments',v)}/></Card>
+ </div><ClinicalSidePanel data={data} section="presenting"/></div></Page>}
 
 const symptomGroupLibrary={
 mood:[['Mood & Self-Perception',['Depressed mood','Hopelessness','Worthlessness / excessive guilt']],['Interest & Motivation',['Loss of interest / pleasure','Social withdrawal']],['Energy & Cognition',['Fatigue / low energy','Difficulty concentrating']],['Biological / Behavioral',['Sleep disturbance','Appetite / weight changes','Psychomotor agitation / slowing']],['Safety',['Suicidal ideation']]],
@@ -949,7 +960,7 @@ function buildLiveClinicalStory(data){
  if((p.impairments.length||p.severity)&&p.clientRequest){const treatmentNeed=`The combination of ${p.severity?`${p.severity.toLowerCase()} symptoms`:'the reported symptoms'}${p.impairments.length?' and associated functional impairment':''} supports the need for ${p.clientRequest.toLowerCase()}.`;clinicalContext=[clinicalContext,treatmentNeed].filter(Boolean).join(' ')}
  return {hasData,chiefComplaint,hpi,clinicalPicture,functionalImpairment,clinicalContext};
 }
-function reasonToClinicalPhrase(reason){const map={'New onset symptoms':'newly emerging symptoms','Worsening symptoms':'a recent worsening of symptoms','Return to treatment':'a return to behavioral-health treatment','Life transition / adjustment stress':'distress associated with a major life transition','Relationship or family conflict':'relationship or family-related distress','Work or school impairment':'work or school-related impairment','Diagnostic clarification':'a need for diagnostic clarification'};return map[reason]||reason.toLowerCase()}
+function reasonToClinicalPhrase(reason){const map={'Symptoms have recently worsened':'a recent worsening of symptoms','New symptoms have developed':'the emergence of new symptoms','Symptoms are interfering with daily functioning':'increasing interference with daily functioning','Difficulty coping independently':'difficulty managing current concerns independently','Symptoms are no longer manageable':'symptoms that no longer feel manageable','Returning to treatment after a break':'a return to treatment after a period without services','Major life transition or adjustment':'distress associated with a major life transition','Relationship conflict or separation':'relationship conflict or separation','Grief, loss, or bereavement':'grief, loss, or bereavement','Work or school stress':'work- or school-related stress','Job loss or employment instability':'job loss or employment instability','Financial stress':'financial stress','Caregiver or parenting stress':'caregiver or parenting stress','Medical diagnosis, chronic illness, or pain':'a medical diagnosis, chronic illness, or pain-related stress','Pregnancy, postpartum, or reproductive transition':'a pregnancy, postpartum, or reproductive transition','Housing instability or relocation':'housing instability or relocation','Legal or court-related stress':'legal or court-related stress','Diagnostic clarification':'a need for diagnostic clarification','Medication-related evaluation or coordination':'a need for medication-related evaluation or coordination','Referral from another provider':'referral from another provider','School, employer, or EAP referral':'a school, employer, or EAP referral','Court or probation referral':'a court or probation referral','Family encouragement or concern':'encouragement or concern from family','Step-down or aftercare following higher level of care':'continued care following a higher level of treatment','Desire for healthier coping skills':'a desire to develop healthier coping skills','Desire to better understand symptoms or patterns':'a desire to better understand symptoms or patterns','Trauma recovery or processing past experiences':'a desire to recover from trauma or process past experiences','Improve emotional regulation':'a desire to improve emotional regulation','Improve relationships or communication':'a desire to improve relationships or communication','Personal growth or relapse prevention':'personal growth or relapse-prevention goals'};return map[reason]||reason.toLowerCase()}
 function durationPhrase(value){const map={'Less than 1 month':'present for less than one month','1–6 months':'present for approximately one to six months','More than 6 months':'present for more than six months','More than 1 year':'present for more than one year','Chronic / longstanding':'longstanding or chronic','Less than 2 weeks':'present for less than two weeks','2 weeks–1 month':'present for approximately two weeks to one month','6–12 months':'present for approximately six to twelve months','Episodic':'episodic','Unclear':'of unclear duration'};return map[value]||`present for ${String(value).toLowerCase()}`}
 function frequencyPhrase(value){const map={'Occasional':'occurring occasionally','Weekly':'occurring weekly','Several days per week':'occurring several days per week','Most days':'occurring most days','Daily':'occurring daily','Nearly constant':'nearly constant','Episodic':'episodic','Unclear':'of unclear frequency'};return map[value]||`occurring ${String(value).toLowerCase()}`}
 function clinicalDomainLabel(key){const map={mood:'Depressive symptoms',anxiety:'Anxiety symptoms',panic:'Panic symptoms',bipolar:'Bipolar-spectrum features',adhd:'Attention and executive-functioning concerns',ocd:'Obsessive-compulsive symptoms',trauma:'Trauma-related symptoms',psychosis:'Thought and perception-related symptoms',eating:'Eating and body-image concerns',substance:'Substance-related concerns',adjustment:'Adjustment-related distress',painHealth:'Pain and health-related distress'};return map[key]||symptomDomainDefinitions[key].label}

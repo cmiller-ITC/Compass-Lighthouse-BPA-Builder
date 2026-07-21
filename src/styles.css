@@ -407,3 +407,31 @@ textarea{min-height:118px;line-height:1.62}
 /* Compass 7.3.1 — Narrative Polish */
 .preview-section h4{letter-spacing:.085em}
 .domain-story-card p+ p{margin-top:9px;padding-top:9px;border-top:1px dashed rgba(95,71,121,.15)}
+
+/* Compass 7.4 — Presenting Experience */
+.presenting-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:18px 0 22px}
+.clinical-choice-field{min-width:0}
+.choice-heading{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:11px}
+.choice-heading span{display:block;color:#4a3565;font-weight:950;font-size:13px}
+.choice-heading small{display:block;margin-top:4px;color:#746c79;font-size:10.5px;line-height:1.45}
+.clear-choice{padding:5px 8px;background:#f0eaf4;color:#694e82;box-shadow:none;font-size:9px}
+.choice-group-stack{display:grid;gap:9px}
+.choice-group{border:1px solid #ddd4e5;border-radius:15px;background:#fff;overflow:hidden;box-shadow:0 7px 18px rgba(54,38,74,.045)}
+.choice-group summary{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;background:linear-gradient(145deg,#fff,#faf7fc);list-style:none}
+.choice-group summary::-webkit-details-marker{display:none}
+.choice-group-icon{display:grid;place-items:center;width:27px;height:27px;border-radius:9px;background:#eee7f5;color:#66488b;font-weight:950}
+.choice-group summary strong{font-size:10.5px;color:#453650}
+.choice-group summary small{font-size:8px;color:#8a818f;text-transform:uppercase;letter-spacing:.055em}
+.choice-options{display:grid;gap:6px;padding:7px 9px 10px;border-top:1px solid #eee8f1}
+.choice-option{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;width:100%;padding:9px 10px;text-align:left;border:1px solid transparent;border-radius:10px;background:#fbfafc;color:#4b4451;box-shadow:none;font-size:10.5px;font-weight:700}
+.choice-option:hover{transform:none;border-color:#d7cbe2;background:#f7f2fa}
+.choice-option.selected{border-color:#aa91c1;background:linear-gradient(135deg,#f1eafb,#edf8f6);color:#4d3370}
+.choice-radio{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1px solid #cfc2d9;background:#fff;color:#4e7e79;font-size:10px;font-weight:950}
+.choice-option.selected .choice-radio{border-color:#6a9e98;background:#e0f2ee}
+.presenting-prompt-strip{display:grid;grid-template-columns:34px 1fr;gap:10px;margin-top:4px;padding:13px 14px;border:1px solid #e5d5b7;border-radius:14px;background:linear-gradient(135deg,#fff9ed,#f8f2fb)}
+.presenting-prompt-strip>span{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#f3dfb8}
+.presenting-prompt-strip strong{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#6b4a26}
+.presenting-prompt-strip p{margin:4px 0 0;color:#5b5260;font-size:11.5px;line-height:1.5}
+.coastal-photo-scene svg{filter:saturate(1.04) contrast(1.02)}
+.lighthouse-hero{background:#302442}
+@media(max-width:1050px){.presenting-choice-grid{grid-template-columns:1fr}}
