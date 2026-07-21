@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.2 Clinical Craftsmanship</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.2.1 Narrative Domain Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.2</div>
+    <div className="eyebrow">Lighthouse Compass 7.2.1</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -389,9 +389,25 @@ function naturalDisposition(values,{none,unknown,notApplicable,deferred,present}
 }
 function joinSentences(parts){return parts.map(v=>String(v||'').trim()).filter(Boolean).map(chartSentence).join(' ')}
 function liveDomainEvidence(data){
- return Object.entries(data.presenting.domains)
+ const domains=Object.entries(data.presenting.domains)
   .filter(([,d])=>d.symptoms.length||d.context.trim()||d.notes.trim())
   .map(([key,d])=>({key,label:clinicalDomainLabel(key),symptoms:d.symptoms,context:d.context.trim(),notes:d.notes.trim(),impairment:d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)),duration:d.duration,frequency:d.frequency,severity:d.severity}));
+ const traumaSymptoms=(data.trauma?.symptoms||[]).filter(v=>!['None reported','Not applicable / no current trauma symptoms'].includes(v));
+ const alreadyHasTrauma=domains.some(domain=>domain.key==='trauma');
+ if(!alreadyHasTrauma&&(traumaSymptoms.length||String(data.trauma?.details||'').trim())){
+  domains.push({
+   key:'trauma',
+   label:'Trauma-Related Symptoms',
+   symptoms:traumaSymptoms,
+   context:'',
+   notes:String(data.trauma?.details||'').trim(),
+   impairment:[],
+   duration:'',
+   frequency:'',
+   severity:''
+  });
+ }
+ return domains;
 }
 function buildLiveHPI(data){
  const p=data.presenting,domains=liveDomainEvidence(data),parts=[];
@@ -406,18 +422,45 @@ function buildLiveHPI(data){
  if(impacts.length)parts.push(`Symptoms are interfering with ${naturalList(impacts.map(v=>v.toLowerCase()))}.`);
  return parts.join('\n\n');
 }
+function buildDomainNarrative(domain){
+ const symptoms=domain.symptoms.map(value=>value.toLowerCase());
+ const qualifiers=[];
+ if(domain.duration)qualifiers.push(durationPhrase(domain.duration));
+ if(domain.frequency)qualifiers.push(frequencyPhrase(domain.frequency));
+ if(domain.severity)qualifiers.push(`${domain.severity.toLowerCase()} in severity`);
+ const qualifierText=qualifiers.length?`, with symptoms ${naturalList(qualifiers)}`:'';
+ const first=(()=>{
+  if(!symptoms.length)return'';
+  switch(domain.key){
+   case 'trauma': return `The client describes trauma-related symptoms characterized by ${naturalList(symptoms)}${qualifierText}.`;
+   case 'ocd': return `Obsessive-compulsive symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'adhd': return `Executive-functioning and attention difficulties include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'panic': return `Panic symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'bipolar': return `Mood-episode features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'psychosis': return `Psychotic-spectrum symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'painHealth': return `Pain- and health-related concerns include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'adjustment': return `Adjustment-related symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'substance': return `Substance-related concerns include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'eating': return `Eating- and body-image-related symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'mood': return `Depressive symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'anxiety': return `Anxiety symptoms include ${naturalList(symptoms)}${qualifierText}.`;
+   default: return `${domain.label} include ${naturalList(symptoms)}${qualifierText}.`;
+  }
+ })();
+ const paragraphs=[];
+ if(first)paragraphs.push(first);
+ if(domain.context)paragraphs.push(`Relevant context, triggers, or patterns include ${chartSentence(domain.context)}`);
+ if(domain.notes)paragraphs.push(`The client describes ${chartSentence(domain.notes)}`);
+ return paragraphs;
+}
+
 function buildMasterClinicalStory(data){
  const p=data.presenting,d=data.diagnosis,domains=liveDomainEvidence(data);
- const domainStories=domains.map(domain=>{
-  const paragraphs=[],qualifiers=[];
-  if(domain.duration)qualifiers.push(durationPhrase(domain.duration));
-  if(domain.frequency)qualifiers.push(frequencyPhrase(domain.frequency));
-  if(domain.severity)qualifiers.push(`${domain.severity.toLowerCase()} in severity`);
-  if(domain.symptoms.length)paragraphs.push(`${domain.label} include ${naturalList(domain.symptoms.slice(0,8).map(value=>value.toLowerCase()))}${qualifiers.length?`, with symptoms ${naturalList(qualifiers)}`:''}.`);
-  if(domain.context)paragraphs.push(`Relevant context, triggers, or patterns include ${chartSentence(domain.context)}`);
-  if(domain.notes)paragraphs.push(`The client describes ${chartSentence(domain.notes)}`);
-  return {title:domain.label,icon:symptomDomainDefinitions[domain.key]?.icon||'•',paragraphs};
- }).filter(domain=>domain.paragraphs.length);
+ const domainStories=domains.map(domain=>({
+  title:domain.label,
+  icon:symptomDomainDefinitions[domain.key]?.icon||'•',
+  paragraphs:buildDomainNarrative(domain)
+ })).filter(domain=>domain.paragraphs.length);
 
  const impacts=[...new Set([...meaningful(p.impairments),...domains.flatMap(domain=>domain.impairment)])];
  const example=domains.map(domain=>domain.notes).find(Boolean);
@@ -449,7 +492,15 @@ function buildMasterClinicalStory(data){
  if(trauma)factors.push('trauma-related factors');
  if(data.social.housing||data.social.employment||data.social.finances||data.social.relationships)factors.push('current psychosocial stressors');
  if(protective.length)factors.push('identified strengths and protective factors');
- const formulation=factors.length?`The developing formulation integrates ${naturalList(factors)} with the client’s symptom pattern and functional impairment.${protective.length?` Protective factors include ${naturalList(protective.map(value=>value.toLowerCase()))}.`:''}`:'';
+ const precipitatingText=p.reasonSeekingCare?`Current concerns appear to have intensified in the context of ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`:'';
+ const maintaining=[];
+ if(domains.some(domain=>['anxiety','panic','ocd','trauma','painHealth'].includes(domain.key)))maintaining.push('avoidance, threat monitoring, reassurance seeking, or other short-term safety strategies');
+ if(impacts.includes('Sleep / energy'))maintaining.push('sleep and energy disruption');
+ if(data.social.finances)maintaining.push('financial stress');
+ if(data.social.supports&&/limited|inconsistent|poor|none/i.test(data.social.supports))maintaining.push('limited or inconsistent support');
+ const formulation=factors.length||precipitatingText||maintaining.length
+  ?`The client’s current presentation appears to reflect ${factors.length?naturalList(factors):'a combination of clinical and psychosocial influences'}. ${precipitatingText}${maintaining.length?` Current distress may be maintained by ${naturalList(maintaining)}.`:''}${protective.length?` Meaningful strengths include ${naturalList(protective.map(value=>value.toLowerCase()))}, which may support engagement and recovery.`:''}`.replace(/\s+/g,' ').trim()
+  :'';
 
  const concerns=meaningful(p.concerns),course=[];
  if(p.duration)course.push(durationPhrase(p.duration));

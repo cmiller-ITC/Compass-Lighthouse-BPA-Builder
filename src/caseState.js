@@ -547,29 +547,41 @@ function buildLevelOfCare(data){
 function buildClinicalFormulation(data){
  const p=data.presenting;
  const domains=selectedSymptomDomains(data);
- const details=patientSpecificDetails(data);
- const predisposing=[];
- if(data.psychiatricHistory.diagnoses.length)predisposing.push(`prior behavioral-health diagnoses including ${listText(data.psychiatricHistory.diagnoses.map(v=>v.toLowerCase()))}`);
- if(data.familyHistory.conditions.length)predisposing.push(`family psychiatric history including ${listText(data.familyHistory.conditions.map(v=>v.toLowerCase()))}`);
- if(data.trauma.experiences.length)predisposing.push(`a history of ${listText(data.trauma.experiences.map(v=>v.toLowerCase()))}`);
- if(data.medical.conditions.length)predisposing.push(`medical factors including ${listText(data.medical.conditions.map(v=>v.toLowerCase()))}`);
+ const meaningfulValues=(values=[])=>values.filter(v=>!['None reported','None identified','None identified yet','Unknown / records unavailable','Unknown / family history unavailable','Unknown / not yet assessed','No trauma disclosed','Trauma history deferred','Not applicable'].includes(v));
+
+ const vulnerabilities=[];
+ const priorDx=meaningfulValues(data.psychiatricHistory.diagnoses);
+ const family=meaningfulValues(data.familyHistory.conditions);
+ const trauma=meaningfulValues(data.trauma.experiences);
+ const medical=meaningfulValues(data.medical.conditions);
+ if(priorDx.length)vulnerabilities.push(`a history of ${listText(priorDx.map(v=>v.toLowerCase()))}`);
+ if(family.length)vulnerabilities.push(`family vulnerability related to ${listText(family.map(v=>v.toLowerCase()))}`);
+ if(trauma.length)vulnerabilities.push(`the ongoing impact of ${listText(trauma.map(v=>v.toLowerCase()))}`);
+ if(medical.length)vulnerabilities.push(`medical factors including ${listText(medical.map(v=>v.toLowerCase()))}`);
+
+ const maintaining=[];
+ if(domains.some(([key])=>['anxiety','panic','ocd','trauma','painHealth'].includes(key)))maintaining.push('avoidance, threat monitoring, reassurance seeking, or other safety behaviors');
+ if(p.impairments.includes('Sleep / energy'))maintaining.push('sleep and energy disruption');
+ if(p.impairments.includes('Social functioning')||p.impairments.includes('Intimate relationships'))maintaining.push('interpersonal stress or withdrawal');
+ if(data.social.finances)maintaining.push(`${data.social.finances.toLowerCase()} financial stress`);
+ if(data.social.supports&&/limited|no support|inconsistent|poor/i.test(data.social.supports))maintaining.push('limited or inconsistent support');
+
+ const strengths=[...new Set([
+  ...meaningfulValues(data.strengths),
+  ...meaningfulValues(data.risk.protectiveFactors)
+ ])];
 
  const presenting=domains.length
-  ?`${listText(domains.map(([key])=>clinicalDomainLabel(key)))} with associated impairment in ${p.impairments.length?listText(p.impairments.map(v=>v.toLowerCase())):'daily functioning'}`
-  :p.concerns.length?listText(p.concerns.map(v=>v.toLowerCase())):'the current behavioral-health concerns';
+  ?listText(domains.map(([key])=>clinicalDomainLabel(key).toLowerCase()))
+  :meaningfulValues(p.concerns).length?listText(meaningfulValues(p.concerns).map(v=>v.toLowerCase())):'the current behavioral-health concerns';
 
- const precipitating=details.length?sentence(details[0]):p.reasonSeekingCare?`The immediate reason for seeking care is ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`:'Specific precipitating factors require further clarification.';
+ const precipitating=p.reasonSeekingCare
+  ?`Current difficulties appear to have intensified in the context of ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`
+  :'The immediate precipitating factors require further clarification.';
 
- const perpetuating=[];
- if(domains.some(([key])=>['anxiety','panic','ocd','trauma','painHealth'].includes(key)))perpetuating.push('avoidance, threat monitoring, or safety behaviors');
- if(p.impairments.includes('Sleep / energy'))perpetuating.push('sleep and energy disruption');
- if(p.impairments.includes('Social functioning')||p.impairments.includes('Intimate relationships'))perpetuating.push('interpersonal stress or social withdrawal');
- if(data.social.finances)perpetuating.push(`${data.social.finances.toLowerCase()} financial stress`);
- if(data.social.supports&&/limited|no support|inconsistent/i.test(data.social.supports))perpetuating.push('limited or inconsistent support');
-
- const protective=[...data.strengths,...data.risk.protectiveFactors].filter(Boolean);
- return `PRESENTING FACTORS\nThe client currently presents with ${presenting}.\n\nPREDISPOSING FACTORS\n${predisposing.length?`Relevant vulnerability factors include ${listText(predisposing)}.`:'Predisposing factors require continued assessment.'}\n\nPRECIPITATING FACTORS\n${precipitating}\n\nPERPETUATING FACTORS\n${perpetuating.length?`Factors that may maintain or intensify the presentation include ${listText(perpetuating)}.`:'Perpetuating factors require continued clarification.'}\n\nPROTECTIVE FACTORS\n${protective.length?`Protective factors and treatment assets include ${listText([...new Set(protective)].map(v=>v.toLowerCase()))}.`:'Protective factors should be further identified with the client.'}`;
+ return `The client’s current presentation involves ${presenting}${p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)).length?`, with associated impairment in ${listText(p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)).map(v=>v.toLowerCase()))}`:''}. ${vulnerabilities.length?`Relevant vulnerability factors include ${listText(vulnerabilities)}.`:''} ${precipitating} ${maintaining.length?`The current pattern may be maintained by ${listText(maintaining)}.`:''} ${strengths.length?`Protective factors and treatment assets include ${listText(strengths.map(v=>v.toLowerCase()))}.`:''}`.replace(/\s+/g,' ').trim();
 }
+
 
 function buildGoldenThread(data){
  const p=data.presenting,d=data.diagnosis;

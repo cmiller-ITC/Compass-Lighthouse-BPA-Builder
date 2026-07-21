@@ -203,3 +203,9 @@
 .empty-intelligence strong{color:#4b3765;font-size:13px}
 .empty-intelligence span{font-size:12px;line-height:1.55}
 @media(max-width:720px){.symptom-group-grid{grid-template-columns:1fr}}
+
+/* Compass 7.2.1 — Domain Narrative Hotfix */
+.domain-story-card:nth-child(4n+1){border-left:4px solid #8a6db0}
+.domain-story-card:nth-child(4n+2){border-left:4px solid #5b9695}
+.domain-story-card:nth-child(4n+3){border-left:4px solid #d6a45e}
+.domain-story-card:nth-child(4n+4){border-left:4px solid #9b748e}

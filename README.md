@@ -1,13 +1,14 @@
-# Lighthouse Compass 7.2 — Clinical Intelligence & Narrative Refinement
+# Lighthouse Compass 7.2.1 — Narrative Domain & Formulation Hotfix
 
-- Begin Assessment opens Presenting for a new assessment
-- Symptom choices are grouped by clinical meaning
-- Presenting concerns and impairment options follow a more natural order
-- Every active symptom domain has its own live narrative card
-- Narrative sections were narrowed to reduce redundancy
-- Clinical Coach 2.0 adds domain-specific questions, scripts, and documentation tips
-- Empty states and symptom cards are more polished
-- Generalized-anxiety clarifier wording was simplified
+## Fixed
+- Trauma symptoms entered in Trauma / Social now appear in the live Clinical Symptom Picture
+- Trauma details also propagate into the trauma narrative card
+- Every symptom domain uses domain-specific clinical wording
+- Optional duration, frequency, or severity fields no longer suppress a domain
+- Clinical Formulation now performs formulation rather than saying that it “integrates” factors
+- Generated 5 Ps formulation was rewritten into one coherent clinical paragraph
+- Multiple active symptom domains remain separately displayed
+- Subtle colored accents improve domain-card scanning
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.
