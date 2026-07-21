@@ -357,15 +357,17 @@ function durationPhrase(value){const map={'Less than 1 month':'present for less 
 function frequencyPhrase(value){const map={'Occasional':'occurring occasionally','Weekly':'occurring weekly','Several days per week':'occurring several days per week','Most days':'occurring most days','Daily':'occurring daily','Nearly constant':'nearly constant','Episodic':'episodic','Unclear':'of unclear frequency'};return map[value]||`occurring ${String(value).toLowerCase()}`}
 function clinicalDomainLabel(key){const map={mood:'depressive symptoms',anxiety:'anxiety symptoms',panic:'panic symptoms',bipolar:'bipolar-spectrum features',adhd:'attention and executive-functioning concerns',ocd:'obsessive-compulsive symptoms',trauma:'trauma-related symptoms',psychosis:'thought and perception-related symptoms',eating:'eating and body-image concerns',substance:'substance-related concerns',adjustment:'adjustment-related distress',painHealth:'pain and health-related distress'};return map[key]||symptomDomainDefinitions[key].label.toLowerCase()}
 function buildHPI(data){
- const p=data.presenting;const domains=activeDomains(data).filter(([,d])=>d.symptoms.length);const paragraphs=[];
- const concerns=p.concerns.length?listText(p.concerns.slice(0,7).map(item=>item.toLowerCase())):domains.length?listText(domains.slice(0,5).map(([key])=>clinicalDomainLabel(key))):'';
- if(concerns){const opening=p.reasonSeekingCare==='Return to treatment'?`The client returned to treatment reporting ${concerns}`:`The client presents for behavioral-health evaluation reporting ${concerns}`;const course=[];if(p.duration)course.push(durationPhrase(p.duration));if(p.frequency)course.push(frequencyPhrase(p.frequency));if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);if(p.course)course.push(`currently ${p.course.toLowerCase()}`);paragraphs.push(`${opening}${course.length?`, with symptoms ${listText(course)}`:''}.`)}
- if(domains.length){const sentences=domains.slice(0,6).map(([key,d])=>{const features=listText(d.symptoms.slice(0,7).map(item=>item.toLowerCase()));const qualifiers=[];if(d.duration)qualifiers.push(durationPhrase(d.duration));if(d.frequency)qualifiers.push(frequencyPhrase(d.frequency));if(d.severity)qualifiers.push(`${d.severity.toLowerCase()} in severity`);return `${clinicalDomainLabel(key).replace(/^./,c=>c.toUpperCase())} are characterized by ${features}${qualifiers.length?` and are ${listText(qualifiers)}`:''}.`});paragraphs.push(sentences.join(' '))}
- if(p.impairments.length){const impact=`The current presentation causes clinically meaningful interference with ${listText(p.impairments.map(item=>item.toLowerCase()))}.`;const examples=domains.flatMap(([,d])=>[d.notes,d.context]).filter(Boolean);paragraphs.push(`${impact}${examples.length?` ${sentence(examples[0])}`:''}`)}
- const context=domains.flatMap(([,d])=>[d.context,d.notes]).filter(Boolean);if(context.length>1)paragraphs.push(`Relevant contextual and precipitating factors include ${sentence(context.slice(0,2).join(' '))}`);
+ const p=data.presenting;const domains=activeDomains(data).filter(([,d])=>d.symptoms.length||d.context||d.notes);const paragraphs=[];
+ if(p.patientNarrative.trim())paragraphs.push(sentence(p.patientNarrative));
+ const concerns=p.concerns.filter(v=>!v.startsWith('None'));
+ if(concerns.length){const course=[];if(p.duration)course.push(durationPhrase(p.duration));if(p.frequency)course.push(frequencyPhrase(p.frequency));if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);if(p.course)course.push(`currently ${p.course.toLowerCase()}`);paragraphs.push(`The client presents with ${listText(concerns.map(v=>v.toLowerCase()))}${course.length?`, with symptoms ${listText(course)}`:''}.`)}
+ if(domains.length){const sentences=domains.map(([key,d])=>{const pieces=[];if(d.symptoms.length)pieces.push(`${clinicalDomainLabel(key).replace(/^./,c=>c.toUpperCase())} include ${listText(d.symptoms.slice(0,7).map(v=>v.toLowerCase()))}`);if(d.context)pieces.push(`Relevant context, triggers, or patterns include ${d.context}`);if(d.notes)pieces.push(`The client describes ${d.notes}`);return pieces.length?`${pieces.join('. ')}.`:''}).filter(Boolean);if(sentences.length)paragraphs.push(sentences.join(' '))}
+ const impacts=[...new Set([...p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)),...domains.flatMap(([,d])=>d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)))])];
+ if(impacts.length)paragraphs.push(`Symptoms are interfering with ${listText(impacts.map(v=>v.toLowerCase()))}.`);
  if(p.clientRequest)paragraphs.push(`The client is seeking ${p.clientRequest.toLowerCase()} to address the reported symptoms and associated impairment.`);
  return paragraphs.join('\n\n')||'History of present illness information has not yet been entered.';
 }
+
 function buildSymptomDomainNarrative(data){
  const paragraphs=activeDomains(data).map(([key,d])=>{
   const def=symptomDomainDefinitions[key], parts=[];
@@ -380,20 +382,30 @@ function buildSymptomDomainNarrative(data){
  return paragraphs.join('\n\n')||'No symptom-domain details were entered.';
 }
 
-function buildPsychHistory(data){const h=data.psychiatricHistory,parts=[];if(h.diagnoses.length)parts.push(`Psychiatric history is significant for ${listText(h.diagnoses)}.`);if(h.services.length)parts.push(`Previous behavioral-health services include ${listText(h.services)}.`);if(h.hospitalization)parts.push(`Psychiatric hospitalization history is described as ${h.hospitalization.toLowerCase()}.`);if(h.suicideAttempts)parts.push(`Suicide-attempt history is described as ${h.suicideAttempts.toLowerCase()}.`);if(h.nssi)parts.push(`Nonsuicidal self-injury history is described as ${h.nssi.toLowerCase()}.`);if(h.treatmentResponse)parts.push(`Prior treatment response is described as ${h.treatmentResponse.toLowerCase()}.`);if(h.details)parts.push(sentence(h.details));return parts.join(' ')||'Psychiatric history was not fully documented during this evaluation.'}
-function buildFamilyHistory(data){
- const f=data.familyHistory;
- if(f.conditions.includes('None reported'))return 'The client reports no known family psychiatric, substance-use, suicide, or psychiatric-hospitalization history.';
- if(f.conditions.some(v=>v.startsWith('Unknown')))return 'Family psychiatric history is currently unknown or unavailable.';
- const conditions=f.conditions.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));
- const parts=[];
- if(conditions.length)parts.push(`Family psychiatric history is notable for ${listText(conditions.map(v=>v.toLowerCase()))}.`);
- if(f.details)parts.push(sentence(f.details));
- if(f.supportLevel)parts.push(`The current level of family support is described as ${f.supportLevel.toLowerCase()}.`);
- return parts.join(' ')||'Family psychiatric history has not yet been documented.';
+function buildPsychHistory(data){
+ const h=data.psychiatricHistory,parts=[];
+ if(h.diagnoses.includes('None reported'))parts.push('The client reports no prior psychiatric diagnoses.');
+ else if(h.diagnoses.some(v=>v.startsWith('Unknown')))parts.push('Prior psychiatric history is currently unknown or unavailable.');
+ else{const diagnoses=h.diagnoses.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));if(diagnoses.length)parts.push(`Prior psychiatric diagnoses include ${listText(diagnoses.map(v=>v.toLowerCase()))}.`)}
+ if(h.services.includes('None reported'))parts.push('The client reports no prior behavioral-health treatment.');
+ else if(h.services.some(v=>v.startsWith('Unknown')))parts.push('Prior treatment history is currently unknown or unavailable.');
+ else{const services=h.services.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));if(services.length)parts.push(`Previous behavioral-health services include ${listText(services.map(v=>v.toLowerCase()))}.`)}
+ if(h.hospitalization)parts.push(`Psychiatric hospitalization history: ${h.hospitalization}.`);if(h.suicideAttempts)parts.push(`Suicide-attempt history: ${h.suicideAttempts}.`);if(h.nssi)parts.push(`Nonsuicidal self-injury history: ${h.nssi}.`);if(h.treatmentResponse)parts.push(`Prior treatment response is described as ${h.treatmentResponse.toLowerCase()}.`);if(h.details)parts.push(sentence(h.details));return parts.join(' ')||'Psychiatric history has not yet been documented.';
 }
-
-function buildMedical(data){const m=data.medical,parts=[];if(m.conditions.length)parts.push(`Medical history is significant for ${listText(m.conditions)}.`);if(m.sleep)parts.push(`Sleep is described as ${m.sleep.toLowerCase()}.`);if(m.pain)parts.push(`Pain concerns are described as ${m.pain.toLowerCase()}.`);if(m.allergies)parts.push(`Allergy information: ${m.allergies}.`);if(m.providerFollowUp)parts.push(`Current medical follow-up is described as ${m.providerFollowUp.toLowerCase()}.`);if(m.details)parts.push(sentence(m.details));return parts.join(' ')||'Medical and biological history was not fully documented during this evaluation.'}
+function buildFamilyHistory(data){
+ const f=data.familyHistory,parts=[];
+ if(f.conditions.includes('None reported'))parts.push('The client reports no known family psychiatric, substance-use, suicide, or psychiatric-hospitalization history.');
+ else if(f.conditions.some(v=>v.startsWith('Unknown')))parts.push('Family psychiatric history is currently unknown or unavailable.');
+ else{const conditions=f.conditions.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));if(conditions.length)parts.push(`Family psychiatric history is notable for ${listText(conditions.map(v=>v.toLowerCase()))}.`)}
+ if(f.relationshipPattern)parts.push(`Family relationships are described as ${f.relationshipPattern.toLowerCase()}.`);if(f.supportLevel)parts.push(`Family support is described as ${f.supportLevel.toLowerCase()}.`);if(f.details)parts.push(sentence(f.details));return parts.join(' ')||'Family psychiatric history has not yet been documented.';
+}
+function buildMedical(data){
+ const m=data.medical,parts=[];
+ if(m.conditions.includes('None reported'))parts.push('The client reports no significant medical conditions.');
+ else if(m.conditions.some(v=>v.startsWith('Unknown')))parts.push('Medical history is currently unknown or has not yet been fully assessed.');
+ else{const conditions=m.conditions.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));if(conditions.length)parts.push(`Medical history includes ${listText(conditions.map(v=>v.toLowerCase()))}.`)}
+ if(m.sleep)parts.push(`Sleep is described as ${m.sleep.toLowerCase()}.`);if(m.pain)parts.push(`Pain is described as ${m.pain.toLowerCase()}.`);if(m.allergies)parts.push(`Allergy information: ${m.allergies}.`);if(m.providerFollowUp)parts.push(`Medical follow-up is ${m.providerFollowUp.toLowerCase()}.`);if(m.details)parts.push(sentence(m.details));return parts.join(' ')||'Medical history has not yet been documented.';
+}
 function buildMedications(data){const meds=data.medical.medications.filter(m=>m.name.trim());return meds.length?meds.map(m=>{const d=[m.dose,m.frequency,m.indication].filter(Boolean).join(', ');return d?`${m.name} (${d})`:m.name}).join('; ')+'.':'No current medications were entered.'}
 function buildSubstance(data){const s=data.substance,rows=[['Alcohol',s.alcohol],['Cannabis',s.cannabis],['Nicotine/tobacco/vaping',s.nicotine],['Opioids',s.opioids],['Stimulants',s.stimulants],['Sedatives/benzodiazepines',s.sedatives],['Other substances',s.other]].filter(([,v])=>v),parts=[];if(rows.length)parts.push(`Substance-use history includes ${rows.map(([n,v])=>`${n}: ${v}`).join('; ')}.`);if(s.treatmentHistory)parts.push(`Substance-use treatment history is described as ${s.treatmentHistory.toLowerCase()}.`);if(s.recoverySupports)parts.push(`Recovery supports include ${s.recoverySupports}.`);if(s.details)parts.push(sentence(s.details));return parts.join(' ')||'Substance-use history was not fully documented during this evaluation.'}
 function buildTrauma(data){const t=data.trauma,parts=[];if(t.experiences.length)parts.push(`The client reports trauma or adverse experiences including ${listText(t.experiences)}.`);if(t.symptoms.length)parts.push(`Current trauma-related symptoms include ${listText(t.symptoms)}.`);if(t.details)parts.push(sentence(t.details));return parts.join(' ')||'Trauma history was not fully documented during this evaluation.'}

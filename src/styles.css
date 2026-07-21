@@ -87,3 +87,6 @@
 .section-contribution[open] summary{border-bottom:1px solid #e4ddea;background:#f4eff8}
 .section-contribution>div{padding:13px 12px 2px}
 .preview-section p{color:#2f2a34}
+
+/* Compass 7.0.1 */
+.preview-section p{white-space:pre-wrap;color:#2f2a34}
