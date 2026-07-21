@@ -318,6 +318,26 @@ function setPath(obj,path,value){
 function getPath(obj,path){return path.split('.').reduce((acc,key)=>acc?.[key],obj)}
 export function listText(items=[]){const c=items.filter(Boolean);if(!c.length)return'';if(c.length===1)return c[0];if(c.length===2)return`${c[0]} and ${c[1]}`;return`${c.slice(0,-1).join(', ')}, and ${c.at(-1)}`}
 function sentence(v){const t=String(v||'').trim();return !t?'':/[.!?]$/.test(t)?t:`${t}.`}
+function normalizeClinicalText(value,{fragmentLead='The client describes',context=false}={}){
+ let text=String(value||'').trim().replace(/\s+/g,' ');
+ if(!text)return'';
+ text=text.replace(/^patient\s+/i,'The client ').replace(/^the patient\s+/i,'The client ').replace(/^client\s+/i,'The client ');
+ if(/^the client\s+(endorses|reports|states|describes|notes|experiences|indicates|shares)\b/i.test(text)){
+  return sentence(text.replace(/^the client\s+endorses\b/i,'The client reports'));
+ }
+ if(/^(he|she|they)\s+(reports?|states?|describes?|notes?|experiences?|indicates?|shares?)\b/i.test(text)){
+  return sentence(text.charAt(0).toUpperCase()+text.slice(1));
+ }
+ if(/^(symptoms?|anxiety|depression|panic|worry|mood|sleep|functioning|trauma|obsessions?|compulsions?)\b/i.test(text)){
+  return sentence(text.charAt(0).toUpperCase()+text.slice(1));
+ }
+ if(context){
+  if(/^(following|after|since|during|when|in response to|in the context of)\b/i.test(text))return sentence(`Symptoms intensified ${text}`);
+  return sentence(`Relevant context, triggers, or patterns include ${text}`);
+ }
+ return sentence(`${fragmentLead} ${text}`);
+}
+
 
 function cleanChartOutput(value){
  return String(value||'')
@@ -339,14 +359,14 @@ export function buildAllNarratives(data){
   socialHistory:buildSocial(data), strengths:buildStrengths(data), mse:buildMSE(data), risk:buildRisk(data),
   safetyPlan:buildSafetyPlan(data), measures:buildMeasures(data), diagnosticSummary:buildDiagnosticSummary(data),
   diagnosticRationale:buildDiagnosticRationale(data), medicalNecessity:buildMedicalNecessity(data),
-  levelOfCare:buildLevelOfCare(data), clinicalFormulation:buildClinicalFormulation(data),
+  levelOfCare:buildLevelOfCare(data), clinicalConceptualization:buildClinicalFormulation(data),
   treatmentFocus:buildTreatmentFocus(data), goldenThread:buildGoldenThread(data)
  };
  return Object.fromEntries(Object.entries(outputs).map(([key,value])=>[key,cleanChartOutput(value)]));
 }
 
 function buildChiefComplaint(data){
- const p=data.presenting;if(p.patientNarrative.trim())return sentence(p.patientNarrative);
+ const p=data.presenting;if(p.patientNarrative.trim())return normalizeClinicalText(p.patientNarrative,{fragmentLead:'The client reports'});
  const reason=p.reasonSeekingCare?reasonToClinicalPhrase(p.reasonSeekingCare):'behavioral-health concerns';
  const request=p.clientRequest?` The client is seeking ${p.clientRequest.toLowerCase()}.`:'';
  return p.reasonSeekingCare||p.clientRequest?`The client presents in response to ${reason}.${request}`:'Chief complaint information has not yet been entered.';
@@ -357,12 +377,33 @@ function durationPhrase(value){const map={'Less than 1 month':'present for less 
 function frequencyPhrase(value){const map={'Occasional':'occurring occasionally','Weekly':'occurring weekly','Several days per week':'occurring several days per week','Most days':'occurring most days','Daily':'occurring daily','Nearly constant':'nearly constant','Episodic':'episodic','Unclear':'of unclear frequency'};return map[value]||`occurring ${String(value).toLowerCase()}`}
 function clinicalDomainLabel(key){const map={mood:'depressive symptoms',anxiety:'anxiety symptoms',panic:'panic symptoms',bipolar:'bipolar-spectrum features',adhd:'attention and executive-functioning concerns',ocd:'obsessive-compulsive symptoms',trauma:'trauma-related symptoms',psychosis:'thought and perception-related symptoms',eating:'eating and body-image concerns',substance:'substance-related concerns',adjustment:'adjustment-related distress',painHealth:'pain and health-related distress'};return map[key]||symptomDomainDefinitions[key].label.toLowerCase()}
 function buildHPI(data){
- const p=data.presenting;const domains=activeDomains(data).filter(([,d])=>d.symptoms.length||d.context||d.notes);const paragraphs=[];
- if(p.patientNarrative.trim())paragraphs.push(sentence(p.patientNarrative));
+ const p=data.presenting;
+ const domains=activeDomains(data).filter(([,d])=>d.symptoms.length||d.context||d.notes);
+ const paragraphs=[];
+ if(p.patientNarrative.trim())paragraphs.push(normalizeClinicalText(p.patientNarrative,{fragmentLead:'The client reports'}));
+
  const concerns=p.concerns.filter(v=>!v.startsWith('None'));
- if(concerns.length){const course=[];if(p.duration)course.push(durationPhrase(p.duration));if(p.frequency)course.push(frequencyPhrase(p.frequency));if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);if(p.course)course.push(`currently ${p.course.toLowerCase()}`);paragraphs.push(`The client presents with ${listText(concerns.map(v=>v.toLowerCase()))}${course.length?`, with symptoms ${listText(course)}`:''}.`)}
- if(domains.length){const sentences=domains.map(([key,d])=>{const pieces=[];if(d.symptoms.length)pieces.push(`${clinicalDomainLabel(key).replace(/^./,c=>c.toUpperCase())} include ${listText(d.symptoms.slice(0,7).map(v=>v.toLowerCase()))}`);if(d.context)pieces.push(`Relevant context, triggers, or patterns include ${d.context}`);if(d.notes)pieces.push(`The client describes ${d.notes}`);return pieces.length?`${pieces.join('. ')}.`:''}).filter(Boolean);if(sentences.length)paragraphs.push(sentences.join(' '))}
- const impacts=[...new Set([...p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)),...domains.flatMap(([,d])=>d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)))])];
+ if(concerns.length){
+  const course=[];
+  if(p.duration)course.push(durationPhrase(p.duration));
+  if(p.frequency)course.push(frequencyPhrase(p.frequency));
+  if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
+  if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+  paragraphs.push(`The primary concerns include ${listText(concerns.map(v=>v.toLowerCase()))}${course.length?`, with symptoms ${listText(course)}`:''}.`);
+ }
+
+ domains.forEach(([key,d])=>{
+  const pieces=[];
+  if(d.symptoms.length)pieces.push(`${clinicalDomainLabel(key).replace(/^./,c=>c.toUpperCase())} include ${listText(d.symptoms.slice(0,8).map(v=>v.toLowerCase()))}.`);
+  if(d.context)pieces.push(normalizeClinicalText(d.context,{context:true}));
+  if(d.notes)pieces.push(normalizeClinicalText(d.notes,{fragmentLead:'The client describes'}));
+  if(pieces.length)paragraphs.push(pieces.join(' '));
+ });
+
+ const impacts=[...new Set([
+  ...p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)),
+  ...domains.flatMap(([,d])=>d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)))
+ ])];
  if(impacts.length)paragraphs.push(`Symptoms are interfering with ${listText(impacts.map(v=>v.toLowerCase()))}.`);
  if(p.clientRequest)paragraphs.push(`The client is seeking ${p.clientRequest.toLowerCase()} to address the reported symptoms and associated impairment.`);
  return paragraphs.join('\n\n')||'History of present illness information has not yet been entered.';
@@ -549,21 +590,32 @@ function buildClinicalFormulation(data){
  const domains=selectedSymptomDomains(data);
  const meaningfulValues=(values=[])=>values.filter(v=>!['None reported','None identified','None identified yet','Unknown / records unavailable','Unknown / family history unavailable','Unknown / not yet assessed','No trauma disclosed','Trauma history deferred','Not applicable'].includes(v));
 
- const vulnerabilities=[];
- const priorDx=meaningfulValues(data.psychiatricHistory.diagnoses);
- const family=meaningfulValues(data.familyHistory.conditions);
- const trauma=meaningfulValues(data.trauma.experiences);
- const medical=meaningfulValues(data.medical.conditions);
- if(priorDx.length)vulnerabilities.push(`a history of ${listText(priorDx.map(v=>v.toLowerCase()))}`);
- if(family.length)vulnerabilities.push(`family vulnerability related to ${listText(family.map(v=>v.toLowerCase()))}`);
- if(trauma.length)vulnerabilities.push(`the ongoing impact of ${listText(trauma.map(v=>v.toLowerCase()))}`);
- if(medical.length)vulnerabilities.push(`medical factors including ${listText(medical.map(v=>v.toLowerCase()))}`);
+ const impairments=p.impairments.filter(v=>!['None reported','Not applicable'].includes(v));
+ const current=[];
+ if(domains.length)current.push(listText(domains.map(([key])=>clinicalDomainLabel(key).toLowerCase())));
+ else if(meaningfulValues(p.concerns).length)current.push(listText(meaningfulValues(p.concerns).map(v=>v.toLowerCase())));
+ if(impairments.length)current.push(`functional disruption involving ${listText(impairments.map(v=>v.toLowerCase()))}`);
 
+ const presentContext=[];
+ if(p.reasonSeekingCare)presentContext.push(reasonToClinicalPhrase(p.reasonSeekingCare));
+ if(data.social.employment)presentContext.push(`${data.social.employment.toLowerCase()} employment circumstances`);
+ if(data.social.finances)presentContext.push(`${data.social.finances.toLowerCase()} financial stress`);
+ if(data.social.relationships)presentContext.push(`${data.social.relationships.toLowerCase()} relationship circumstances`);
+
+ const history=[];
+ if(meaningfulValues(data.trauma.experiences).length)history.push('trauma-related experiences');
+ if(meaningfulValues(data.familyHistory.conditions).length)history.push('family psychiatric vulnerability');
+ if(meaningfulValues(data.psychiatricHistory.diagnoses).length)history.push('prior behavioral-health concerns');
+ if(meaningfulValues(data.medical.conditions).length)history.push('relevant medical or biological factors');
+
+ const selectedSymptoms=domains.flatMap(([,domain])=>domain.symptoms.map(value=>value.toLowerCase()));
  const maintaining=[];
- if(domains.some(([key])=>['anxiety','panic','ocd','trauma','painHealth'].includes(key)))maintaining.push('avoidance, threat monitoring, reassurance seeking, or other safety behaviors');
- if(p.impairments.includes('Sleep / energy'))maintaining.push('sleep and energy disruption');
- if(p.impairments.includes('Social functioning')||p.impairments.includes('Intimate relationships'))maintaining.push('interpersonal stress or withdrawal');
- if(data.social.finances)maintaining.push(`${data.social.finances.toLowerCase()} financial stress`);
+ if(selectedSymptoms.some(value=>/avoidance|withdrawal/.test(value)))maintaining.push('avoidance or withdrawal');
+ if(selectedSymptoms.some(value=>/reassurance/.test(value)))maintaining.push('reassurance seeking');
+ if(selectedSymptoms.some(value=>/checking|ritual|compulsion/.test(value)))maintaining.push('compulsive or safety behaviors');
+ if(selectedSymptoms.some(value=>/worry|rumination|racing thoughts/.test(value)))maintaining.push('persistent worry or rumination');
+ if(selectedSymptoms.some(value=>/hypervigilance|threat|startle/.test(value)))maintaining.push('heightened threat monitoring');
+ if(impairments.includes('Sleep / energy'))maintaining.push('sleep and energy disruption');
  if(data.social.supports&&/limited|no support|inconsistent|poor/i.test(data.social.supports))maintaining.push('limited or inconsistent support');
 
  const strengths=[...new Set([
@@ -571,15 +623,13 @@ function buildClinicalFormulation(data){
   ...meaningfulValues(data.risk.protectiveFactors)
  ])];
 
- const presenting=domains.length
-  ?listText(domains.map(([key])=>clinicalDomainLabel(key).toLowerCase()))
-  :meaningfulValues(p.concerns).length?listText(meaningfulValues(p.concerns).map(v=>v.toLowerCase())):'the current behavioral-health concerns';
-
- const precipitating=p.reasonSeekingCare
-  ?`Current difficulties appear to have intensified in the context of ${reasonToClinicalPhrase(p.reasonSeekingCare)}.`
-  :'The immediate precipitating factors require further clarification.';
-
- return `The client’s current presentation involves ${presenting}${p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)).length?`, with associated impairment in ${listText(p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)).map(v=>v.toLowerCase()))}`:''}. ${vulnerabilities.length?`Relevant vulnerability factors include ${listText(vulnerabilities)}.`:''} ${precipitating} ${maintaining.length?`The current pattern may be maintained by ${listText(maintaining)}.`:''} ${strengths.length?`Protective factors and treatment assets include ${listText(strengths.map(v=>v.toLowerCase()))}.`:''}`.replace(/\s+/g,' ').trim();
+ return [
+  current.length?`From a bird’s-eye view, the client is currently presenting with ${listText(current)}.`:'',
+  presentContext.length?`These difficulties are occurring in the present-day context of ${listText(presentContext)}.`:'',
+  history.length?`Earlier experiences and background factors that may help explain the current presentation include ${listText(history)}.`:'',
+  maintaining.length?`The current pattern may be reinforced by ${listText([...new Set(maintaining)])}.`:'',
+  strengths.length?`${listText(strengths.map(v=>v.toLowerCase()))} represent meaningful strengths and treatment assets.`:''
+ ].filter(Boolean).join(' ')||'Clinical conceptualization requires additional assessment information.';
 }
 
 

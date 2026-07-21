@@ -403,3 +403,7 @@ textarea{min-height:118px;line-height:1.62}
  .clinical-side-panel.focus-mode .intelligence-tab-content{padding:18px}
  .symptom-group-grid{grid-template-columns:1fr}
 }
+
+/* Compass 7.3.1 — Narrative Polish */
+.preview-section h4{letter-spacing:.085em}
+.domain-story-card p+ p{margin-top:9px;padding-top:9px;border-top:1px dashed rgba(95,71,121,.15)}

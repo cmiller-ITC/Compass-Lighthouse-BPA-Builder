@@ -1,20 +1,18 @@
-# Lighthouse Compass 7.3 — Visual Experience & Panel Refinement
+# Lighthouse Compass 7.3.1 — Narrative Polish & Clinical Conceptualization
 
 ## Improvements
-- Wider, more spacious clinical workspace
-- Right-side Lighthouse Intelligence panel has independent, smooth scrolling
-- Panel tabs no longer squeeze together and can scroll horizontally
-- Focus View expands the panel for comfortable reading
-- Hide / reopen controls let clinicians reclaim form space
-- Top button returns the active panel tab to the beginning
-- Panel automatically scrolls to the top when changing tabs or sections
-- Responsive layout stacks the panel below the form before content becomes cramped
-- Forms, fields, cards, accordions, and checkboxes have more breathing room
-- Symptom groups use soft color-coded accents
-- Narrative cards, Clinical Coach panels, and section contributions have cleaner hierarchy
-- Improved focus states, hover feedback, shadows, spacing, and mobile behavior
-
-This release changes presentation and interaction only; clinical logic from 7.2.1 is preserved.
+- Free text is normalized before entering live or generated narratives
+- “Patient endorses…” becomes natural client-centered wording
+- Complete clinician-entered sentences are preserved instead of receiving duplicate lead-ins
+- Fragments receive an appropriate lead-in only when needed
+- Context entries beginning with “following,” “after,” “since,” or “during” are converted into natural clinical sentences
+- Patient-specific symptom details remain in the relevant domain instead of being repeated under Functional Impact
+- Functional Impact now focuses only on how life is affected
+- Integrated Formulation is renamed Clinical Conceptualization
+- Clinical Conceptualization starts with a bird’s-eye view of the current presentation
+- Relevant history is connected to the present rather than merely listed
+- Maintaining patterns are inferred from documented avoidance, reassurance seeking, compulsions, worry, hypervigilance, sleep disruption, and support limitations
+- Generated HPI and final conceptualization use the same language-normalization rules
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.
