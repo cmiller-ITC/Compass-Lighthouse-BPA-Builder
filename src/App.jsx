@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.4 Presenting Experience</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.4.1 Presenting Runtime Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.4</div>
+    <div className="eyebrow">Lighthouse Compass 7.4.1</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -119,6 +119,63 @@ function LighthouseScene({progress=0}){
   </svg>
   <div className="scene-caption"><span>Compass · Dawn</span><strong>{progress>=85?'The path is illuminated':progress>=55?'Clarity is taking shape':'Understanding begins here'}</strong></div>
  </div>
+}
+
+const reasonSeekingCareGroups=[
+ {label:'Change in Symptoms or Functioning',icon:'↗',options:[
+  'Symptoms have recently worsened','New symptoms have developed','Symptoms are interfering with daily functioning',
+  'Difficulty coping independently','Symptoms are no longer manageable','Returning to treatment after a break'
+ ]},
+ {label:'Life Event or Current Stressor',icon:'◌',options:[
+  'Major life transition or adjustment','Relationship conflict or separation','Grief, loss, or bereavement',
+  'Work or school stress','Job loss or employment instability','Financial stress','Caregiver or parenting stress',
+  'Medical diagnosis, chronic illness, or pain','Pregnancy, postpartum, or reproductive transition',
+  'Housing instability or relocation','Legal or court-related stress'
+ ]},
+ {label:'Clarification, Referral, or Continued Care',icon:'◇',options:[
+  'Diagnostic clarification','Medication-related evaluation or coordination','Referral from another provider',
+  'School, employer, or EAP referral','Court or probation referral','Family encouragement or concern',
+  'Step-down or aftercare following higher level of care'
+ ]},
+ {label:'Growth, Recovery, or Prevention',icon:'✦',options:[
+  'Desire for healthier coping skills','Desire to better understand symptoms or patterns',
+  'Trauma recovery or processing past experiences','Improve emotional regulation','Improve relationships or communication',
+  'Personal growth or relapse prevention'
+ ]}
+];
+
+const clientRequestGroups=[
+ {label:'Symptom Relief & Stabilization',icon:'☀',options:[
+  'Reduce anxiety or excessive worry','Improve mood and motivation','Reduce panic symptoms',
+  'Reduce obsessive thoughts and compulsive behaviors','Improve emotional regulation','Improve sleep',
+  'Manage trauma-related symptoms','Manage chronic pain or health-related distress','Reduce substance-related concerns'
+ ]},
+ {label:'Coping, Insight & Daily Functioning',icon:'🧭',options:[
+  'Develop healthier coping skills','Better understand emotions, symptoms, or patterns','Increase distress tolerance',
+  'Improve concentration and executive functioning','Improve work or school functioning',
+  'Increase confidence and self-esteem','Improve daily routines and self-care','Improve overall quality of life'
+ ]},
+ {label:'Relationships, Boundaries & Communication',icon:'∞',options:[
+  'Improve communication','Build healthier boundaries','Improve intimate or family relationships',
+  'Reduce people pleasing or fear of conflict','Strengthen social support','Navigate separation, divorce, or relationship change'
+ ]},
+ {label:'Healing, Growth & Treatment Direction',icon:'✦',options:[
+  'Process trauma or painful experiences','Heal from grief or loss','Clarify diagnosis and treatment needs',
+  'Begin or resume individual therapy','Explore medication evaluation or coordination',
+  'Determine whether a higher level of care is needed','Create a treatment plan with clear goals'
+ ]}
+];
+
+function ClinicalChoiceGroups({label,helper,value,onChange,groups}){
+ return <section className="clinical-choice-field">
+  <div className="choice-heading"><div><span>{label}</span><small>{helper}</small></div>{value&&<button type="button" className="clear-choice" onClick={()=>onChange('')}>Clear</button>}</div>
+  <div className="choice-group-stack">{groups.map(group=><details className="choice-group" key={group.label} open>
+   <summary><span className="choice-group-icon">{group.icon}</span><strong>{group.label}</strong><small>{group.options.includes(value)?'Selected here':'Choose one'}</small></summary>
+   <div className="choice-options">{group.options.map(option=><button type="button" key={option} className={`choice-option ${value===option?'selected':''}`} onClick={()=>onChange(option)}>
+    <span className="choice-radio">{value===option?'✓':''}</span><span>{option}</span>
+   </button>)}</div>
+  </details>)}</div>
+ </section>
 }
 
 function Presenting({data,set,toggle}){const p=data.presenting;return <Page><div className="workspace-grid"><div>
