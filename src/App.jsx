@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.4.3 Multi-Select Runtime Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.5 Premium Selection Polish</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.4.3</div>
+    <div className="eyebrow">Lighthouse Compass 7.5</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -1188,5 +1188,26 @@ function Documentation({data,outputs,copy,dispatch}){
   </Card>
  </div><ClinicalSidePanel data={data} section="documentation"/></div></Page>
 }
-function Page({children}){return <div className="page">{children}</div>}function Card({title,children}){return <section className="card"><h2>{title}</h2>{children}</section>}function Grid({columns=2,children}){return <div className={`grid cols-${columns}`}>{children}</div>}function Input({label,value,onChange,placeholder=''}){return <label className="field"><span>{label}</span><input value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}function TextArea({label,value,onChange,placeholder=''}){return <label className="field"><span>{label}</span><textarea value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}function Select({label,value,onChange,options}){return <label className="field"><span>{label}</span><select value={value} onChange={e=>onChange(e.target.value)}><option value="">Select...</option>{options.map(o=><option key={o}>{o}</option>)}</select></label>}function Checks({options,selected,onToggle}){return <div className="checks">{options.map(o=><label key={o}><input type="checkbox" checked={selected.includes(o)} onChange={()=>onToggle(o)}/><span>{o}</span></label>)}</div>}function Stat({label,value}){return <div><small>{label}</small><strong>{value}</strong></div>}function titleCase(value){return value.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())}
+function Page({children}){return <div className="page">{children}</div>}function Card({title,children}){
+ const tone=(()=>{
+  const value=String(title||'').toLowerCase();
+  if(/risk|safety|crisis/.test(value))return'risk';
+  if(/strength|support|social|trauma/.test(value))return'sage';
+  if(/symptom|concern|presenting|impairment/.test(value))return'plum';
+  if(/medical|substance|medication/.test(value))return'ocean';
+  if(/diagnos|measure|formulation|conceptualization/.test(value))return'gold';
+  return'neutral';
+ })();
+ return <section className={`card card-tone-${tone}`}><div className="card-heading"><span className="card-accent" aria-hidden="true"/><h2>{title}</h2></div>{children}</section>
+}function Grid({columns=2,children}){return <div className={`grid cols-${columns}`}>{children}</div>}function Input({label,value,onChange,placeholder=''}){return <label className="field"><span>{label}</span><input value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}function TextArea({label,value,onChange,placeholder=''}){return <label className="field"><span>{label}</span><textarea value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}function Select({label,value,onChange,options}){return <label className="field"><span>{label}</span><select value={value} onChange={e=>onChange(e.target.value)}><option value="">Select...</option>{options.map(o=><option key={o}>{o}</option>)}</select></label>}function Checks({options,selected,onToggle}){
+ const selectedValues=Array.isArray(selected)?selected:[];
+ return <div className="checks">{options.map((option,index)=>{
+  const isSelected=selectedValues.includes(option);
+  return <label key={option} className={`check-card tone-${index%5} ${isSelected?'selected':''}`}>
+   <input type="checkbox" checked={isSelected} onChange={()=>onToggle(option)}/>
+   <span className="check-indicator" aria-hidden="true">{isSelected?'✓':''}</span>
+   <span className="check-label">{option}</span>
+  </label>
+ })}</div>
+}function Stat({label,value}){return <div><small>{label}</small><strong>{value}</strong></div>}function titleCase(value){return value.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())}
 export default App;

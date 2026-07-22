@@ -490,3 +490,147 @@ textarea{min-height:118px;line-height:1.62}
 .symptom-group.tone-4 .checks label:has(input:checked)::before{background:#547f9a}
 .checks input{width:17px;height:17px}
 @media(max-width:900px){.presenting-intro-grid{grid-template-columns:1fr}}
+
+
+/* Compass 7.5 — Premium Selection Polish */
+.card{position:relative;overflow:hidden}
+.card-heading{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.card-heading h2{margin:0!important}
+.card-accent{width:7px;height:32px;border-radius:999px;background:#8b6bb2;box-shadow:0 0 0 5px rgba(139,107,178,.08)}
+.card-tone-sage .card-accent{background:#658f7e;box-shadow:0 0 0 5px rgba(101,143,126,.09)}
+.card-tone-ocean .card-accent{background:#507f98;box-shadow:0 0 0 5px rgba(80,127,152,.09)}
+.card-tone-gold .card-accent{background:#d4a45d;box-shadow:0 0 0 5px rgba(212,164,93,.10)}
+.card-tone-risk .card-accent{background:#b8737d;box-shadow:0 0 0 5px rgba(184,115,125,.09)}
+.card-tone-neutral .card-accent{background:#94859f;box-shadow:0 0 0 5px rgba(148,133,159,.08)}
+
+.checks{gap:11px}
+.check-card{
+ --selection-accent:#8b6bb2;
+ position:relative;
+ display:grid!important;
+ grid-template-columns:24px minmax(0,1fr);
+ align-items:center!important;
+ gap:10px!important;
+ min-height:52px;
+ padding:12px 14px 12px 15px!important;
+ border:1px solid #ded6e5!important;
+ border-radius:14px!important;
+ background:linear-gradient(145deg,#fff,#fdfcfe)!important;
+ box-shadow:none!important;
+ transform:none!important;
+ overflow:hidden;
+ cursor:pointer;
+ transition:border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+.check-card.tone-0{--selection-accent:#8b6bb2}
+.check-card.tone-1{--selection-accent:#4f918e}
+.check-card.tone-2{--selection-accent:#d2a257}
+.check-card.tone-3{--selection-accent:#b77b93}
+.check-card.tone-4{--selection-accent:#547f9a}
+.check-card:hover{
+ transform:none!important;
+ border-color:#c9bdd4!important;
+ background:#fff!important;
+ box-shadow:0 6px 16px rgba(56,40,76,.055)!important;
+}
+.check-card.selected{
+ padding-left:18px!important;
+ border-color:color-mix(in srgb,var(--selection-accent) 38%,#ded6e5)!important;
+ background:linear-gradient(135deg,color-mix(in srgb,var(--selection-accent) 8%,#fff),#fff)!important;
+ box-shadow:0 7px 18px rgba(57,40,77,.055)!important;
+}
+.check-card.selected::before{
+ content:'';
+ position:absolute;
+ inset:0 auto 0 0;
+ width:6px;
+ background:var(--selection-accent);
+}
+.check-card input{
+ position:absolute;
+ opacity:0;
+ pointer-events:none;
+ width:1px!important;
+ height:1px!important;
+ margin:0!important;
+}
+.check-indicator{
+ display:grid;
+ place-items:center;
+ width:22px;
+ height:22px;
+ border-radius:7px;
+ border:1.5px solid #cfc5d8;
+ background:#fff;
+ color:#fff;
+ font-size:12px;
+ font-weight:950;
+ transition:background .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.check-card.selected .check-indicator{
+ border-color:var(--selection-accent);
+ background:var(--selection-accent);
+ box-shadow:0 0 0 4px color-mix(in srgb,var(--selection-accent) 12%,transparent);
+}
+.check-label{
+ display:block;
+ min-width:0;
+ color:#4f4755;
+ font-size:11.5px;
+ font-weight:750;
+ line-height:1.35;
+}
+.check-card.selected .check-label{color:#42364c;font-weight:850}
+
+/* Presenting multi-theme cards use the same premium language */
+.choice-option{
+ --selection-accent:#6f9f9a;
+ min-height:44px;
+ border-radius:12px;
+}
+.choice-group.theme-0 .choice-option{--selection-accent:#8b6bb2}
+.choice-group.theme-1 .choice-option{--selection-accent:#4f918e}
+.choice-group.theme-2 .choice-option{--selection-accent:#d2a257}
+.choice-group.theme-3 .choice-option{--selection-accent:#b77b93}
+.choice-option.selected::before{width:6px;background:var(--selection-accent)}
+.choice-option.selected{
+ border-color:color-mix(in srgb,var(--selection-accent) 36%,#ded6e5);
+ background:linear-gradient(135deg,color-mix(in srgb,var(--selection-accent) 8%,#fff),#fff);
+}
+.choice-option.selected .choice-radio{
+ border-color:var(--selection-accent);
+ background:var(--selection-accent);
+ color:#fff;
+ box-shadow:0 0 0 4px color-mix(in srgb,var(--selection-accent) 12%,transparent);
+}
+
+/* Clearer visual separation inside domain-specific sections */
+.symptom-group{
+ border-top:1px solid color-mix(in srgb,var(--group-accent,#8a6db0) 28%,#e1d9e8)!important;
+}
+.symptom-group h4{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ font-size:11px!important;
+}
+.symptom-group h4::before{
+ content:'';
+ width:8px;
+ height:8px;
+ border-radius:50%;
+ background:var(--group-accent,#8a6db0);
+ box-shadow:0 0 0 4px color-mix(in srgb,var(--group-accent,#8a6db0) 12%,transparent);
+}
+
+/* Remove every legacy lift/ghost selected state */
+.checks label:has(input:checked),
+.checks label:has(input:checked):hover{
+ transform:none!important;
+ box-shadow:none!important;
+}
+@media(max-width:720px){
+ .check-card{min-height:48px}
+ .card-heading{align-items:flex-start}
+ .card-accent{height:28px}
+}
