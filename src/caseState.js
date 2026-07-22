@@ -227,9 +227,12 @@ export const initialCaseData = {
     diagnoses: [], services: [], treatmentResponse: "", hospitalization: "",
     suicideAttempts: "", nssi: "", details: ""
   },
-  familyHistory: { conditions: [], relationshipPattern: "", supportLevel: "", details: "" },
+  familyHistory: { conditions: [], relationshipPattern: "", relationshipPatterns: [], supportLevel: "", currentImpact: "", currentPatterns: [], relationalDetails: "", details: "" },
   medical: {
-    conditions: [], sleep: "", pain: "", allergies: "", providerFollowUp: "",
+    conditions: [], sleep: "", sleepConcerns: [], sleepContributors: [], sleepHours: "",
+    sleepQuality: "", sleepDaytimeImpact: "", sleepFollowUp: "", sleepDetails: "",
+    pain: "", allergies: "", providerFollowUp: "", followUpNeeds: [], currentProviders: "",
+    careCoordination: "", mentalHealthImpact: "", medicationFactors: [],
     details: "", medications: [{ name: "", dose: "", frequency: "", indication: "" }]
   },
   substance: {
@@ -325,26 +328,23 @@ function setPath(obj,path,value){
 function getPath(obj,path){return path.split('.').reduce((acc,key)=>acc?.[key],obj)}
 export function listText(items=[]){const c=items.filter(Boolean);if(!c.length)return'';if(c.length===1)return c[0];if(c.length===2)return`${c[0]} and ${c[1]}`;return`${c.slice(0,-1).join(', ')}, and ${c.at(-1)}`}
 function sentence(v){const t=String(v||'').trim();return !t?'':/[.!?]$/.test(t)?t:`${t}.`}
-function normalizeClinicalText(value,{fragmentLead='The client describes',context=false}={}){
+function normalizeClinicalText(value,{context=false}={}){
  let text=String(value||'').trim().replace(/\s+/g,' ');
  if(!text)return'';
- text=text.replace(/^patient\s+/i,'The client ').replace(/^the patient\s+/i,'The client ').replace(/^client\s+/i,'The client ');
- if(/^the client\s+(endorses|reports|states|describes|notes|experiences|indicates|shares)\b/i.test(text)){
-  return sentence(text.replace(/^the client\s+endorses\b/i,'The client reports'));
- }
- if(/^(he|she|they)\s+(reports?|states?|describes?|notes?|experiences?|indicates?|shares?)\b/i.test(text)){
-  return sentence(text.charAt(0).toUpperCase()+text.slice(1));
- }
- if(/^(symptoms?|anxiety|depression|panic|worry|mood|sleep|functioning|trauma|obsessions?|compulsions?)\b/i.test(text)){
-  return sentence(text.charAt(0).toUpperCase()+text.slice(1));
- }
- if(context){
-  if(/^(following|after|since|during|when|in response to|in the context of)\b/i.test(text))return sentence(`Symptoms intensified ${text}`);
-  return sentence(`Relevant context, triggers, or patterns include ${text}`);
- }
- return sentence(`${fragmentLead} ${text}`);
-}
 
+ text=text
+  .replace(/^the patient\b/i,'The client')
+  .replace(/^patient\b/i,'The client')
+  .replace(/^client\b/i,'The client')
+  .replace(/^pt\.?\s+/i,'The client ')
+  .replace(/\bthe patient\b/gi,'the client')
+  .replace(/\bpatient\b/gi,'client')
+  .replace(/\bthe pt\.?\b/gi,'the client')
+  .replace(/\bpt\.?\b/gi,'the client');
+
+ text=text.charAt(0).toUpperCase()+text.slice(1);
+ return sentence(text);
+}
 
 function cleanChartOutput(value){
  return String(value||'')
@@ -386,7 +386,7 @@ function conciseList(values,{limit=3,mapper=value=>String(value).toLowerCase()}=
  return `${listText(items.slice(0,limit))} within a broader pattern of related concerns`;
 }
 function normalizeClientText(value){
- return normalizeClinicalText(value,{fragmentLead:'The client reports'})
+ return normalizeClinicalText(value)
   .replace(/^The client reports The client\s+/i,'The client ')
   .replace(/^The client describes The client\s+/i,'The client ')
   .replace(/^The client reports Patient\s+/i,'The client ');
@@ -444,7 +444,7 @@ function buildHPI(data){
  if(contexts.length)paragraphs.push(normalizeClinicalText(contexts[0],{context:true}));
 
  const examples=domains.map(([,domain])=>domain.notes).filter(Boolean);
- if(examples.length)paragraphs.push(normalizeClinicalText(examples[0],{fragmentLead:'The client describes'}));
+ if(examples.length)paragraphs.push(normalizeClinicalText(examples[0]));
 
  return paragraphs.join('\n\n')||'History of present illness information has not yet been entered.';
 }
@@ -475,18 +475,46 @@ function buildPsychHistory(data){
 }
 function buildFamilyHistory(data){
  const f=data.familyHistory,parts=[];
+ const conditions=meaningfulValues(f.conditions);
  if(f.conditions.includes('None reported'))parts.push('The client reports no known family psychiatric, substance-use, suicide, or psychiatric-hospitalization history.');
- else if(f.conditions.some(v=>v.startsWith('Unknown')))parts.push('Family psychiatric history is currently unknown or unavailable.');
- else{const conditions=f.conditions.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));if(conditions.length)parts.push(`Family psychiatric history is notable for ${listText(conditions.map(v=>v.toLowerCase()))}.`)}
- if(f.relationshipPattern)parts.push(`Family relationships are described as ${f.relationshipPattern.toLowerCase()}.`);if(f.supportLevel)parts.push(`Family support is described as ${f.supportLevel.toLowerCase()}.`);if(f.details)parts.push(sentence(f.details));return parts.join(' ')||'Family psychiatric history has not yet been documented.';
+ else if(f.conditions.some(v=>String(v).startsWith('Unknown')))parts.push('Family psychiatric history is currently unknown or unavailable.');
+ else if(conditions.length)parts.push(`Family psychiatric history is notable for ${listText(conditions.map(v=>v.toLowerCase()))}.`);
+
+ const patterns=meaningfulValues(f.relationshipPatterns?.length?f.relationshipPatterns:(f.relationshipPattern?[f.relationshipPattern]:[]));
+ if(patterns.length)parts.push(`Family relationship patterns are described as ${listText(patterns.map(v=>v.toLowerCase()))}.`);
+ if(f.supportLevel)parts.push(`Current family support is described as ${f.supportLevel.toLowerCase()}.`);
+ if(f.currentImpact)parts.push(`The present-day impact of family relationships is described as ${f.currentImpact.toLowerCase()}.`);
+ if(meaningfulValues(f.currentPatterns).length)parts.push(`Current interpersonal patterns include ${listText(meaningfulValues(f.currentPatterns).map(v=>v.toLowerCase()))}.`);
+ if(f.relationalDetails)parts.push(normalizeClinicalText(f.relationalDetails));
+ else if(f.details)parts.push(sentence(f.details));
+ return parts.join(' ')||'Family and relational history has not yet been entered.';
 }
+
 function buildMedical(data){
  const m=data.medical,parts=[];
+ const conditions=meaningfulValues(m.conditions);
  if(m.conditions.includes('None reported'))parts.push('The client reports no significant medical conditions.');
- else if(m.conditions.some(v=>v.startsWith('Unknown')))parts.push('Medical history is currently unknown or has not yet been fully assessed.');
- else{const conditions=m.conditions.filter(v=>!v.startsWith('None')&&!v.startsWith('Unknown'));if(conditions.length)parts.push(`Medical history includes ${listText(conditions.map(v=>v.toLowerCase()))}.`)}
- if(m.sleep)parts.push(`Sleep is described as ${m.sleep.toLowerCase()}.`);if(m.pain)parts.push(`Pain is described as ${m.pain.toLowerCase()}.`);if(m.allergies)parts.push(`Allergy information: ${m.allergies}.`);if(m.providerFollowUp)parts.push(`Medical follow-up is ${m.providerFollowUp.toLowerCase()}.`);if(m.details)parts.push(sentence(m.details));return parts.join(' ')||'Medical history has not yet been documented.';
+ else if(m.conditions.some(v=>String(v).startsWith('Unknown')))parts.push('Medical history is currently unknown or has not yet been fully assessed.');
+ else if(conditions.length)parts.push(`Medical history includes ${listText(conditions.map(v=>v.toLowerCase()))}.`);
+ if(m.pain)parts.push(`Pain is described as ${m.pain.toLowerCase()}.`);
+ if(m.mentalHealthImpact)parts.push(`The client describes the medical contribution to mental-health functioning as ${m.mentalHealthImpact.toLowerCase()}.`);
+
+ const sleep=meaningfulValues(m.sleepConcerns);
+ if(sleep.length)parts.push(`Current sleep concerns include ${listText(sleep.map(v=>v.toLowerCase()))}.`);
+ if(m.sleepHours)parts.push(`Typical sleep duration is ${m.sleepHours.toLowerCase()} per night.`);
+ if(m.sleepQuality)parts.push(`Sleep quality is described as ${m.sleepQuality.toLowerCase()}.`);
+ if(m.sleepDaytimeImpact)parts.push(`Daytime effects include ${m.sleepDaytimeImpact.toLowerCase()}.`);
+ if(meaningfulValues(m.sleepContributors).length)parts.push(`Possible contributors to sleep disruption include ${listText(meaningfulValues(m.sleepContributors).map(v=>v.toLowerCase()))}.`);
+ if(m.sleepDetails)parts.push(normalizeClinicalText(m.sleepDetails));
+
+ if(meaningfulValues(m.followUpNeeds).length)parts.push(`Medical follow-up or coordination needs include ${listText(meaningfulValues(m.followUpNeeds).map(v=>v.toLowerCase()))}.`);
+ else if(m.providerFollowUp)parts.push(`Medical follow-up status is ${m.providerFollowUp.toLowerCase()}.`);
+ if(m.currentProviders)parts.push(`Current providers include ${m.currentProviders}.`);
+ if(m.careCoordination)parts.push(`Care-coordination considerations include ${m.careCoordination}.`);
+ if(m.details)parts.push(sentence(m.details));
+ return parts.join(' ')||'Medical and sleep history has not yet been entered.';
 }
+
 function buildMedications(data){const meds=data.medical.medications.filter(m=>m.name.trim());return meds.length?meds.map(m=>{const d=[m.dose,m.frequency,m.indication].filter(Boolean).join(', ');return d?`${m.name} (${d})`:m.name}).join('; ')+'.':'No current medications were entered.'}
 function buildSubstance(data){const s=data.substance,rows=[['Alcohol',s.alcohol],['Cannabis',s.cannabis],['Nicotine/tobacco/vaping',s.nicotine],['Opioids',s.opioids],['Stimulants',s.stimulants],['Sedatives/benzodiazepines',s.sedatives],['Other substances',s.other]].filter(([,v])=>v),parts=[];if(rows.length)parts.push(`Substance-use history includes ${rows.map(([n,v])=>`${n}: ${v}`).join('; ')}.`);if(s.treatmentHistory)parts.push(`Substance-use treatment history is described as ${s.treatmentHistory.toLowerCase()}.`);if(s.recoverySupports)parts.push(`Recovery supports include ${s.recoverySupports}.`);if(s.details)parts.push(sentence(s.details));return parts.join(' ')||'Substance-use history was not fully documented during this evaluation.'}
 function buildTrauma(data){const t=data.trauma,parts=[];if(t.experiences.length)parts.push(`The client reports trauma or adverse experiences including ${listText(t.experiences)}.`);if(t.symptoms.length)parts.push(`Current trauma-related symptoms include ${listText(t.symptoms)}.`);if(t.details)parts.push(sentence(t.details));return parts.join(' ')||'Trauma history was not fully documented during this evaluation.'}

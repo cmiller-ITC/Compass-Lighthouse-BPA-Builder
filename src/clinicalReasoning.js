@@ -167,6 +167,45 @@ export function collectContributors(data){
   };
 }
 
+export function collectRelationalContext(data){
+  const family = data?.familyHistory || {};
+  const social = data?.social || {};
+  const familyPatterns = meaningful(family.relationshipPatterns?.length ? family.relationshipPatterns : family.relationshipPattern);
+  const currentPatterns = meaningful(family.currentPatterns);
+  const evidenceItems = [
+    ...familyPatterns.map(value => evidence("familyHistory.relationshipPatterns","Family relationship pattern",value)),
+    ...currentPatterns.map(value => evidence("familyHistory.currentPatterns","Current interpersonal pattern",value)),
+    family.supportLevel && evidence("familyHistory.supportLevel","Family support level",family.supportLevel),
+    family.currentImpact && evidence("familyHistory.currentImpact","Present-day family impact",family.currentImpact),
+    family.relationalDetails && evidence("familyHistory.relationalDetails","Relational narrative",family.relationalDetails),
+    social.relationships && evidence("social.relationships","Current relationship context",social.relationships),
+    social.supports && evidence("social.supports","Current support system",social.supports)
+  ].filter(Boolean);
+
+  const possibleThemes = [];
+  const addTheme = (id,label,matcher,meaning) => {
+    const matches=evidenceItems.filter(item=>matcher.test(lower(item.value)));
+    if(matches.length)possibleThemes.push({id,label,confidence:confidenceFor(matches),evidence:matches,clinicalMeaning:meaning});
+  };
+  addTheme("conflictAvoidance","conflict avoidance or people pleasing",/people pleasing|fear of conflict|conflict avoidant|difficulty expressing needs/,"Earlier and current relational patterns may shape how the client responds to disagreement, needs, and perceived rejection.");
+  addTheme("boundaryDifficulty","boundary or overfunctioning difficulties",/boundary|overfunction|caretaking|parentified|enmeshed/,"Relational roles may contribute to difficulty balancing personal needs with responsibility for others.");
+  addTheme("trustInsecurity","difficulty with trust or interpersonal safety",/difficulty trusting|fear of rejection|abandonment|inconsistent|chaotic|emotionally unavailable/,"Relational inconsistency may contribute to caution, sensitivity, or insecurity in current relationships.");
+  addTheme("selfCriticism","self-criticism or shame vulnerability",/critical|highly demanding|invalidating|self-criticism|shame|sensitivity to criticism/,"Repeated criticism or emotional invalidation may contribute to current self-evaluative patterns.");
+  addTheme("supportiveRelationships","supportive relational resources",/supportive|strong and reliable|secure|emotionally available/,"Supportive relationships may serve as meaningful protective and recovery resources.");
+
+  return {
+    familyPatterns,
+    supportLevel:family.supportLevel || "",
+    presentImpact:family.currentImpact || "",
+    currentPatterns,
+    relationalNarrative:String(family.relationalDetails || "").trim(),
+    currentRelationshipContext:String(social.relationships || "").trim(),
+    currentSupportSystem:String(social.supports || "").trim(),
+    evidence:evidenceItems,
+    themes:possibleThemes
+  };
+}
+
 export function collectMaintainingFactors(data){
   const domains = activeDomainEntries(data);
   const corpus = textCorpus(data);
@@ -290,10 +329,11 @@ export function collectTreatmentTargets(data,maintainingFactors=collectMaintaini
 export function buildClinicalReasoning(data){
   const presentation = collectPresentation(data);
   const contributors = collectContributors(data);
+  const relationalContext = collectRelationalContext(data);
   const maintainingFactors = collectMaintainingFactors(data);
   const strengths = collectStrengths(data);
   const treatmentTargets = collectTreatmentTargets(data,maintainingFactors);
-  return {presentation,contributors,maintainingFactors,strengths,treatmentTargets};
+  return {presentation,contributors,relationalContext,maintainingFactors,strengths,treatmentTargets};
 }
 
 function contributorSummary(contributors){
@@ -309,7 +349,7 @@ function contributorSummary(contributors){
 
 export function buildEvidenceBasedConceptualization(data){
   const reasoning = buildClinicalReasoning(data);
-  const {presentation,contributors,maintainingFactors,strengths} = reasoning;
+  const {presentation,contributors,relationalContext,maintainingFactors,strengths} = reasoning;
   const domainLabels = presentation.domains.map(domain => domain.label);
   const currentItems = domainLabels.length ? domainLabels : presentation.concerns.map(lower);
   const context = contributorSummary(contributors);
@@ -328,6 +368,15 @@ export function buildEvidenceBasedConceptualization(data){
 
   if(context.history.length){
     sentences.push(`Background factors that may be relevant to the present-day presentation include ${naturalList(context.history)}.`);
+  }
+
+  const relationalThemes=(relationalContext?.themes||[]).filter(theme=>theme.id!=="supportiveRelationships");
+  if(relationalThemes.length){
+    const labels=relationalThemes.slice(0,3).map(theme=>theme.label);
+    sentences.push(`Documented family and relational experiences may be relevant to current patterns involving ${naturalList(labels)}.`);
+  }
+  if(relationalContext?.supportLevel && /limited|no current|mixed|source of stress/i.test(relationalContext.supportLevel)){
+    sentences.push(`The client’s current family support appears ${lower(relationalContext.supportLevel)}, which may affect access to emotional or practical support.`);
   }
 
   if(maintainingFactors.length){

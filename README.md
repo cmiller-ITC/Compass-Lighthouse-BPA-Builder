@@ -1,21 +1,25 @@
-# Lighthouse Compass 7.7 — Clinical Reasoning Foundation
+# Lighthouse Compass 7.8.1 — Narrative & Golden Thread Hotfix
 
-## New clinical reasoning layer
-- Added a dedicated `clinicalReasoning.js` module
-- Collects current presentation as structured facts
-- Separates current contributors from historical context
-- Identifies maintaining factors only when assessment evidence supports them
-- Assigns high, moderate, or emerging support based on available evidence
-- Collects strengths and protective factors with their source
-- Builds initial treatment targets from supported mechanisms and client goals
-- Replaces canned Clinical Conceptualization assumptions with evidence-based reasoning
-- Adds an expandable “Why Compass reached this formulation” panel
-- Displays the evidence supporting each maintaining factor
-- States that maintaining factors require clarification when no evidence exists
-- Removes numeric phrases such as “and 5 additional concerns”
+## Free-text cleanup
+- Clinician-entered narrative is now lightly cleaned rather than rewritten
+- Converts patient / pt language to client language
+- Normalizes capitalization, spacing, and punctuation
+- Does not prepend “The client describes,” “The client reports,” or other canned lead-ins
+- Fixes duplications such as “The client describes The client indicated…”
 
-## Important
-The engine does not infer avoidance, rumination, reassurance seeking, compulsions, threat monitoring, sleep disruption, limited support, or other maintaining factors unless matching evidence appears in the assessment.
+## Golden Thread validator
+- No longer depends on clicking Generate or on legacy generated-output property names
+- Evaluates the current assessment data directly
+- Checks each link separately:
+  - assessment findings
+  - functional impairment
+  - diagnosis / clinical impression
+  - diagnostic rationale
+  - medical necessity
+  - level of care
+  - treatment direction
+- Shows the exact missing link and corrective guidance
+- Marks Golden Thread complete when all clinical links are established, even before generating the final documentation package
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.

@@ -23,6 +23,13 @@ const psychDx=['None reported','Unknown / records unavailable','Major depressive
 const services=['None reported','Unknown / records unavailable','Outpatient therapy','Medication management','Psychiatric hospitalization','Partial hospitalization','Intensive outpatient','Crisis stabilization','Emergency behavioral-health evaluation','Substance-use treatment','Residential treatment'];
 const familyConditions=['None reported','Unknown / family history unavailable','Depression','Anxiety','Bipolar disorder','ADHD / executive functioning','Trauma / adverse experiences','Substance-use disorder','Psychosis','Suicide attempt / death by suicide','Psychiatric hospitalization','Medical illness impacting mental health'];
 const medicalConditions=['None reported','Unknown / not yet assessed','Chronic pain','Fibromyalgia','Thyroid condition','Diabetes','Cardiovascular condition','Neurological condition','Sleep disorder','Autoimmune condition','PCOS / hormonal condition','Traumatic brain injury','Seizure disorder','Other chronic illness'];
+
+const sleepConcerns=['None reported','Difficulty falling asleep','Difficulty staying asleep','Early-morning awakening','Restless / non-restorative sleep','Frequent nightmares','Irregular sleep schedule','Sleeping excessively','Decreased need for sleep','Shift-work / schedule disruption'];
+const sleepContributors=['None identified','Anxiety / worry','Racing thoughts / rumination','Trauma-related arousal or nightmares','Chronic pain','Medical condition','Medication side effects','Substance use','Possible sleep apnea','Environmental disruption','Unknown / needs further assessment'];
+const medicalFollowUpNeeds=['No follow-up currently indicated','Established primary-care provider','Primary-care follow-up recommended','Medication evaluation / psychiatry','Pain management','Sleep medicine','Endocrinology / thyroid','Neurology','Rheumatology','Cardiology','OB/GYN or reproductive health','Gastroenterology','Dental care','Vision care','Specialty care already established','Care coordination needed','Client declined follow-up','Unknown / needs clarification'];
+const medicationFactors=['No concerns reported','Taking as prescribed','Occasional missed doses','Frequent missed doses','Stopped medication independently','Recent medication change','Possible side effects','Questions or concerns about medication','Interested in psychiatric medication evaluation','Needs medication reconciliation','Unknown'];
+const familyRelationshipPatterns=['Supportive / emotionally available','Generally stable','Emotionally distant / unavailable','Critical or highly demanding','Controlling','Conflictual','Chaotic / unpredictable','Inconsistent','Enmeshed','Parentified / role reversal','Invalidating of emotions','Conflict avoidant','Estranged or no contact','History of abuse or neglect','Mixed / complex','Unknown / not yet assessed'];
+const currentInterpersonalPatterns=['None identified','People pleasing','Fear of conflict','Difficulty setting boundaries','Fear of rejection or abandonment','Difficulty trusting others','Reassurance seeking','Hyper-independence / difficulty accepting help','Relationship avoidance or withdrawal','Overfunctioning / caretaking','Sensitivity to criticism','Difficulty expressing needs','Current relationships generally secure and supportive','Unknown / needs further assessment'];
 const traumaExperiences=['Childhood abuse or neglect','Domestic / intimate-partner violence','Sexual violence','Community violence','Medical trauma','Accident / injury','Traumatic loss','Discrimination / identity-based harm','Military trauma','Other adverse experience','Trauma history deferred','No trauma disclosed'];
 const traumaSymptoms=['None reported','Not applicable / no current trauma symptoms','Intrusive memories','Nightmares','Flashbacks','Avoidance','Hypervigilance','Exaggerated startle','Emotional numbing / detachment','Negative beliefs / self-blame','Irritability / anger','Sleep disturbance','Dissociation'];
 const needs=['None reported','Not applicable','Food insecurity','Housing instability','Transportation barriers','Financial strain','Legal support','Employment support','Educational support','Caregiving support','Medical care coordination','Childcare needs','Safety concerns'];
@@ -38,7 +45,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.7 Clinical Reasoning Foundation</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.8.1 Narrative & Golden Thread Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -49,7 +56,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.7</div>
+    <div className="eyebrow">Lighthouse Compass 7.8.1</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -341,6 +348,11 @@ function ReasoningTrace({reasoning}){
    <ReasoningTraceGroup title="Current presentation" items={[
     ...reasoning.presentation.domains.map(domain=>({label:domain.label,evidence:[...domain.symptoms,...domain.impairment]}))
    ]}/>
+   <ReasoningTraceGroup title="Relational and attachment context" items={(reasoning.relationalContext?.themes||[]).map(theme=>({
+    label:theme.label,
+    confidence:theme.confidence,
+    evidence:theme.evidence.map(item=>`${item.label}: ${item.value}`)
+   }))} empty="No relational theme is stated without documented family, support, or interpersonal evidence."/>
    <ReasoningTraceGroup title="Evidence-supported maintaining factors" items={factors.map(factor=>({
     label:factor.label,
     confidence:factor.confidence,
@@ -409,7 +421,9 @@ function FinalComarReview({review,section}){
   <div className="score-hero compact"><div className="side-label">Whole-assessment readiness</div><div className="readiness-score">{review.score}%</div><div className="progress-track"><span style={{width:`${review.score}%`}}/></div></div>
   <div className="requirements-list">{review.items.map(item=><div className={`requirement-row ${item.status}`} key={item.label}>
    <span className="requirement-icon">{item.status==='met'?'✓':item.status==='upcoming'?'→':'!'}</span>
-   <div><strong>{item.label}</strong><small>{item.detail}</small></div>
+   <div><strong>{item.label}</strong><small>{item.detail}</small>
+    {item.checks&&<div className="golden-thread-links">{item.checks.map(check=><div className={check.met?'linked':'unlinked'} key={check.id}><span>{check.met?'✓':'!'}</span><em>{check.label}</em>{!check.met&&<small>{check.missing}</small>}</div>)}</div>}
+   </div>
   </div>)}</div>
   <div className="comar-note">Use this as decision support before signing. It does not replace clinical judgment, supervisory review, organizational policy, or the official record.</div>
  </div>
@@ -459,9 +473,79 @@ function buildAssessmentJourney(data,currentSection='home'){
  const nextStep=steps.find((step,index)=>index>currentIndex&&!step.complete)||(!currentStep?.complete?currentStep:null);
  return {steps,completedCount,overallProgress,currentStep,nextStep};
 }
+function validateGoldenThread(data){
+ const p=data.presenting;
+ const active=Object.entries(p.domains).filter(([,domain])=>
+  domain.symptoms.length||domain.context.trim()||domain.notes.trim()
+ );
+ const reasoning=buildClinicalReasoning(data);
+ const impairments=[...new Set([
+  ...meaningful(p.impairments),
+  ...active.flatMap(([,domain])=>meaningful(domain.impairment))
+ ])];
+
+ const checks=[
+  {
+   id:'findings',
+   label:'Assessment findings',
+   met:Boolean(active.length||meaningful(p.concerns).length),
+   missing:'Document at least one presenting concern or active symptom domain.'
+  },
+  {
+   id:'impairment',
+   label:'Functional impairment',
+   met:impairments.length>0,
+   missing:'Connect the current presentation to at least one area of functional impairment.'
+  },
+  {
+   id:'diagnosis',
+   label:'Diagnosis / clinical impression',
+   met:Boolean(data.diagnosis.primary),
+   missing:'Enter the primary diagnosis or clinical impression.'
+  },
+  {
+   id:'rationale',
+   label:'Diagnostic rationale',
+   met:Boolean(String(data.diagnosis.diagnosticRationale||'').trim()),
+   missing:'Document how the findings support the diagnosis and relevant rule-outs.'
+  },
+  {
+   id:'necessity',
+   label:'Medical necessity',
+   met:Boolean(String(data.diagnosis.medicalNecessity||'').trim()),
+   missing:'Document why behavioral-health treatment is medically necessary.'
+  },
+  {
+   id:'levelOfCare',
+   label:'Level of care',
+   met:Boolean(data.diagnosis.levelOfCare&&String(data.diagnosis.locRationale||'').trim()),
+   missing:'Select a level of care and document the rationale.'
+  },
+  {
+   id:'treatment',
+   label:'Treatment direction',
+   met:Boolean(
+    String(data.diagnosis.treatmentFocus||'').trim()||
+    hasSelections(p.clientRequest)||
+    reasoning.treatmentTargets?.length
+   ),
+   missing:'Document client goals or an initial treatment direction.'
+  }
+ ];
+ const missing=checks.filter(check=>!check.met);
+ return {
+  checks,
+  met:missing.length===0,
+  detail:missing.length
+   ?`Needs attention: ${missing.map(check=>check.label).join(', ')}.`
+   :'Assessment findings are linked to impairment, diagnosis, medical necessity, level of care, and treatment direction.'
+ };
+}
+
 function buildFinalComarReview(data){
  const p=data.presenting;
  const active=Object.values(p.domains).filter(d=>d.symptoms.length||d.context.trim()||d.notes.trim());
+ const goldenThread=validateGoldenThread(data);
  const reached=id=>{
   const order=JOURNEY_STEPS.map(step=>step.id);
   const firstIncomplete=order.findIndex(step=>!sectionEstablished(data,step));
@@ -477,16 +561,21 @@ function buildFinalComarReview(data){
   ['Trauma, social context, and strengths','social',data.trauma.experiences.length>0&&data.social.needs.length>0&&data.strengths.length>0,'Identify environmental factors, barriers, supports, and strengths.'],
   ['MSE, risk formulation, and response','mse',Boolean(data.risk.overallRisk)&&Boolean(data.risk.safetyResponse),'Match risk findings to the documented safety response.'],
   ['Diagnosis and clinical rationale','diagnosis',Boolean(data.diagnosis.primary&&data.diagnosis.diagnosticRationale),'Connect diagnosis to symptoms, duration, impairment, and rule-outs.'],
-  ['Medical necessity and level of care','diagnosis',Boolean(data.diagnosis.medicalNecessity&&data.diagnosis.levelOfCare&&data.diagnosis.locRationale),'Explain why treatment and the selected level of care are appropriate now.'],
-  ['Golden Thread and final package','documentation',Boolean(data.generated.goldenThread&&data.generated.clinicalFormulation),'Confirm that assessment findings connect to diagnosis, impairment, and treatment direction.']
+  ['Medical necessity and level of care','diagnosis',Boolean(data.diagnosis.medicalNecessity&&data.diagnosis.levelOfCare&&data.diagnosis.locRationale),'Explain why treatment and the selected level of care are appropriate now.']
  ];
  const items=specs.map(([label,step,met,missingDetail])=>{
   if(met)return{label,status:'met',detail:'Established in the current assessment.'};
   if(!reached(step))return{label,status:'upcoming',detail:`Collected later during ${JOURNEY_STEPS.find(s=>s.id===step)?.label}.`};
   return{label,status:'missing',detail:missingDetail};
  });
+ items.push({
+  label:'Golden Thread linkage',
+  status:goldenThread.met?'met':'missing',
+  detail:goldenThread.detail,
+  checks:goldenThread.checks
+ });
  const score=Math.round(items.filter(item=>item.status==='met').length/items.length*100);
- return {items,score};
+ return {items,score,goldenThread};
 }
 
 function buildEvidenceMap(data){
@@ -531,31 +620,22 @@ function chartSentence(value){
  if(!text)return'';
  return /[.!?]$/.test(text)?text:`${text}.`;
 }
-function normalizeClinicalFreeText(value,{fragmentLead='The client describes',context=false}={}){
+function normalizeClinicalFreeText(value,{context=false}={}){
  let text=String(value||'').trim().replace(/\s+/g,' ');
  if(!text)return'';
 
  text=text
-  .replace(/^patient\s+/i,'The client ')
-  .replace(/^the patient\s+/i,'The client ')
-  .replace(/^client\s+/i,'The client ');
+  .replace(/^the patient\b/i,'The client')
+  .replace(/^patient\b/i,'The client')
+  .replace(/^client\b/i,'The client')
+  .replace(/^pt\.?\s+/i,'The client ')
+  .replace(/\bthe patient\b/gi,'the client')
+  .replace(/\bpatient\b/gi,'client')
+  .replace(/\bthe pt\.?\b/gi,'the client')
+  .replace(/\bpt\.?\b/gi,'the client');
 
- if(/^the client\s+(endorses|reports|states|describes|notes|experiences|indicates|shares)\b/i.test(text)){
-  return chartSentence(text.replace(/^the client\s+endorses\b/i,'The client reports'));
- }
- if(/^(he|she|they)\s+(reports?|states?|describes?|notes?|experiences?|indicates?|shares?)\b/i.test(text)){
-  return chartSentence(text.charAt(0).toUpperCase()+text.slice(1));
- }
- if(/^(symptoms?|anxiety|depression|panic|worry|mood|sleep|functioning|trauma|obsessions?|compulsions?)\b/i.test(text)){
-  return chartSentence(text.charAt(0).toUpperCase()+text.slice(1));
- }
- if(context){
-  if(/^(following|after|since|during|when|in response to|in the context of)\b/i.test(text)){
-   return chartSentence(`Symptoms intensified ${text}`);
-  }
-  return chartSentence(`Relevant context, triggers, or patterns include ${text}`);
- }
- return chartSentence(`${fragmentLead} ${text}`);
+ text=text.charAt(0).toUpperCase()+text.slice(1);
+ return chartSentence(text);
 }
 function uniqueClinicalSentences(values=[]){
  const seen=new Set();
@@ -610,7 +690,7 @@ function buildLiveHPI(data){
  const concerns=meaningful(p.concerns),qualifiers=[];
  if(p.duration)qualifiers.push(durationPhrase(p.duration));if(p.frequency)qualifiers.push(frequencyPhrase(p.frequency));if(p.severity)qualifiers.push(`${p.severity.toLowerCase()} in severity`);if(p.course)qualifiers.push(`currently ${p.course.toLowerCase()}`);
  if(concerns.length)parts.push(`Primary concerns include ${naturalList(concerns.map(v=>v.toLowerCase()))}${qualifiers.length?`, with symptoms ${naturalList(qualifiers)}`:''}.`);
- const domainText=domains.map(domain=>{const dp=[];if(domain.symptoms.length)dp.push(`${domain.label} include ${naturalList(domain.symptoms.slice(0,7).map(v=>v.toLowerCase()))}`);if(domain.context)dp.push(`Relevant context, triggers, or patterns include ${domain.context}`);if(domain.notes)dp.push(`The client describes ${domain.notes}`);return dp.length?`${dp.join('. ')}.`:''}).filter(Boolean);
+ const domainText=domains.map(domain=>{const dp=[];if(domain.symptoms.length)dp.push(`${domain.label} include ${naturalList(domain.symptoms.slice(0,7).map(v=>v.toLowerCase()))}`);if(domain.context)dp.push(normalizeClinicalFreeText(domain.context));if(domain.notes)dp.push(normalizeClinicalFreeText(domain.notes));return dp.length?`${dp.join('. ')}.`:''}).filter(Boolean);
  if(domainText.length)parts.push(domainText.join(' '));
  const impacts=[...new Set([...meaningful(p.impairments),...domains.flatMap(d=>d.impairment)])];
  if(impacts.length)parts.push(`Symptoms are interfering with ${naturalList(impacts.map(v=>v.toLowerCase()))}.`);
@@ -644,7 +724,7 @@ function buildDomainNarrative(domain){
  return uniqueClinicalSentences([
   symptomSentence,
   domain.context?normalizeClinicalFreeText(domain.context,{context:true}):'',
-  domain.notes?normalizeClinicalFreeText(domain.notes,{fragmentLead:'The client describes'}):''
+  domain.notes?normalizeClinicalFreeText(domain.notes):''
  ]);
 }
 
@@ -687,7 +767,7 @@ function buildMasterClinicalStory(data){
  if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
 
  return [
-  {title:'Chief Complaint',text:p.patientNarrative.trim()?normalizeClinicalFreeText(p.patientNarrative,{fragmentLead:'The client reports'}):(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare?true:false)?`The client is seeking care in response to ${naturalList((Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare]).map(reasonToClinicalPhrase))}.`:''},
+  {title:'Chief Complaint',text:p.patientNarrative.trim()?normalizeClinicalFreeText(p.patientNarrative):(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare?true:false)?`The client is seeking care in response to ${naturalList((Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare]).map(reasonToClinicalPhrase))}.`:''},
   {title:'History of Present Illness',text:concerns.length?`The primary concerns include ${naturalList(concerns.map(value=>value.toLowerCase()))}${course.length?`, with symptoms ${naturalList(course)}`:''}.`:''},
   {title:'Clinical Symptom Picture',domains:domainStories},
   {title:'Functional Impact',text:functionalImpact},
@@ -1040,7 +1120,7 @@ function summarizeSelections(values,{limit=3,mapper=value=>String(value).toLower
  return `${naturalList(items.slice(0,limit))} within a broader pattern of related concerns`;
 }
 function normalizeClientNarrative(value){
- const text=normalizeClinicalFreeText(value,{fragmentLead:'The client reports'});
+ const text=normalizeClinicalFreeText(value);
  return text
   .replace(/^The client reports The client\s+/i,'The client ')
   .replace(/^The client describes The client\s+/i,'The client ')
@@ -1137,10 +1217,52 @@ function getDocumentationQuality(data,readiness){
 }
 function naturalList(items){const c=items.filter(Boolean);if(!c.length)return'';if(c.length===1)return c[0];if(c.length===2)return`${c[0]} and ${c[1]}`;return`${c.slice(0,-1).join(', ')}, and ${c.at(-1)}`}
 
-function History({data,set,toggle}){const p=data.psychiatricHistory,f=data.familyHistory;return <Page><div className="workspace-grid"><div><Card title="Psychiatric History"><h3>Previous Diagnoses</h3><Checks options={psychDx} selected={p.diagnoses} onToggle={v=>toggle('psychiatricHistory.diagnoses',v)}/><h3>Previous Services / Higher Levels of Care</h3><Checks options={services} selected={p.services} onToggle={v=>toggle('psychiatricHistory.services',v)}/><Grid columns={4}><Select label="Hospitalization" value={p.hospitalization} onChange={v=>set('psychiatricHistory.hospitalization',v)} options={['None reported','One prior admission','Multiple prior admissions','Unknown']}/><Select label="Suicide Attempts" value={p.suicideAttempts} onChange={v=>set('psychiatricHistory.suicideAttempts',v)} options={['None reported','One prior attempt','Multiple prior attempts','Unknown']}/><Select label="NSSI History" value={p.nssi} onChange={v=>set('psychiatricHistory.nssi',v)} options={['None reported','Historical','Current / recent','Unknown']}/><Select label="Treatment Response" value={p.treatmentResponse} onChange={v=>set('psychiatricHistory.treatmentResponse',v)} options={['Helpful','Partially helpful','Limited benefit','Adverse response','Unknown']}/></Grid><TextArea label="Additional Psychiatric History Details" value={p.details} onChange={v=>set('psychiatricHistory.details',v)}/></Card><Card title="Family History"><Checks options={familyConditions} selected={f.conditions} onToggle={v=>toggle('familyHistory.conditions',v)}/><Grid columns={2}><Select label="Family Relationship Pattern" value={f.relationshipPattern} onChange={v=>set('familyHistory.relationshipPattern',v)} options={['Supportive','Generally stable','Conflictual','Estranged','Enmeshed','Limited contact','Mixed / complex']}/><Select label="Family Support Level" value={f.supportLevel} onChange={v=>set('familyHistory.supportLevel',v)} options={['Strong support','Some support','Limited support','No support','Mixed / inconsistent']}/></Grid><TextArea label="Additional Family History Details" value={f.details} onChange={v=>set('familyHistory.details',v)}/></Card></div><ClinicalSidePanel data={data} section="history"/></div></Page>}
-
-function Medical({data,set,toggle,dispatch}){const m=data.medical,s=data.substance;return <Page><div className="workspace-grid"><div><Card title="Medical & Biological Factors"><Checks options={medicalConditions} selected={m.conditions} onToggle={v=>toggle('medical.conditions',v)}/><Grid columns={4}><Select label="Sleep" value={m.sleep} onChange={v=>set('medical.sleep',v)} options={['No concerns','Mild disruption','Moderate disruption','Severe disruption','Insomnia','Hypersomnia']}/><Select label="Pain" value={m.pain} onChange={v=>set('medical.pain',v)} options={['None reported','Intermittent','Chronic mild','Chronic moderate','Chronic severe']}/><Input label="Allergies" value={m.allergies} onChange={v=>set('medical.allergies',v)}/><Select label="Medical Follow-Up" value={m.providerFollowUp} onChange={v=>set('medical.providerFollowUp',v)} options={['Established PCP','Specialty care','Needs PCP','Inconsistent follow-up','Unknown']}/></Grid><TextArea label="Additional Medical Details" value={m.details} onChange={v=>set('medical.details',v)}/></Card><Card title="Current Medications">{m.medications.map((med,i)=><div className="med-row" key={i}><Input label="Medication" value={med.name} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'name',value:v})}/><Input label="Dose" value={med.dose} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'dose',value:v})}/><Input label="Frequency" value={med.frequency} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'frequency',value:v})}/><Input label="Indication" value={med.indication} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'indication',value:v})}/>{m.medications.length>1&&<button className="danger small" onClick={()=>dispatch({type:'REMOVE_MEDICATION',index:i})}>Remove</button>}</div>)}<button onClick={()=>dispatch({type:'ADD_MEDICATION'})}>+ Add Medication</button></Card><Card title="Substance-Use Snapshot"><Grid columns={3}>{['alcohol','cannabis','nicotine','opioids','stimulants','sedatives','other'].map(key=><Select key={key} label={titleCase(key)} value={s[key]} onChange={v=>set(`substance.${key}`,v)} options={['Denied','Rare / social','Occasional','Weekly','Daily','In remission','Medical use','Unknown']}/>)}</Grid><Grid columns={2}><Select label="Treatment History" value={s.treatmentHistory} onChange={v=>set('substance.treatmentHistory',v)} options={['None reported','Outpatient','IOP','Residential','Detoxification','Mutual-help / peer recovery','Multiple services']}/><Input label="Recovery Supports" value={s.recoverySupports} onChange={v=>set('substance.recoverySupports',v)}/></Grid><TextArea label="Additional Substance-Use Details" value={s.details} onChange={v=>set('substance.details',v)}/></Card></div><ClinicalSidePanel data={data} section="medical"/></div></Page>}
-
+function History({data,set,toggle}){const p=data.psychiatricHistory,f=data.familyHistory;const familyPatterns=Array.isArray(f.relationshipPatterns)?f.relationshipPatterns:(f.relationshipPattern?[f.relationshipPattern]:[]);return <Page><div className="workspace-grid"><div>
+ <Card title="Psychiatric History">
+  <h3>Previous Diagnoses</h3><Checks options={psychDx} selected={p.diagnoses} onToggle={v=>toggle('psychiatricHistory.diagnoses',v)}/>
+  <h3>Previous Services / Higher Levels of Care</h3><Checks options={services} selected={p.services} onToggle={v=>toggle('psychiatricHistory.services',v)}/>
+  <Grid columns={4}><Select label="Hospitalization" value={p.hospitalization} onChange={v=>set('psychiatricHistory.hospitalization',v)} options={['None reported','One prior admission','Multiple prior admissions','Unknown']}/><Select label="Suicide Attempts" value={p.suicideAttempts} onChange={v=>set('psychiatricHistory.suicideAttempts',v)} options={['None reported','One prior attempt','Multiple prior attempts','Unknown']}/><Select label="NSSI History" value={p.nssi} onChange={v=>set('psychiatricHistory.nssi',v)} options={['None reported','Historical','Current / recent','Unknown']}/><Select label="Treatment Response" value={p.treatmentResponse} onChange={v=>set('psychiatricHistory.treatmentResponse',v)} options={['Helpful','Partially helpful','Limited benefit','Adverse response','Unknown']}/></Grid>
+  <TextArea label="Additional Psychiatric History Details" value={p.details} onChange={v=>set('psychiatricHistory.details',v)}/>
+ </Card>
+ <Card title="Family, Relational & Developmental Context">
+  <div className="section-kicker">Document only patterns supported by the client’s report; these details help explain how earlier relationships may connect to current functioning.</div>
+  <h3>Family Psychiatric / Substance-Use History</h3><Checks options={familyConditions} selected={f.conditions} onToggle={v=>toggle('familyHistory.conditions',v)}/>
+  <h3>Family Relationship Patterns</h3><Checks options={familyRelationshipPatterns} selected={familyPatterns} onToggle={v=>toggle('familyHistory.relationshipPatterns',v)}/>
+  <Grid columns={2}>
+   <Select label="Current Family Support Level" value={f.supportLevel||''} onChange={v=>set('familyHistory.supportLevel',v)} options={['Strong and reliable support','Some support available','Emotionally supportive but limited practical help','Practical help but limited emotional support','Mixed / inconsistent support','Limited support','No current family support','Family is a current source of stress','Unknown / not yet assessed']}/>
+   <Select label="Impact of Family Relationships Today" value={f.currentImpact||''} onChange={v=>set('familyHistory.currentImpact',v)} options={['Primarily protective / supportive','Generally neutral','Contributes to current stress','Contributes to self-criticism or shame','Contributes to conflict avoidance or people pleasing','Contributes to trust or boundary difficulties','Mixed / complex impact','Unclear / needs further assessment']}/>
+  </Grid>
+  <h3>Current Interpersonal Patterns</h3><Checks options={currentInterpersonalPatterns} selected={f.currentPatterns||[]} onToggle={v=>toggle('familyHistory.currentPatterns',v)}/>
+  <TextArea label="Relational / Attachment Context in the Client’s Own Story" placeholder="Example: Client describes learning to avoid conflict in a highly critical household and now has difficulty expressing needs in adult relationships." value={f.relationalDetails||f.details||''} onChange={v=>set('familyHistory.relationalDetails',v)}/>
+  <div className="presenting-prompt-strip"><span>💬</span><div><strong>Suggested language</strong><p>“How were emotions, conflict, and support handled in your family?” “Are there relationship patterns from earlier in life that you notice showing up now?”</p></div></div>
+ </Card>
+ </div><ClinicalSidePanel data={data} section="history"/></div></Page>}
+function Medical({data,set,toggle,dispatch}){const m=data.medical,s=data.substance;return <Page><div className="workspace-grid"><div>
+ <Card title="Medical & Biological Factors">
+  <div className="section-kicker">Identify health factors that may affect mood, cognition, energy, sleep, pain, functioning, or treatment participation.</div>
+  <Checks options={medicalConditions} selected={m.conditions||[]} onToggle={v=>toggle('medical.conditions',v)}/>
+  <Grid columns={3}><Select label="Pain" value={m.pain||''} onChange={v=>set('medical.pain',v)} options={['None reported','Intermittent','Chronic mild','Chronic moderate','Chronic severe','Acute / new pain','Under evaluation']}/><Input label="Allergies" value={m.allergies||''} onChange={v=>set('medical.allergies',v)}/><Select label="Perceived Medical Impact on Mental Health" value={m.mentalHealthImpact||''} onChange={v=>set('medical.mentalHealthImpact',v)} options={['None identified','Mild contribution','Moderate contribution','Significant contribution','Possible contribution / unclear','Unknown']}/></Grid>
+  <TextArea label="Additional Medical Details" value={m.details||''} onChange={v=>set('medical.details',v)}/>
+ </Card>
+ <Card title="Sleep & Restoration">
+  <div className="section-kicker">Explore sleep pattern, quality, likely contributors, and the effect of sleep on emotional and cognitive functioning.</div>
+  <h3>Current Sleep Concerns</h3><Checks options={sleepConcerns} selected={m.sleepConcerns||[]} onToggle={v=>toggle('medical.sleepConcerns',v)}/>
+  <h3>Possible Sleep Contributors</h3><Checks options={sleepContributors} selected={m.sleepContributors||[]} onToggle={v=>toggle('medical.sleepContributors',v)}/>
+  <Grid columns={4}><Select label="Typical Hours per Night" value={m.sleepHours||''} onChange={v=>set('medical.sleepHours',v)} options={['Less than 3 hours','3–4 hours','5–6 hours','7–8 hours','9–10 hours','More than 10 hours','Highly variable','Unknown']}/><Select label="Sleep Quality" value={m.sleepQuality||m.sleep||''} onChange={v=>set('medical.sleepQuality',v)} options={['Restorative','Somewhat restorative','Non-restorative','Severely disrupted','Variable','Unknown']}/><Select label="Daytime Effect" value={m.sleepDaytimeImpact||''} onChange={v=>set('medical.sleepDaytimeImpact',v)} options={['None reported','Fatigue / low energy','Difficulty concentrating','Irritability / emotional reactivity','Daytime sleepiness','Missed responsibilities','Multiple effects','Unknown']}/><Select label="Sleep Follow-Up" value={m.sleepFollowUp||''} onChange={v=>set('medical.sleepFollowUp',v)} options={['Not currently indicated','Monitor in therapy','Discuss with PCP','Sleep-medicine evaluation recommended','Possible sleep study','Medication review recommended','Already receiving treatment','Unknown']}/></Grid>
+  <TextArea label="Patient-Specific Sleep Details" placeholder="Example: Takes 2–3 hours to fall asleep due to racing thoughts; averages 4–5 hours and feels exhausted at work." value={m.sleepDetails||''} onChange={v=>set('medical.sleepDetails',v)}/>
+ </Card>
+ <Card title="Medical Follow-Up & Care Coordination">
+  <div className="section-kicker">Select every follow-up pathway that is established, recommended, or requires clarification.</div>
+  <Checks options={medicalFollowUpNeeds} selected={m.followUpNeeds||[]} onToggle={v=>toggle('medical.followUpNeeds',v)}/>
+  <Grid columns={2}><Input label="Current Medical / Specialty Providers" placeholder="PCP, pain management, endocrinology, rheumatology, etc." value={m.currentProviders||''} onChange={v=>set('medical.currentProviders',v)}/><Input label="Care-Coordination Notes" placeholder="Release needed, appointment scheduled, labs requested, client barriers, etc." value={m.careCoordination||''} onChange={v=>set('medical.careCoordination',v)}/></Grid>
+ </Card>
+ <Card title="Current Medications">
+  <h3>Medication Factors</h3><Checks options={medicationFactors} selected={m.medicationFactors||[]} onToggle={v=>toggle('medical.medicationFactors',v)}/>
+  {m.medications.map((med,i)=><div className="med-row" key={i}><Input label="Medication" value={med.name} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'name',value:v})}/><Input label="Dose" value={med.dose} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'dose',value:v})}/><Input label="Frequency" value={med.frequency} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'frequency',value:v})}/><Input label="Indication" value={med.indication} onChange={v=>dispatch({type:'SET_MEDICATION',index:i,field:'indication',value:v})}/>{m.medications.length>1&&<button className="danger small" onClick={()=>dispatch({type:'REMOVE_MEDICATION',index:i})}>Remove</button>}</div>)}
+  <button onClick={()=>dispatch({type:'ADD_MEDICATION'})}>+ Add Medication</button>
+ </Card>
+ <Card title="Substance-Use Snapshot"><Grid columns={3}>{['alcohol','cannabis','nicotine','opioids','stimulants','sedatives','other'].map(key=><Select key={key} label={titleCase(key)} value={s[key]} onChange={v=>set(`substance.${key}`,v)} options={['Denied','Rare / social','Occasional','Weekly','Daily','In remission','Medical use','Unknown']}/>)}</Grid><Grid columns={2}><Select label="Treatment History" value={s.treatmentHistory} onChange={v=>set('substance.treatmentHistory',v)} options={['None reported','Outpatient','IOP','Residential','Detoxification','Mutual-help / peer recovery','Multiple services']}/><Input label="Recovery Supports" value={s.recoverySupports} onChange={v=>set('substance.recoverySupports',v)}/></Grid><TextArea label="Additional Substance-Use Details" value={s.details} onChange={v=>set('substance.details',v)}/></Card>
+ </div><ClinicalSidePanel data={data} section="medical"/></div></Page>}
 function Social({data,set,toggle}){const t=data.trauma,s=data.social;return <Page><div className="workspace-grid"><div><Card title="Trauma-Informed History"><h3>Experiences</h3><Checks options={traumaExperiences} selected={t.experiences} onToggle={v=>toggle('trauma.experiences',v)}/><h3>Current Trauma Symptoms</h3><Checks options={traumaSymptoms} selected={t.symptoms} onToggle={v=>toggle('trauma.symptoms',v)}/><TextArea label="Additional Trauma Details" value={t.details} onChange={v=>set('trauma.details',v)}/></Card><Card title="Social & Environmental History"><Grid columns={3}><Select label="Housing" value={s.housing} onChange={v=>set('social.housing',v)} options={['Stable','Temporary','At risk','Homeless / unhoused','Residential program','Unknown']}/><Select label="Employment" value={s.employment} onChange={v=>set('social.employment',v)} options={['Full-time','Part-time','Unemployed','Student','Disabled / unable to work','Retired','Caregiver']}/><Select label="Financial Stress" value={s.finances} onChange={v=>set('social.finances',v)} options={['None','Mild','Moderate','Severe','Crisis-level']}/><Select label="Transportation" value={s.transportation} onChange={v=>set('social.transportation',v)} options={['Reliable','Limited','Unreliable','No transportation']}/><Select label="Relationships" value={s.relationships} onChange={v=>set('social.relationships',v)} options={['Supportive','Generally stable','Conflictual','Isolated','Recent separation / loss','Mixed']}/><Select label="Legal Stress" value={s.legal} onChange={v=>set('social.legal',v)} options={['None','Current legal matter','Probation / parole','Custody matter','Protective-order concern','Historical only']}/></Grid><Input label="Support System — who is available, how reliable, and how helpful?" placeholder="Example: sister and close friend; emotionally supportive but client has difficulty asking for help" value={s.supports} onChange={v=>set('social.supports',v)}/><Grid columns={2}><Input label="Education / Learning Context" placeholder="Highest level, current enrollment, learning needs, academic barriers, or goals" value={s.education} onChange={v=>set('social.education',v)}/><Input label="Parenting / Caregiving Context" placeholder="Children/dependents, caregiving duties, stressors, strengths, custody context" value={s.parenting} onChange={v=>set('social.parenting',v)}/><Input label="Cultural Factors" placeholder="Values, traditions, language, community, or cultural considerations relevant to care" value={s.culturalFactors} onChange={v=>set('social.culturalFactors',v)}/><Input label="Spiritual / Values Factors" placeholder="Beliefs, meaning, faith community, values, or preferences affecting care" value={s.spiritualFactors} onChange={v=>set('social.spiritualFactors',v)}/><Input label="Identity-Related Factors" placeholder="Identity strengths, stressors, discrimination, belonging, or treatment preferences" value={s.identityFactors} onChange={v=>set('social.identityFactors',v)}/><Input label="Military History" placeholder="Service, deployment, combat, discharge, VA connection, MST, or not applicable" value={s.military} onChange={v=>set('social.military',v)}/></Grid><h3>Current Practical Needs</h3><Checks options={needs} selected={s.needs} onToggle={v=>toggle('social.needs',v)}/></Card><Card title="Strengths & Protective Factors"><Checks options={strengths} selected={data.strengths} onToggle={v=>toggle('strengths',v)}/></Card></div><ClinicalSidePanel data={data} section="social"/></div></Page>}
 
 function MseRisk({data,set,toggle}){const m=data.mse,r=data.risk;return <Page><div className="workspace-grid"><div><Card title="Mental Status Examination"><Grid columns={4}><Select label="Appearance" value={m.appearance} onChange={v=>set('mse.appearance',v)} options={['Appropriate / well-groomed','Casual','Disheveled','Unkempt','Bizarre / unusual']}/><Select label="Behavior" value={m.behavior} onChange={v=>set('mse.behavior',v)} options={['Cooperative','Engaged','Guarded','Restless','Agitated','Withdrawn','Tearful']}/><Select label="Orientation" value={m.orientation} onChange={v=>set('mse.orientation',v)} options={['Alert and oriented ×4','Oriented to person and place','Partially oriented','Disoriented']}/><Select label="Speech" value={m.speech} onChange={v=>set('mse.speech',v)} options={['Normal rate, rhythm, and volume','Rapid','Pressured','Slow','Soft','Loud','Minimal']}/><Select label="Mood" value={m.mood} onChange={v=>set('mse.mood',v)} options={['Euthymic','Anxious','Depressed','Irritable','Angry','Sad','Elevated','Labile']}/><Select label="Affect" value={m.affect} onChange={v=>set('mse.affect',v)} options={['Full range','Appropriate / congruent','Constricted','Blunted','Flat','Labile','Incongruent']}/><Select label="Thought Process" value={m.thoughtProcess} onChange={v=>set('mse.thoughtProcess',v)} options={['Linear and goal-directed','Logical','Circumstantial','Tangential','Disorganized','Racing','Thought blocking']}/><Select label="Thought Content" value={m.thoughtContent} onChange={v=>set('mse.thoughtContent',v)} options={['Unremarkable','Preoccupation','Obsessions','Delusions','Paranoia','Hopelessness','Worthlessness','Suicidal content']}/><Select label="Perception" value={m.perception} onChange={v=>set('mse.perception',v)} options={['No perceptual disturbance','Auditory hallucinations','Visual hallucinations','Other perceptual disturbance']}/><Select label="Cognition" value={m.cognition} onChange={v=>set('mse.cognition',v)} options={['Grossly intact','Mildly impaired','Moderately impaired','Severely impaired']}/><Select label="Attention" value={m.attention} onChange={v=>set('mse.attention',v)} options={['Intact','Mildly impaired','Moderately impaired','Severely impaired']}/><Select label="Memory" value={m.memory} onChange={v=>set('mse.memory',v)} options={['Grossly intact','Recent-memory difficulty','Remote-memory difficulty','Impaired']}/><Select label="Insight" value={m.insight} onChange={v=>set('mse.insight',v)} options={['Good','Fair','Limited','Poor']}/><Select label="Judgment" value={m.judgment} onChange={v=>set('mse.judgment',v)} options={['Good','Fair','Limited','Poor']}/><Select label="Impulse Control" value={m.impulseControl} onChange={v=>set('mse.impulseControl',v)} options={['Good','Fair','Limited','Poor']}/></Grid><TextArea label="Additional MSE Observations" value={m.additional} onChange={v=>set('mse.additional',v)}/></Card><Card title="Risk & Safety"><Grid columns={4}><Select label="Suicide Screen" value={r.suicideScreen} onChange={v=>set('risk.suicideScreen',v)} options={['Negative','Positive for passive ideation','Positive for active ideation','Positive for recent behavior','Not completed']}/><Select label="Ideation" value={r.ideation} onChange={v=>set('risk.ideation',v)} options={['Denied','Passive','Active without plan','Active with plan','Unknown']}/><Select label="Intent" value={r.intent} onChange={v=>set('risk.intent',v)} options={['Denied','No current intent','Ambivalent','Intent present','Unknown']}/><Select label="Plan" value={r.plan} onChange={v=>set('risk.plan',v)} options={['Denied','No specific plan','Vague plan','Specific plan','Unknown']}/><Select label="Recent Behavior" value={r.behavior} onChange={v=>set('risk.behavior',v)} options={['Denied','Preparatory behavior','Aborted attempt','Interrupted attempt','Recent attempt','NSSI']}/><Select label="Homicidal Ideation" value={r.homicidalIdeation} onChange={v=>set('risk.homicidalIdeation',v)} options={['Denied','Passive thoughts','Active thoughts without plan','Active thoughts with plan','Unknown']}/><Select label="Access to Means" value={r.accessToMeans} onChange={v=>set('risk.accessToMeans',v)} options={['Denied / no access','Restricted access','Access present','Unknown']}/><Select label="Overall Risk" value={r.overallRisk} onChange={v=>set('risk.overallRisk',v)} options={['Low','Low to moderate','Moderate','High','Imminent']}/><Select label="Safety Response" value={r.safetyResponse} onChange={v=>set('risk.safetyResponse',v)} options={['No additional action indicated','Safety plan completed','Crisis resources reviewed','Higher level of care recommended','Emergency evaluation initiated']}/><Select label="Generate Safety Plan" value={r.safetyPlanNeeded} onChange={v=>set('risk.safetyPlanNeeded',v)} options={['No','Yes']}/></Grid><h3>Protective Factors</h3><Checks options={riskProtective} selected={r.protectiveFactors} onToggle={v=>toggle('risk.protectiveFactors',v)}/>{r.safetyPlanNeeded==='Yes'&&<div className="safety-plan-fields"><h3>Stanley-Brown-Style Safety Plan Inputs</h3><Grid columns={2}><TextArea label="1. Warning Signs" value={r.warningSigns} onChange={v=>set('risk.warningSigns',v)}/><TextArea label="2. Internal Coping Strategies" value={r.internalCoping} onChange={v=>set('risk.internalCoping',v)}/><TextArea label="3. People / Places for Distraction" value={r.peoplePlaces} onChange={v=>set('risk.peoplePlaces',v)}/><TextArea label="4. Support Contacts" value={r.supportContacts} onChange={v=>set('risk.supportContacts',v)}/><TextArea label="5. Professional / Crisis Contacts" value={r.professionalContacts} onChange={v=>set('risk.professionalContacts',v)}/><TextArea label="6. Means-Safety Steps" value={r.meansSafety} onChange={v=>set('risk.meansSafety',v)}/></Grid></div>}</Card></div><ClinicalSidePanel data={data} section="mse"/></div></Page>}
