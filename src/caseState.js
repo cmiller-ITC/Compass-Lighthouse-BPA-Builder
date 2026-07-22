@@ -370,12 +370,48 @@ export function buildAllNarratives(data){
  return Object.fromEntries(Object.entries(outputs).map(([key,value])=>[key,cleanChartOutput(value)]));
 }
 
-function buildChiefComplaint(data){
- const p=data.presenting;if(p.patientNarrative.trim())return normalizeClinicalText(p.patientNarrative,{fragmentLead:'The client reports'});
- const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:(p.reasonSeekingCare?[p.reasonSeekingCare]:[]);const reason=reasons.length?listText(reasons.map(reasonToClinicalPhrase)):'behavioral-health concerns';
- const requests=Array.isArray(p.clientRequest)?p.clientRequest:(p.clientRequest?[p.clientRequest]:[]);const request=requests.length?` The client hopes to ${listText(requests.map(v=>v.toLowerCase()))}.`:'';
- return hasSelections(p.reasonSeekingCare)||hasSelections(p.clientRequest)?`The client presents in response to ${reason}.${request}`:'Chief complaint information has not yet been entered.';
+function meaningfulValues(values=[]){
+ return asArray(values).filter(value=>![
+  'None reported','Not applicable','None identified','None identified yet',
+  'None reported / no current behavioral-health concern',
+  'Unknown / records unavailable','Unknown / family history unavailable',
+  'Unknown / not yet assessed','Not applicable / no current trauma symptoms'
+ ].includes(value));
 }
+function conciseList(values,{limit=3,mapper=value=>String(value).toLowerCase()}={}){
+ const items=meaningfulValues(values).map(mapper).filter(Boolean);
+ if(items.length<=limit)return listText(items);
+ return `${listText(items.slice(0,limit))}, and ${items.length-limit} additional concern${items.length-limit===1?'':'s'}`;
+}
+function normalizeClientText(value){
+ return normalizeClinicalText(value,{fragmentLead:'The client reports'})
+  .replace(/^The client reports The client\s+/i,'The client ')
+  .replace(/^The client describes The client\s+/i,'The client ')
+  .replace(/^The client reports Patient\s+/i,'The client ');
+}
+function currentImpairments(data){
+ const p=data.presenting;
+ const domains=activeDomains(data);
+ return [...new Set([
+  ...meaningfulValues(p.impairments),
+  ...domains.flatMap(([,domain])=>meaningfulValues(domain.impairment))
+ ])];
+}
+
+function buildChiefComplaint(data){
+ const p=data.presenting;
+ if(p.patientNarrative.trim())return normalizeClientText(p.patientNarrative);
+
+ const reasons=asArray(p.reasonSeekingCare);
+ const concerns=meaningfulValues(p.concerns);
+ const goals=asArray(p.clientRequest);
+
+ if(reasons.length)return `The client is seeking care due to ${conciseList(reasons,{limit:3,mapper:reasonToClinicalPhrase})}.`;
+ if(concerns.length)return `The client is seeking care for ${conciseList(concerns,{limit:3})}.`;
+ if(goals.length)return `The client is seeking support to ${conciseList(goals,{limit:3})}.`;
+ return 'Chief complaint information has not yet been entered.';
+}
+
 function activeDomains(data){return Object.entries(data.presenting.domains).filter(([,d])=>d.symptoms.length||d.duration||d.frequency||d.severity||d.context||d.notes||Object.values(d.answers||{}).some(Boolean))}
 function asArray(value){return Array.isArray(value)?value:(value===undefined||value===null||value===''?[]:[value])}
 function hasSelections(value){return asArray(value).length>0}
@@ -386,34 +422,28 @@ function frequencyPhrase(value){const map={'Occasional':'occurring occasionally'
 function clinicalDomainLabel(key){const map={mood:'depressive symptoms',anxiety:'anxiety symptoms',panic:'panic symptoms',bipolar:'bipolar-spectrum features',adhd:'attention and executive-functioning concerns',ocd:'obsessive-compulsive symptoms',trauma:'trauma-related symptoms',psychosis:'thought and perception-related symptoms',eating:'eating and body-image concerns',substance:'substance-related concerns',adjustment:'adjustment-related distress',painHealth:'pain and health-related distress'};return map[key]||symptomDomainDefinitions[key].label.toLowerCase()}
 function buildHPI(data){
  const p=data.presenting;
- const domains=activeDomains(data).filter(([,d])=>d.symptoms.length||d.context||d.notes);
+ const domains=activeDomains(data).filter(([,domain])=>domain.symptoms.length||domain.context||domain.notes);
  const paragraphs=[];
- if(p.patientNarrative.trim())paragraphs.push(normalizeClinicalText(p.patientNarrative,{fragmentLead:'The client reports'}));
+ const concerns=meaningfulValues(p.concerns);
+ const course=[];
 
- const concerns=p.concerns.filter(v=>!v.startsWith('None'));
+ if(p.duration)course.push(durationPhrase(p.duration));
+ if(p.frequency)course.push(frequencyPhrase(p.frequency));
+ if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
+ if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+
  if(concerns.length){
-  const course=[];
-  if(p.duration)course.push(durationPhrase(p.duration));
-  if(p.frequency)course.push(frequencyPhrase(p.frequency));
-  if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
-  if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
-  paragraphs.push(`The primary concerns include ${listText(concerns.map(v=>v.toLowerCase()))}${course.length?`, with symptoms ${listText(course)}`:''}.`);
+  paragraphs.push(`The primary concerns include ${conciseList(concerns,{limit:5})}${course.length?`, with symptoms ${listText(course)}`:''}.`);
+ }else if(domains.length){
+  paragraphs.push(`The current presentation includes ${conciseList(domains.map(([key])=>clinicalDomainLabel(key)),{limit:4})}${course.length?`, with symptoms ${listText(course)}`:''}.`);
  }
 
- domains.forEach(([key,d])=>{
-  const pieces=[];
-  if(d.symptoms.length)pieces.push(`${clinicalDomainLabel(key).replace(/^./,c=>c.toUpperCase())} include ${listText(d.symptoms.slice(0,8).map(v=>v.toLowerCase()))}.`);
-  if(d.context)pieces.push(normalizeClinicalText(d.context,{context:true}));
-  if(d.notes)pieces.push(normalizeClinicalText(d.notes,{fragmentLead:'The client describes'}));
-  if(pieces.length)paragraphs.push(pieces.join(' '));
- });
+ const contexts=domains.map(([,domain])=>domain.context).filter(Boolean);
+ if(contexts.length)paragraphs.push(normalizeClinicalText(contexts[0],{context:true}));
 
- const impacts=[...new Set([
-  ...p.impairments.filter(v=>!['None reported','Not applicable'].includes(v)),
-  ...domains.flatMap(([,d])=>d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)))
- ])];
- if(impacts.length)paragraphs.push(`Symptoms are interfering with ${listText(impacts.map(v=>v.toLowerCase()))}.`);
- if(Array.isArray(p.clientRequest)?p.clientRequest.length:p.clientRequest){const requests=Array.isArray(p.clientRequest)?p.clientRequest:[p.clientRequest];paragraphs.push(`The client hopes to ${listText(requests.map(v=>v.toLowerCase()))}.`);}
+ const examples=domains.map(([,domain])=>domain.notes).filter(Boolean);
+ if(examples.length)paragraphs.push(normalizeClinicalText(examples[0],{fragmentLead:'The client describes'}));
+
  return paragraphs.join('\n\n')||'History of present illness information has not yet been entered.';
 }
 
@@ -537,16 +567,30 @@ function generateDiagnosticRationale(data){
 }
 
 function generateMedicalNecessity(data){
- const p=data.presenting,domains=selectedSymptomDomains(data);
- const symptomPhrase=domains.length
-  ?listText(domains.slice(0,5).map(([key])=>clinicalDomainLabel(key)))
-  :p.concerns.length?listText(p.concerns.map(v=>v.toLowerCase())):'behavioral-health symptoms';
- const impairment=p.impairments.length?listText(p.impairments.map(v=>v.toLowerCase())):'daily functioning';
- const severity=p.severity?`${p.severity.toLowerCase()} `:'';
- const frequency=p.frequency?` occurring ${p.frequency.toLowerCase()}`:'';
- const course=p.course?` and ${p.course.toLowerCase()}`:'';
- const requests=asArray(p.clientRequest);const request=requests.length?` The client hopes to ${listText(requests.map(value=>String(value).toLowerCase()))}.`:'';
- return `Behavioral-health treatment is medically necessary due to ${severity}${symptomPhrase}${frequency}${course}, resulting in clinically meaningful impairment in ${impairment}. Without appropriate intervention, the current symptom pattern may contribute to continued functional decline, worsening distress, and increased difficulty meeting daily responsibilities.${request}`;
+ const p=data.presenting;
+ const domains=selectedSymptomDomains(data);
+ const domainLabels=domains.map(([key])=>clinicalDomainLabel(key));
+ const concerns=meaningfulValues(p.concerns);
+ const impairments=currentImpairments(data);
+
+ const symptomSummary=domainLabels.length
+  ?conciseList(domainLabels,{limit:4})
+  :concerns.length
+    ?conciseList(concerns,{limit:4})
+    :'behavioral-health symptoms';
+
+ const qualifiers=[];
+ if(p.severity)qualifiers.push(`${p.severity.toLowerCase()} severity`);
+ if(p.frequency)qualifiers.push(frequencyPhrase(p.frequency));
+ if(p.course)qualifiers.push(`a ${p.course.toLowerCase()} course`);
+
+ const impairmentSummary=impairments.length
+  ?`clinically meaningful impairment in ${conciseList(impairments,{limit:5})}`
+  :'clinically meaningful interference with daily functioning';
+
+ const opening=`Behavioral-health treatment is medically necessary due to ${symptomSummary}${qualifiers.length?`, characterized by ${listText(qualifiers)}`:''}, resulting in ${impairmentSummary}.`;
+ const riskSentence='Without appropriate intervention, the current symptom pattern may contribute to continued functional decline, worsening distress, and increased difficulty meeting daily responsibilities.';
+ return `${opening} ${riskSentence}`;
 }
 
 function generateLevelOfCareRationale(data){
@@ -563,20 +607,32 @@ function generateLevelOfCareRationale(data){
 }
 
 function generateTreatmentFocus(data){
- const p=data.presenting,domains=selectedSymptomDomains(data);
- const targets=[];
+ const p=data.presenting;
+ const domains=selectedSymptomDomains(data);
  const keys=domains.map(([key])=>key);
- if(keys.includes('mood'))targets.push('reduce depressive symptoms and increase behavioral activation');
- if(keys.includes('anxiety')||keys.includes('panic'))targets.push('improve anxiety management and nervous-system regulation');
- if(keys.includes('trauma'))targets.push('strengthen stabilization and trauma-informed coping');
- if(keys.includes('ocd'))targets.push('address obsessive-compulsive patterns using exposure-based and response-prevention strategies when clinically appropriate');
- if(keys.includes('adhd'))targets.push('improve executive-functioning supports and daily organization');
- if(keys.includes('adjustment'))targets.push('process adjustment-related stressors and strengthen adaptive coping');
- if(keys.includes('painHealth'))targets.push('address the interaction among pain, stress, avoidance, and functioning');
- if(keys.includes('substance'))targets.push('support harm reduction, recovery goals, and relapse-prevention planning');
- if(!targets.length&&p.concerns.length)targets.push(`address ${listText(p.concerns.slice(0,5).map(v=>v.toLowerCase()))}`);
- if(p.impairments.length)targets.push(`improve functioning in ${listText(p.impairments.slice(0,5).map(v=>v.toLowerCase()))}`);
- return `Initial treatment should focus on ${listText(targets)}. Treatment planning should incorporate the client’s stated goals, strengths, cultural context, treatment preferences, risk needs, and response to prior services.`;
+ const priorities=[];
+
+ if(keys.includes('mood'))priorities.push('reducing depressive symptoms and increasing engagement in daily activities');
+ if(keys.includes('anxiety')||keys.includes('panic'))priorities.push('improving anxiety management and reducing panic-related distress');
+ if(keys.includes('trauma'))priorities.push('strengthening stabilization and trauma-informed coping');
+ if(keys.includes('ocd'))priorities.push('reducing obsessive-compulsive patterns through evidence-based intervention');
+ if(keys.includes('adhd'))priorities.push('strengthening executive-functioning supports and daily organization');
+ if(keys.includes('adjustment'))priorities.push('processing current stressors and strengthening adaptive coping');
+ if(keys.includes('painHealth'))priorities.push('addressing the interaction among pain, fear, avoidance, and functioning');
+ if(keys.includes('substance'))priorities.push('supporting recovery, harm-reduction, or relapse-prevention goals');
+
+ const goals=asArray(p.clientRequest).map(value=>String(value).toLowerCase());
+ if(!priorities.length&&goals.length)priorities.push(...goals.slice(0,4));
+ if(!priorities.length&&meaningfulValues(p.concerns).length)priorities.push(`addressing ${conciseList(p.concerns,{limit:4})}`);
+
+ const impairments=currentImpairments(data);
+ if(impairments.length)priorities.push(`improving functioning in ${conciseList(impairments,{limit:4})}`);
+
+ if(!priorities.length){
+  return 'Initial treatment priorities will be established collaboratively as additional assessment information is gathered.';
+ }
+
+ return `Initial treatment will focus on ${listText(priorities.slice(0,5))}. Treatment planning will be individualized to the client’s goals, strengths, preferences, cultural context, risk needs, and response to prior services.`;
 }
 
 function buildDiagnosticRationale(data){
@@ -584,7 +640,8 @@ function buildDiagnosticRationale(data){
 }
 
 function buildMedicalNecessity(data){
- return sentence(data.diagnosis.medicalNecessity)||generateMedicalNecessity(data);
+ const custom=cleanChartOutput(sentence(data.diagnosis.medicalNecessity));
+ return custom||generateMedicalNecessity(data);
 }
 
 function buildLevelOfCare(data){
@@ -653,5 +710,6 @@ function buildGoldenThread(data){
 }
 
 function buildTreatmentFocus(data){
- return sentence(data.diagnosis.treatmentFocus)||generateTreatmentFocus(data);
+ const custom=cleanChartOutput(sentence(data.diagnosis.treatmentFocus));
+ return custom||generateTreatmentFocus(data);
 }

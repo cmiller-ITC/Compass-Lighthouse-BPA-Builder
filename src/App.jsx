@@ -37,7 +37,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.5 Premium Selection Polish</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.6 Narrative Engine 2.0</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +48,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.5</div>
+    <div className="eyebrow">Lighthouse Compass 7.6</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -1043,20 +1043,88 @@ function getPresentingReadiness(data){
  return {score,prompts,strengths,requirements};
 }
 function cleanSentence(value){const text=String(value||'').trim().replace(/\s+/g,' ');if(!text)return'';return /[.!?]$/.test(text)?text:`${text}.`}
+function summarizeSelections(values,{limit=3,mapper=value=>String(value).toLowerCase()}={}){
+ const items=selectionList(values).map(mapper).filter(Boolean);
+ if(items.length<=limit)return naturalList(items);
+ return `${naturalList(items.slice(0,limit))}, and ${items.length-limit} additional concern${items.length-limit===1?'':'s'}`;
+}
+function normalizeClientNarrative(value){
+ const text=normalizeClinicalFreeText(value,{fragmentLead:'The client reports'});
+ return text
+  .replace(/^The client reports The client\s+/i,'The client ')
+  .replace(/^The client describes The client\s+/i,'The client ')
+  .replace(/^The client reports Patient\s+/i,'The client ');
+}
 function buildLiveClinicalStory(data){
- const p=data.presenting;const active=Object.entries(p.domains).filter(([,d])=>d.symptoms.length);
- const hasData=Boolean(hasSelections(p.reasonSeekingCare)||hasSelections(p.clientRequest)||p.patientNarrative.trim()||p.concerns.length||active.length);
+ const p=data.presenting;
+ const active=Object.entries(p.domains).filter(([,domain])=>domain.symptoms.length||domain.context||domain.notes);
+ const reasons=selectionList(p.reasonSeekingCare);
+ const goals=selectionList(p.clientRequest);
+ const concerns=meaningful(p.concerns);
+ const impacts=[...new Set([
+  ...meaningful(p.impairments),
+  ...active.flatMap(([,domain])=>meaningful(domain.impairment))
+ ])];
+
  let chiefComplaint='';
- if(p.patientNarrative.trim())chiefComplaint=cleanSentence(p.patientNarrative);
- else if(hasSelections(p.reasonSeekingCare)||hasSelections(p.clientRequest)){const reasons=selectionList(p.reasonSeekingCare);const requests=selectionList(p.clientRequest);const reason=reasons.length?naturalList(reasons.map(reasonToClinicalPhrase)):'behavioral-health concerns';const request=requests.length?` and hopes to ${naturalList(requests.map(value=>value.toLowerCase()))}`:'';chiefComplaint=`The client presents in response to ${reason}${request}.`}
- const concernPhrase=p.concerns.length?naturalList(p.concerns.slice(0,6).map(item=>item.toLowerCase())):active.length?naturalList(active.slice(0,4).map(([key])=>symptomDomainDefinitions[key].label.toLowerCase())):'';
- const courseParts=[];if(p.duration)courseParts.push(durationPhrase(p.duration));if(p.frequency)courseParts.push(frequencyPhrase(p.frequency));if(p.severity)courseParts.push(`${p.severity.toLowerCase()} in severity`);if(p.course)courseParts.push(`currently ${p.course.toLowerCase()}`);
- let hpi='';if(concernPhrase){hpi=`The client presents with ${concernPhrase}`;if(courseParts.length)hpi+=`, with symptoms ${naturalList(courseParts)}`;hpi+='.'}else if(courseParts.length)hpi=`The reported concerns are ${naturalList(courseParts)}.`;
- const clinicalPicture=active.slice(0,5).map(([key,domain])=>{const label=clinicalDomainLabel(key);const features=naturalList(domain.symptoms.slice(0,6).map(item=>item.toLowerCase()));const qualifiers=[domain.duration&&durationPhrase(domain.duration),domain.frequency&&frequencyPhrase(domain.frequency),domain.severity&&`${domain.severity.toLowerCase()} in severity`].filter(Boolean);let sentence=`${label} are characterized by ${features}`;if(qualifiers.length)sentence+=` and are ${naturalList(qualifiers)}`;return `${sentence}.`}).join(' ');
- let functionalImpairment='';if(p.impairments.length){functionalImpairment=`The current presentation is interfering with ${naturalList(p.impairments.map(item=>item.toLowerCase()))}`;const examples=active.flatMap(([,d])=>[d.notes,d.context]).filter(Boolean);functionalImpairment+=examples.length?`. ${cleanSentence(examples[0])}`:'.'}
- let clinicalContext='';const contextual=active.flatMap(([,d])=>[d.context,d.notes]).filter(Boolean);if(contextual.length)clinicalContext=`Relevant clinical context includes ${cleanSentence(contextual.slice(0,2).join(' '))}`;else if(p.patientNarrative.trim())clinicalContext=cleanSentence(p.patientNarrative);
- if((p.impairments.length||p.severity)&&hasSelections(p.clientRequest)){const treatmentNeed=`The combination of ${p.severity?`${p.severity.toLowerCase()} symptoms`:'the reported symptoms'}${p.impairments.length?' and associated functional impairment':''} supports the need for ${naturalList(selectionList(p.clientRequest).map(value=>value.toLowerCase()))}.`;clinicalContext=[clinicalContext,treatmentNeed].filter(Boolean).join(' ')}
- return {hasData,chiefComplaint,hpi,clinicalPicture,functionalImpairment,clinicalContext};
+ if(p.patientNarrative.trim()){
+  chiefComplaint=normalizeClientNarrative(p.patientNarrative);
+ }else if(reasons.length){
+  const primaryReasons=summarizeSelections(reasons,{limit:3,mapper:reasonToClinicalPhrase});
+  chiefComplaint=`The client is seeking care due to ${primaryReasons}.`;
+ }else if(concerns.length){
+  chiefComplaint=`The client is seeking care for ${summarizeSelections(concerns,{limit:3})}.`;
+ }else if(goals.length){
+  chiefComplaint=`The client is seeking support to ${summarizeSelections(goals,{limit:3})}.`;
+ }
+
+ const course=[];
+ if(p.duration)course.push(durationPhrase(p.duration));
+ if(p.frequency)course.push(frequencyPhrase(p.frequency));
+ if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
+ if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+
+ const hpiParts=[];
+ if(concerns.length){
+  hpiParts.push(`The primary concerns include ${summarizeSelections(concerns,{limit:5})}${course.length?`, with symptoms ${naturalList(course)}`:''}.`);
+ }else if(active.length){
+  const labels=active.map(([key])=>clinicalDomainLabel(key).toLowerCase());
+  hpiParts.push(`The current presentation includes ${summarizeSelections(labels,{limit:4})}${course.length?`, with symptoms ${naturalList(course)}`:''}.`);
+ }
+ const contexts=active.map(([,domain])=>domain.context).filter(Boolean);
+ if(contexts.length)hpiParts.push(normalizeClinicalFreeText(contexts[0],{context:true}));
+ const notes=active.map(([,domain])=>domain.notes).filter(Boolean);
+ if(notes.length)hpiParts.push(normalizeClinicalFreeText(notes[0],{fragmentLead:'The client describes'}));
+ const hpi=hpiParts.join(' ');
+
+ const clinicalPicture=active.slice(0,5).map(([key,domain])=>{
+  const label=clinicalDomainLabel(key);
+  const features=domain.symptoms.slice(0,6).map(item=>item.toLowerCase());
+  if(!features.length)return'';
+  const qualifiers=[
+   domain.duration&&durationPhrase(domain.duration),
+   domain.frequency&&frequencyPhrase(domain.frequency),
+   domain.severity&&`${domain.severity.toLowerCase()} in severity`
+  ].filter(Boolean);
+  return `${label} include ${naturalList(features)}${qualifiers.length?`, with symptoms ${naturalList(qualifiers)}`:''}.`;
+ }).filter(Boolean).join(' ');
+
+ const functionalImpairment=impacts.length
+  ?`Symptoms are interfering with ${naturalList(impacts.map(item=>item.toLowerCase()))}.`
+  :'';
+
+ const clinicalContext=goals.length
+  ?`The client hopes treatment will help ${summarizeSelections(goals,{limit:4})}.`
+  :'';
+
+ return {
+  hasData:Boolean(chiefComplaint||hpi||clinicalPicture||functionalImpairment),
+  chiefComplaint,
+  hpi,
+  clinicalPicture,
+  functionalImpairment,
+  clinicalContext
+ };
 }
 function asArray(value){return Array.isArray(value)?value:(value===undefined||value===null||value===''?[]:[value])}
 function hasSelections(value){return asArray(value).length>0}

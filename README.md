@@ -1,16 +1,23 @@
-# Lighthouse Compass 7.5 — Premium Selection Polish
+# Lighthouse Compass 7.6 — Narrative Engine 2.0, Sprint A
 
-## Phase 1 improvements
-- Rebuilt checkbox cards with explicit selected-state classes
-- Removed all lift, pop-out, and ghost-outline effects
-- Added clean color-coded stripes on selected cards
-- Added modern custom check indicators
-- Added five rotating accent colors for easy scanning
-- Matched Presenting theme selections to the same visual language
-- Added colored category markers to major cards
-- Strengthened hierarchy inside domain-specific symptom groups
-- Improved hover, focus, spacing, and mobile behavior
-- Preserved all 7.4.3 multi-select and narrative logic
+## Rebuilt narrative sections
+- Chief Complaint
+- History of Present Illness
+- Functional Impact
+- Medical Necessity
+- Treatment Direction
+
+## Key safeguards
+- No duplicate “The client reports The client…” lead-ins
+- No empty sentence starters such as “Initial treatment should focus on .”
+- Chief Complaint no longer contains every selected reason and goal
+- Long selections are summarized instead of becoming run-on lists
+- HPI excludes treatment goals
+- Functional Impact contains impairment only
+- Medical Necessity excludes client goals and treatment hopes
+- Treatment Direction owns initial priorities and client goals
+- Live Story and generated documentation use the same section purposes
+- Patient-specific text is normalized before entering narrative output
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.
