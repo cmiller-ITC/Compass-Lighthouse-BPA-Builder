@@ -1,3 +1,5 @@
+import { buildEvidenceBasedConceptualization } from "./clinicalReasoning";
+
 
 export const symptomDomainDefinitions = {
   mood: {
@@ -381,7 +383,7 @@ function meaningfulValues(values=[]){
 function conciseList(values,{limit=3,mapper=value=>String(value).toLowerCase()}={}){
  const items=meaningfulValues(values).map(mapper).filter(Boolean);
  if(items.length<=limit)return listText(items);
- return `${listText(items.slice(0,limit))}, and ${items.length-limit} additional concern${items.length-limit===1?'':'s'}`;
+ return `${listText(items.slice(0,limit))} within a broader pattern of related concerns`;
 }
 function normalizeClientText(value){
  return normalizeClinicalText(value,{fragmentLead:'The client reports'})
@@ -651,50 +653,7 @@ function buildLevelOfCare(data){
 }
 
 function buildClinicalFormulation(data){
- const p=data.presenting;
- const domains=selectedSymptomDomains(data);
- const meaningfulValues=(values=[])=>values.filter(v=>!['None reported','None identified','None identified yet','Unknown / records unavailable','Unknown / family history unavailable','Unknown / not yet assessed','No trauma disclosed','Trauma history deferred','Not applicable'].includes(v));
-
- const impairments=p.impairments.filter(v=>!['None reported','Not applicable'].includes(v));
- const current=[];
- if(domains.length)current.push(listText(domains.map(([key])=>clinicalDomainLabel(key).toLowerCase())));
- else if(meaningfulValues(p.concerns).length)current.push(listText(meaningfulValues(p.concerns).map(v=>v.toLowerCase())));
- if(impairments.length)current.push(`functional disruption involving ${listText(impairments.map(v=>v.toLowerCase()))}`);
-
- const presentContext=[];
- if(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare){const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare];presentContext.push(...reasons.map(reasonToClinicalPhrase));}
- if(data.social.employment)presentContext.push(`${data.social.employment.toLowerCase()} employment circumstances`);
- if(data.social.finances)presentContext.push(`${data.social.finances.toLowerCase()} financial stress`);
- if(data.social.relationships)presentContext.push(`${data.social.relationships.toLowerCase()} relationship circumstances`);
-
- const history=[];
- if(meaningfulValues(data.trauma.experiences).length)history.push('trauma-related experiences');
- if(meaningfulValues(data.familyHistory.conditions).length)history.push('family psychiatric vulnerability');
- if(meaningfulValues(data.psychiatricHistory.diagnoses).length)history.push('prior behavioral-health concerns');
- if(meaningfulValues(data.medical.conditions).length)history.push('relevant medical or biological factors');
-
- const selectedSymptoms=domains.flatMap(([,domain])=>domain.symptoms.map(value=>value.toLowerCase()));
- const maintaining=[];
- if(selectedSymptoms.some(value=>/avoidance|withdrawal/.test(value)))maintaining.push('avoidance or withdrawal');
- if(selectedSymptoms.some(value=>/reassurance/.test(value)))maintaining.push('reassurance seeking');
- if(selectedSymptoms.some(value=>/checking|ritual|compulsion/.test(value)))maintaining.push('compulsive or safety behaviors');
- if(selectedSymptoms.some(value=>/worry|rumination|racing thoughts/.test(value)))maintaining.push('persistent worry or rumination');
- if(selectedSymptoms.some(value=>/hypervigilance|threat|startle/.test(value)))maintaining.push('heightened threat monitoring');
- if(impairments.includes('Sleep / energy'))maintaining.push('sleep and energy disruption');
- if(data.social.supports&&/limited|no support|inconsistent|poor/i.test(data.social.supports))maintaining.push('limited or inconsistent support');
-
- const strengths=[...new Set([
-  ...meaningfulValues(data.strengths),
-  ...meaningfulValues(data.risk.protectiveFactors)
- ])];
-
- return [
-  current.length?`The client is currently presenting with ${listText(current)}.`:'',
-  presentContext.length?`These difficulties are occurring in the present-day context of ${listText(presentContext)}.`:'',
-  history.length?`Earlier experiences and background factors that may help explain the current presentation include ${listText(history)}.`:'',
-  maintaining.length?`The current pattern may be reinforced by ${listText([...new Set(maintaining)])}.`:'',
-  strengths.length?`${listText(strengths.map(v=>v.toLowerCase()))} represent meaningful strengths and treatment assets.`:''
- ].filter(Boolean).join(' ')||'Clinical conceptualization requires additional assessment information.';
+ return buildEvidenceBasedConceptualization(data);
 }
 
 

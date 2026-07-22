@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
+import { buildClinicalReasoning, buildEvidenceBasedConceptualization } from "./clinicalReasoning";
 import "./styles.css";
 
 const NAV=[['home','🏠','Home'],['presenting','📝','Presenting'],['symptoms','🧩','Symptom Domains'],['history','📚','History'],['medical','🩺','Medical / Substance'],['social','🌿','Trauma / Social / Strengths'],['mse','🧠','MSE / Risk'],['diagnosis','🔎','Measures / Diagnosis'],['documentation','📄','Documentation']];
@@ -37,7 +38,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.6 Narrative Engine 2.0</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.7 Clinical Reasoning Foundation</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -48,7 +49,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.6</div>
+    <div className="eyebrow">Lighthouse Compass 7.7</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -326,7 +327,31 @@ function SectionNarrative({intelligence,masterStory}){
 }
 function NarrativeStorySection({item}){
  if(item.domains?.length)return <section className="preview-section symptom-story-section"><h4>{item.title}</h4><div className="domain-story-stack">{item.domains.map(domain=><article className="domain-story-card" key={domain.title}><h5>{domain.icon} {domain.title}</h5>{domain.paragraphs.map((paragraph,index)=><p key={index}>{paragraph}</p>)}</article>)}</div></section>;
+ if(item.reasoning)return <section className="preview-section conceptualization-section">
+  <h4>{item.title}</h4><p>{item.text}</p><ReasoningTrace reasoning={item.reasoning}/>
+ </section>;
  return <PreviewSection title={item.title} text={item.text}/>;
+}
+function ReasoningTrace({reasoning}){
+ const factors=reasoning.maintainingFactors||[];
+ const strengths=reasoning.strengths||[];
+ return <details className="reasoning-trace">
+  <summary><span>🧠 Why Compass reached this formulation</span><small>View the assessment evidence supporting each interpretation</small></summary>
+  <div className="reasoning-trace-body">
+   <ReasoningTraceGroup title="Current presentation" items={[
+    ...reasoning.presentation.domains.map(domain=>({label:domain.label,evidence:[...domain.symptoms,...domain.impairment]}))
+   ]}/>
+   <ReasoningTraceGroup title="Evidence-supported maintaining factors" items={factors.map(factor=>({
+    label:factor.label,
+    confidence:factor.confidence,
+    evidence:factor.evidence.map(item=>`${item.label}: ${item.value}`)
+   }))} empty="No maintaining factor is stated without supporting evidence."/>
+   <ReasoningTraceGroup title="Strengths and protective factors" items={strengths.map(item=>({label:item.value,evidence:[item.label]}))} empty="No strengths have been documented yet."/>
+  </div>
+ </details>;
+}
+function ReasoningTraceGroup({title,items,empty}){
+ return <section className="reasoning-trace-group"><h5>{title}</h5>{items.length?items.map((item,index)=><article className="reasoning-evidence-card" key={`${item.label}-${index}`}><div className="reasoning-evidence-head"><strong>{item.label}</strong>{item.confidence&&<span className={`confidence-badge ${item.confidence}`}>{item.confidence} support</span>}</div>{item.evidence?.length?<ul>{item.evidence.slice(0,5).map((value,i)=><li key={i}>{value}</li>)}</ul>:null}</article>):<p className="reasoning-empty">{empty}</p>}</section>;
 }
 function PreviewSection({title,text}){if(!text)return null;return <section className="preview-section"><h4>{title}</h4><p>{text}</p></section>}
 
@@ -652,43 +677,9 @@ function buildMasterClinicalStory(data){
   data.social.supports&&`The support system is described as ${data.social.supports.toLowerCase()}.`
  ]);
 
- const protective=[...new Set([...meaningful(data.strengths),...meaningful(data.risk.protectiveFactors)])];
+ const reasoning=buildClinicalReasoning(data);
+ const formulation=buildEvidenceBasedConceptualization(data);
 
- const currentThemes=[];
- if(domains.length)currentThemes.push(naturalList(domains.map(domain=>domain.label.toLowerCase())));
- if(impacts.length)currentThemes.push(`meaningful disruption in ${naturalList(impacts.map(value=>value.toLowerCase()))}`);
-
- const relevantHistory=[];
- if(meaningful(data.trauma.experiences).length)relevantHistory.push('trauma-related experiences');
- if(meaningful(data.familyHistory.conditions).length)relevantHistory.push('family psychiatric vulnerability');
- if(meaningful(data.psychiatricHistory.diagnoses).length)relevantHistory.push('prior behavioral-health concerns');
- if(meaningful(data.medical.conditions).length)relevantHistory.push('relevant medical or biological factors');
-
- const presentContext=[];
- if(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare){const reasons=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare];presentContext.push(...reasons.map(reasonToClinicalPhrase));}
- if(data.social.employment)presentContext.push(`${data.social.employment.toLowerCase()} employment context`);
- if(data.social.finances)presentContext.push(`${data.social.finances.toLowerCase()} financial stress`);
- if(data.social.relationships)presentContext.push(`${data.social.relationships.toLowerCase()} relationship context`);
-
- const maintaining=[];
- const selectedSymptoms=domains.flatMap(domain=>domain.symptoms.map(value=>value.toLowerCase()));
- if(selectedSymptoms.some(value=>/avoidance|withdrawal/.test(value)))maintaining.push('avoidance or withdrawal');
- if(selectedSymptoms.some(value=>/reassurance/.test(value)))maintaining.push('reassurance seeking');
- if(selectedSymptoms.some(value=>/checking|ritual|compulsion/.test(value)))maintaining.push('compulsive or safety behaviors');
- if(selectedSymptoms.some(value=>/worry|rumination|racing thoughts/.test(value)))maintaining.push('persistent worry or rumination');
- if(selectedSymptoms.some(value=>/hypervigilance|threat|startle/.test(value)))maintaining.push('heightened threat monitoring');
- if(impacts.includes('Sleep / energy'))maintaining.push('sleep and energy disruption');
- if(data.social.supports&&/limited|inconsistent|poor|none/i.test(data.social.supports))maintaining.push('limited or inconsistent support');
-
- const formulation=currentThemes.length
-  ?[
-    `The client is currently presenting with ${naturalList(currentThemes)}.`,
-    presentContext.length?`These difficulties are occurring in the present-day context of ${naturalList(presentContext)}.`:'',
-    relevantHistory.length?`Earlier experiences and background factors that may help explain the current presentation include ${naturalList(relevantHistory)}.`:'',
-    maintaining.length?`The current pattern may be reinforced by ${naturalList([...new Set(maintaining)])}.`:'',
-    protective.length?`At the same time, ${naturalList(protective.map(value=>value.toLowerCase()))} represent meaningful strengths that may support treatment engagement and recovery.`:''
-   ].filter(Boolean).join(' ')
-  :'';
  const concerns=meaningful(p.concerns),course=[];
  if(p.duration)course.push(durationPhrase(p.duration));
  if(p.frequency)course.push(frequencyPhrase(p.frequency));
@@ -701,7 +692,7 @@ function buildMasterClinicalStory(data){
   {title:'Clinical Symptom Picture',domains:domainStories},
   {title:'Functional Impact',text:functionalImpact},
   {title:'Psychosocial & Clinical Context',text:psychosocial},
-  {title:'Clinical Conceptualization',text:formulation},
+  {title:'Clinical Conceptualization',text:formulation,reasoning},
   {title:'Diagnostic Support',text:d.primary?joinSentences([`The current clinical impression is ${d.primary}${d.confidence?`, with ${d.confidence.toLowerCase()} confidence`:''}.`,d.diagnosticRationale]):''},
   {title:'Medical Necessity',text:d.medicalNecessity},
   {title:'Treatment Direction',text:joinSentences([d.treatmentFocus,!d.treatmentFocus&&(Array.isArray(p.clientRequest)?p.clientRequest.length:p.clientRequest)?`The client hopes to ${naturalList((Array.isArray(p.clientRequest)?p.clientRequest:[p.clientRequest]).map(value=>value.toLowerCase()))}.`:''])}
@@ -1046,7 +1037,7 @@ function cleanSentence(value){const text=String(value||'').trim().replace(/\s+/g
 function summarizeSelections(values,{limit=3,mapper=value=>String(value).toLowerCase()}={}){
  const items=selectionList(values).map(mapper).filter(Boolean);
  if(items.length<=limit)return naturalList(items);
- return `${naturalList(items.slice(0,limit))}, and ${items.length-limit} additional concern${items.length-limit===1?'':'s'}`;
+ return `${naturalList(items.slice(0,limit))} within a broader pattern of related concerns`;
 }
 function normalizeClientNarrative(value){
  const text=normalizeClinicalFreeText(value,{fragmentLead:'The client reports'});

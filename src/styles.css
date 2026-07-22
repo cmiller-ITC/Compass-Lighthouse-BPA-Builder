@@ -634,3 +634,24 @@ textarea{min-height:118px;line-height:1.62}
  .card-heading{align-items:flex-start}
  .card-accent{height:28px}
 }
+
+
+/* Compass 7.7 — Evidence-Based Clinical Reasoning */
+.reasoning-trace{margin-top:15px;border:1px solid #d9cee4;border-radius:16px;background:linear-gradient(145deg,#fbf8fd,#f3faf8);overflow:hidden}
+.reasoning-trace summary{display:grid;gap:4px;padding:13px 14px;cursor:pointer;list-style:none}
+.reasoning-trace summary::-webkit-details-marker{display:none}
+.reasoning-trace summary span{font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;color:#563b73}
+.reasoning-trace summary small{font-size:9.5px;line-height:1.4;color:#7a7180}
+.reasoning-trace-body{display:grid;gap:14px;padding:4px 14px 15px;border-top:1px solid #e7e0eb}
+.reasoning-trace-group h5{margin:12px 0 8px;font-size:9px;text-transform:uppercase;letter-spacing:.075em;color:#6d5a78}
+.reasoning-evidence-card{padding:11px 12px;margin-bottom:8px;border-left:5px solid #789d96;border-radius:11px;background:#fff;box-shadow:0 5px 14px rgba(54,39,73,.045)}
+.reasoning-evidence-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.reasoning-evidence-head strong{font-size:10.5px;color:#45394c}
+.confidence-badge{padding:4px 7px;border-radius:999px;font-size:7.5px;text-transform:uppercase;letter-spacing:.055em;font-weight:950}
+.confidence-badge.high{background:#e4f3ed;color:#376d5b}
+.confidence-badge.moderate{background:#fff1d8;color:#8a6529}
+.confidence-badge.emerging{background:#f2eaf6;color:#76518b}
+.reasoning-evidence-card ul{margin:8px 0 0;padding-left:17px}
+.reasoning-evidence-card li{margin:4px 0;font-size:9.5px;line-height:1.4;color:#655c69}
+.reasoning-empty{margin:0;padding:10px;border-radius:10px;background:#f7f4f8;color:#7f7584;font-size:9.5px}
+.conceptualization-section>p{font-size:13.5px;line-height:1.72}
