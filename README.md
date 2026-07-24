@@ -1,25 +1,24 @@
-# Lighthouse Compass 7.8.1 — Narrative & Golden Thread Hotfix
+# Lighthouse Compass 7.9 — Clinical Intelligence Coach
 
-## Free-text cleanup
-- Clinician-entered narrative is now lightly cleaned rather than rewritten
-- Converts patient / pt language to client language
-- Normalizes capitalization, spacing, and punctuation
-- Does not prepend “The client describes,” “The client reports,” or other canned lead-ins
-- Fixes duplications such as “The client describes The client indicated…”
+## Clinical Coach
+- Coach tab now consumes the structured Clinical Reasoning object
+- Surfaces evidence-based clinical observations
+- Identifies specific evidence gaps rather than generic prompts
+- Generates follow-up questions based on supported maintaining factors
+- Highlights cross-cutting issues such as sleep disruption and ongoing stress
+- Keeps relational interpretations tentative and evidence-linked
 
-## Golden Thread validator
-- No longer depends on clicking Generate or on legacy generated-output property names
-- Evaluates the current assessment data directly
-- Checks each link separately:
-  - assessment findings
-  - functional impairment
-  - diagnosis / clinical impression
-  - diagnostic rationale
-  - medical necessity
-  - level of care
-  - treatment direction
-- Shows the exact missing link and corrective guidance
-- Marks Golden Thread complete when all clinical links are established, even before generating the final documentation package
+## Clinical Priorities
+- Adds an Emerging Clinical Priorities panel
+- Shows treatment targets derived from client goals and supported mechanisms
+- Displays the evidence behind each suggested priority
+- Makes the bridge from assessment to treatment planning visible
+
+## Treatment Direction
+- Rebuilt from the reasoning engine
+- Pulls from supported maintaining factors, functional needs, client goals, and strengths
+- Avoids diagnosis-only canned recommendations
+- Creates a stronger foundation for the future Navigator treatment planner
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.

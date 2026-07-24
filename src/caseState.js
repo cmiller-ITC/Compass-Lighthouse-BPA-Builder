@@ -1,4 +1,4 @@
-import { buildEvidenceBasedConceptualization } from "./clinicalReasoning";
+import { buildEvidenceBasedConceptualization, buildReasoningTreatmentDirection } from "./clinicalReasoning";
 
 
 export const symptomDomainDefinitions = {
@@ -637,32 +637,7 @@ function generateLevelOfCareRationale(data){
 }
 
 function generateTreatmentFocus(data){
- const p=data.presenting;
- const domains=selectedSymptomDomains(data);
- const keys=domains.map(([key])=>key);
- const priorities=[];
-
- if(keys.includes('mood'))priorities.push('reducing depressive symptoms and increasing engagement in daily activities');
- if(keys.includes('anxiety')||keys.includes('panic'))priorities.push('improving anxiety management and reducing panic-related distress');
- if(keys.includes('trauma'))priorities.push('strengthening stabilization and trauma-informed coping');
- if(keys.includes('ocd'))priorities.push('reducing obsessive-compulsive patterns through evidence-based intervention');
- if(keys.includes('adhd'))priorities.push('strengthening executive-functioning supports and daily organization');
- if(keys.includes('adjustment'))priorities.push('processing current stressors and strengthening adaptive coping');
- if(keys.includes('painHealth'))priorities.push('addressing the interaction among pain, fear, avoidance, and functioning');
- if(keys.includes('substance'))priorities.push('supporting recovery, harm-reduction, or relapse-prevention goals');
-
- const goals=asArray(p.clientRequest).map(value=>String(value).toLowerCase());
- if(!priorities.length&&goals.length)priorities.push(...goals.slice(0,4));
- if(!priorities.length&&meaningfulValues(p.concerns).length)priorities.push(`addressing ${conciseList(p.concerns,{limit:4})}`);
-
- const impairments=currentImpairments(data);
- if(impairments.length)priorities.push(`improving functioning in ${conciseList(impairments,{limit:4})}`);
-
- if(!priorities.length){
-  return 'Initial treatment priorities will be established collaboratively as additional assessment information is gathered.';
- }
-
- return `Initial treatment will focus on ${listText(priorities.slice(0,5))}. Treatment planning will be individualized to the client’s goals, strengths, preferences, cultural context, risk needs, and response to prior services.`;
+ return buildReasoningTreatmentDirection(data);
 }
 
 function buildDiagnosticRationale(data){

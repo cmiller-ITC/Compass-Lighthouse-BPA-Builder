@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
-import { buildClinicalReasoning, buildEvidenceBasedConceptualization } from "./clinicalReasoning";
+import { buildClinicalReasoning, buildEvidenceBasedConceptualization, buildClinicalCoachInsights, buildReasoningTreatmentDirection } from "./clinicalReasoning";
 import "./styles.css";
 
 const NAV=[['home','🏠','Home'],['presenting','📝','Presenting'],['symptoms','🧩','Symptom Domains'],['history','📚','History'],['medical','🩺','Medical / Substance'],['social','🌿','Trauma / Social / Strengths'],['mse','🧠','MSE / Risk'],['diagnosis','🔎','Measures / Diagnosis'],['documentation','📄','Documentation']];
@@ -45,7 +45,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.8.1 Narrative & Golden Thread Hotfix</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.9 Clinical Intelligence Coach</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -56,7 +56,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.8.1</div>
+    <div className="eyebrow">Lighthouse Compass 7.9</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -369,13 +369,25 @@ function PreviewSection({title,text}){if(!text)return null;return <section class
 
 function SectionCoach({intelligence}){
  return <div className="coach-library">
+  {intelligence.clinicalPriorities?.length>0&&<ClinicalPriorityPanel priorities={intelligence.clinicalPriorities}/>}
+  {intelligence.clinicalObservations?.map((item,i)=><div className="coach-observation" key={`observation-${i}`}><strong>🧠 Clinical observation</strong><span>{item}</span></div>)}
   {intelligence.strengths.map((item,i)=><div className="coach-strength" key={`strength-${i}`}><strong>✓ What is working</strong><span>{item}</span></div>)}
   <GuidanceBlock icon="💬" title="Suggested Questions" items={intelligence.questions}/>
   <GuidanceBlock icon="🗣️" title="Clinician Scripting" items={intelligence.scripts}/>
   <GuidanceBlock icon="💡" title="Clinical Pearl" items={intelligence.pearls}/>
   <GuidanceBlock icon="📝" title="Documentation Tip" items={intelligence.documentationTips}/>
+  {intelligence.clinicalGaps?.map((item,i)=><div className="coach-item high" key={`gap-${i}`}><strong>Evidence to strengthen</strong><span>{item}</span></div>)}
   {intelligence.prompts.map((item,i)=><div className={`coach-item ${item.priority||'standard'}`} key={`prompt-${i}`}><strong>{item.priority==='high'?'Important to explore':'Clinical Coach'}</strong><span>{item.text}</span></div>)}
  </div>
+}
+function ClinicalPriorityPanel({priorities}){
+ return <section className="clinical-priority-panel">
+  <div className="clinical-priority-heading"><span>⭐</span><div><strong>Emerging clinical priorities</strong><small>Suggested from documented goals and evidence-supported mechanisms</small></div></div>
+  <div className="clinical-priority-list">{priorities.map((priority,index)=><article key={`${priority.id}-${index}`}>
+   <span className="priority-number">{index+1}</span>
+   <div><strong>{priority.label}</strong>{priority.evidence?.length>0&&<small>Supported by: {priority.evidence.slice(0,2).map(item=>item.value).join(' · ')}</small>}</div>
+  </article>)}</div>
+ </section>;
 }
 function GuidanceBlock({icon,title,items}){if(!items?.length)return null;return <details className="guidance-block" open><summary>{icon} {title}</summary><div>{items.map((item,i)=><p key={i}>{item}</p>)}</div></details>}
 
@@ -775,7 +787,7 @@ function buildMasterClinicalStory(data){
   {title:'Clinical Conceptualization',text:formulation,reasoning},
   {title:'Diagnostic Support',text:d.primary?joinSentences([`The current clinical impression is ${d.primary}${d.confidence?`, with ${d.confidence.toLowerCase()} confidence`:''}.`,d.diagnosticRationale]):''},
   {title:'Medical Necessity',text:d.medicalNecessity},
-  {title:'Treatment Direction',text:joinSentences([d.treatmentFocus,!d.treatmentFocus&&(Array.isArray(p.clientRequest)?p.clientRequest.length:p.clientRequest)?`The client hopes to ${naturalList((Array.isArray(p.clientRequest)?p.clientRequest:[p.clientRequest]).map(value=>value.toLowerCase()))}.`:''])}
+  {title:'Treatment Direction',text:d.treatmentFocus?normalizeClinicalFreeText(d.treatmentFocus):buildReasoningTreatmentDirection(data)}
  ].filter(item=>item.text||item.domains?.length);
 }
 
@@ -795,6 +807,11 @@ function buildSectionIntelligence(data,section){
  return enrichWithDynamicCoach(result,data,e,section);
 }
 function enrichWithDynamicCoach(result,data,e,section){
+ const clinicalCoach=buildClinicalCoachInsights(data);
+ result.clinicalObservations=clinicalCoach.observations;
+ result.clinicalGaps=clinicalCoach.gaps;
+ result.clinicalPriorities=clinicalCoach.priorities;
+ clinicalCoach.questions.forEach(question=>{if(!result.questions.includes(question))result.questions.push(question)});
  const keys=e.activeDomains.map(([key])=>key);
  const addQuestion=(text)=>{if(!result.questions.includes(text))result.questions.push(text)};
  const addPrompt=(text,priority='standard')=>{if(!result.prompts.some(p=>p.text===text))result.prompts.push({text,priority})};

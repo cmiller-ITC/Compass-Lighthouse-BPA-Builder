@@ -395,3 +395,118 @@ export function buildEvidenceBasedConceptualization(data){
 
   return sentences.join(" ") || "Clinical conceptualization requires additional assessment information.";
 }
+
+
+function targetEvidence(target,reasoning){
+  if(target.source?.startsWith("maintainingFactors.")){
+    const id=target.source.split(".").at(-1);
+    const factor=reasoning.maintainingFactors.find(item=>item.id===id);
+    return factor?.evidence || [];
+  }
+  if(target.source==="presenting.clientRequest"){
+    return [evidence("presenting.clientRequest","Client-identified goal",target.label)];
+  }
+  return [];
+}
+
+export function buildClinicalCoachInsights(data){
+  const reasoning=buildClinicalReasoning(data);
+  const {presentation,contributors,relationalContext,maintainingFactors,strengths,treatmentTargets}=reasoning;
+  const observations=[];
+  const gaps=[];
+  const questions=[];
+  const priorities=treatmentTargets.slice(0,6).map(target=>({
+    ...target,
+    evidence:targetEvidence(target,reasoning)
+  }));
+
+  if(presentation.domains.length>1){
+    observations.push(`The presentation spans ${presentation.domains.length} active symptom domains. Consider identifying which pattern is primary and which concerns are secondary or cross-cutting.`);
+  }
+
+  const sleepFactor=maintainingFactors.find(factor=>factor.id==="sleep");
+  if(sleepFactor){
+    observations.push("Sleep disruption is supported across the assessment and may represent a cross-cutting treatment target affecting mood, cognition, and emotional regulation.");
+  }
+
+  const stressFactor=maintainingFactors.find(factor=>factor.id==="ongoingStress");
+  if(stressFactor){
+    observations.push("Multiple current stressors are documented. Clarify which stressors are precipitating, ongoing, and most changeable through treatment or care coordination.");
+  }
+
+  const relationalThemes=(relationalContext?.themes||[]).filter(theme=>theme.id!=="supportiveRelationships");
+  if(relationalThemes.length){
+    observations.push(`Documented relational evidence suggests possible themes involving ${naturalList(relationalThemes.slice(0,3).map(theme=>theme.label))}. These should remain tentative and tied to the client’s own account.`);
+  }
+
+  maintainingFactors.forEach(factor=>{
+    if(factor.confidence==="emerging"){
+      gaps.push(`The formulation includes emerging evidence for ${factor.label}. Add a patient-specific behavioral example before treating this as a well-established maintaining factor.`);
+    }
+  });
+
+  if(presentation.impairment.length&&presentation.domains.length&&!presentation.patientNarrative){
+    gaps.push("Symptoms and impairment are documented, but a concise patient-specific presenting narrative would strengthen the clinical story.");
+  }
+
+  if(presentation.domains.some(domain=>domain.symptoms.length>=5)&&presentation.impairment.length<2){
+    gaps.push("A substantial symptom burden is documented with limited functional-impact detail. Explore how symptoms affect work, relationships, self-care, routines, or decision-making.");
+  }
+
+  if(contributors.trauma.length&& !presentation.domains.some(domain=>domain.id==="trauma") && !meaningful(data?.trauma?.symptoms).length){
+    gaps.push("Trauma history is documented without current trauma-symptom evidence. Clarify whether the history is clinically active, historical, or not currently contributing.");
+  }
+
+  if(relationalThemes.length&&!String(data?.familyHistory?.relationalDetails||"").trim()){
+    gaps.push("Relational themes are selected, but the client’s own narrative describing how these patterns developed or appear today is still limited.");
+  }
+
+  if(!strengths.length){
+    gaps.push("No strengths or protective factors are documented yet. Identify treatment assets, supports, motivation, values, coping resources, or reasons for living.");
+  }
+
+  maintainingFactors.forEach(factor=>{
+    const questionMap={
+      avoidance:"What situations, emotions, memories, or responsibilities is the client avoiding, and what short-term relief does avoidance provide?",
+      rumination:"What topics does the client repeatedly think about, when does this occur, and how does it affect action or problem solving?",
+      reassurance:"What reassurance is sought, from whom, and how long does relief last?",
+      compulsions:"What feared outcome is the behavior intended to prevent, and what happens when the client resists it?",
+      threatMonitoring:"What cues does the client monitor for danger, and how does this affect arousal or behavior?",
+      sleep:"How do sleep quantity and quality affect mood, concentration, irritability, and daily functioning?",
+      ongoingStress:"Which current stressor is most urgent, ongoing, or realistically modifiable?",
+      limitedSupport:"Who is available emotionally or practically, and what makes it difficult to access that support?"
+    };
+    if(questionMap[factor.id])questions.push(questionMap[factor.id]);
+  });
+
+  return {
+    observations:unique(observations),
+    gaps:unique(gaps),
+    questions:unique(questions),
+    priorities,
+    strengths:strengths.slice(0,5)
+  };
+}
+
+export function buildReasoningTreatmentDirection(data){
+  const reasoning=buildClinicalReasoning(data);
+  const targets=reasoning.treatmentTargets.slice(0,5);
+  const strengths=reasoning.strengths.slice(0,3).map(item=>lower(item.value));
+  const goals=reasoning.presentation.goals.slice(0,4).map(lower);
+  const sentences=[];
+
+  if(targets.length){
+    sentences.push(`Initial treatment will focus on ${naturalList(targets.map(target=>target.label))}.`);
+  }else if(goals.length){
+    sentences.push(`Initial treatment priorities will be developed around the client’s goals of ${naturalList(goals)}.`);
+  }else{
+    sentences.push("Initial treatment priorities will be established collaboratively as additional assessment information is gathered.");
+  }
+
+  if(strengths.length){
+    sentences.push(`Treatment planning can build upon ${naturalList(strengths)} as identified clinical strengths and engagement resources.`);
+  }
+
+  sentences.push("Interventions should be individualized to the client’s preferences, cultural context, risk needs, functional priorities, and response to treatment.");
+  return sentences.join(" ");
+}
