@@ -106,7 +106,7 @@ function confidenceFor(evidenceItems){
 function makeFactor(id,label,evidenceItems,clinicalMeaning){
   const clean = unique(evidenceItems.map(item => JSON.stringify(item))).map(item => JSON.parse(item));
   if(!clean.length) return null;
-  return {id,label,confidence:confidenceFor(clean),evidence:clean,clinicalMeaning};
+  return {id,label,confidence:confidenceFor(clean),evidence:clean,evidenceSummary:"",mechanism:"",clinicalMeaning};
 }
 
 export function collectPresentation(data){
@@ -302,6 +302,55 @@ export function collectMaintainingFactors(data){
   return factors;
 }
 
+const STRESSOR_LANGUAGE = {
+  "Major life transition or adjustment":"a major life transition",
+  "Relationship conflict or separation":"relationship conflict or separation",
+  "Grief, loss, or bereavement":"grief or bereavement",
+  "Work or school stress":"work- or school-related stress",
+  "Job loss or employment instability":"job loss or employment instability",
+  "Financial stress":"financial strain",
+  "Caregiver or parenting stress":"caregiver or parenting demands",
+  "Medical diagnosis, chronic illness, or pain":"medical or pain-related stress",
+  "Pregnancy, postpartum, or reproductive transition":"a reproductive or postpartum transition",
+  "Housing instability or relocation":"housing instability or relocation",
+  "Legal or court-related stress":"legal or court-related stress"
+};
+
+function conciseEvidenceValues(factor){
+  const structured=factor.evidence.filter(item=>item.source!=="freeText").map(item=>String(item.value||"").trim()).filter(Boolean);
+  const narrative=factor.evidence.filter(item=>item.source==="freeText").map(item=>String(item.value||"").trim()).filter(Boolean);
+  return unique(structured.length?structured:narrative).slice(0,5);
+}
+function factorEvidenceSummary(factor){
+  const values=conciseEvidenceValues(factor);
+  if(!values.length)return factor.label;
+  if(factor.id==="ongoingStress")return naturalList(values.map(value=>STRESSOR_LANGUAGE[value]||lower(value)));
+  return naturalList(values.map(lower));
+}
+function factorMechanism(factor){
+  const evidenceText=factorEvidenceSummary(factor);
+  const mechanisms={
+    avoidance:`${evidenceText} may provide short-term relief while reducing engagement, problem solving, or opportunities for corrective experiences`,
+    rumination:`${evidenceText} may keep attention focused on threat, uncertainty, or perceived problems while limiting flexible action`,
+    reassurance:`${evidenceText} may briefly reduce uncertainty while reinforcing reliance on external confirmation`,
+    compulsions:`${evidenceText} may temporarily lower distress while strengthening the feared association and the perceived need for ritualized behavior`,
+    threatMonitoring:`${evidenceText} may keep the nervous system oriented toward danger and sustain physiological arousal`,
+    sleep:`${evidenceText} may increase fatigue, cognitive strain, irritability, and emotional vulnerability`,
+    ongoingStress:`${evidenceText} may continue to increase emotional and practical demands while limiting opportunities for recovery`,
+    limitedSupport:`${evidenceText} may reduce access to emotional reassurance, practical assistance, and shared problem solving`
+  };
+  return mechanisms[factor.id]||factor.clinicalMeaning.replace(/[.]$/,"");
+}
+export function enrichMaintainingFactors(factors){
+  return factors.map(factor=>({...factor,evidenceSummary:factorEvidenceSummary(factor),mechanism:factorMechanism(factor)}));
+}
+export function buildMaintainingFactorNarratives(factors){
+  return enrichMaintainingFactors(factors).slice(0,4).map(factor=>{
+    const certainty=factor.confidence==="emerging"?"may be contributing to":"appears to be maintained";
+    return `Current distress ${certainty}, in part, through ${factor.mechanism}.`;
+  });
+}
+
 export function collectStrengths(data){
   const items = [
     ...meaningful(data?.strengths).map(value => evidence("strengths","Strength",value)),
@@ -320,7 +369,10 @@ export function collectTreatmentTargets(data,maintainingFactors=collectMaintaini
   if(factorIds.has("compulsions")) targets.push({id:"erp",label:"reduce compulsive and safety behaviors using exposure-based intervention when appropriate",source:"maintainingFactors.compulsions"});
   if(factorIds.has("threatMonitoring")) targets.push({id:"regulation",label:"strengthen stabilization, grounding, and nervous-system regulation",source:"maintainingFactors.threatMonitoring"});
   if(factorIds.has("sleep")) targets.push({id:"sleep",label:"improve sleep stability and restorative routines",source:"maintainingFactors.sleep"});
-  if(factorIds.has("ongoingStress")) targets.push({id:"stressCoping",label:"strengthen coping and problem solving around current stressors",source:"maintainingFactors.ongoingStress"});
+  if(factorIds.has("ongoingStress")){
+    const stressFactor=maintainingFactors.find(factor=>factor.id==="ongoingStress");
+    targets.push({id:"stressCoping",label:`strengthen coping and problem solving around ${stressFactor?.evidenceSummary||"current stressors"}`,source:"maintainingFactors.ongoingStress"});
+  }
   if(factorIds.has("limitedSupport")) targets.push({id:"support",label:"increase access to supportive relationships and practical resources",source:"maintainingFactors.limitedSupport"});
   presentation.goals.slice(0,4).forEach((goal,index) => targets.push({id:`clientGoal${index}`,label:lower(goal),source:"presenting.clientRequest"}));
   return unique(targets.map(item => JSON.stringify(item))).map(item => JSON.parse(item));
@@ -464,11 +516,7 @@ export function buildEvidenceBasedConceptualization(data){
   }
 
   if(maintainingFactors.length){
-    const supported = maintainingFactors.slice(0,4).map(factor => factor.label);
-    const qualifier = maintainingFactors.some(factor => factor.confidence === "emerging")
-      ? "may be influenced by"
-      : "appear to be maintained in part by";
-    sentences.push(`Current distress ${qualifier} ${naturalList(supported)}.`);
+    sentences.push(...buildMaintainingFactorNarratives(maintainingFactors));
   }else if(currentItems.length){
     sentences.push("Maintaining factors require further clarification before a more specific formulation can be made.");
   }
@@ -519,7 +567,7 @@ export function buildClinicalCoachInsights(data){
 
   const stressFactor=maintainingFactors.find(factor=>factor.id==="ongoingStress");
   if(stressFactor){
-    observations.push("Multiple current stressors are documented. Clarify which stressors are precipitating, ongoing, and most changeable through treatment or care coordination.");
+    observations.push(`Current psychosocial stress includes ${stressFactor.evidenceSummary}. Clarify which stressors are precipitating, ongoing, and most changeable through treatment or care coordination.`);
   }
 
   const relationalThemes=(relationalContext?.themes||[]).filter(theme=>theme.id!=="supportiveRelationships");

@@ -45,7 +45,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.9.1 Care Pathway Narrative Routing</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.10 Narrative Intelligence 2.0</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -56,7 +56,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.9.1</div>
+    <div className="eyebrow">Lighthouse Compass 7.10</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -345,6 +345,7 @@ function ReasoningTrace({reasoning}){
  return <details className="reasoning-trace">
   <summary><span>🧠 Why Compass reached this formulation</span><small>View the assessment evidence supporting each interpretation</small></summary>
   <div className="reasoning-trace-body">
+   <ClinicalCompassMini reasoning={reasoning}/>
    <ReasoningTraceGroup title="Current presentation" items={[
     ...reasoning.presentation.domains.map(domain=>({label:domain.label,evidence:[...domain.symptoms,...domain.impairment]}))
    ]}/>
@@ -356,14 +357,32 @@ function ReasoningTrace({reasoning}){
    <ReasoningTraceGroup title="Evidence-supported maintaining factors" items={factors.map(factor=>({
     label:factor.label,
     confidence:factor.confidence,
-    evidence:factor.evidence.map(item=>`${item.label}: ${item.value}`)
+    evidence:factor.evidence.map(item=>`${item.label}: ${item.value}`),
+    mechanism:factor.mechanism,
+    meaning:factor.clinicalMeaning
    }))} empty="No maintaining factor is stated without supporting evidence."/>
    <ReasoningTraceGroup title="Strengths and protective factors" items={strengths.map(item=>({label:item.value,evidence:[item.label]}))} empty="No strengths have been documented yet."/>
   </div>
  </details>;
 }
+function ClinicalCompassMini({reasoning}){
+ const steps=[
+  {icon:'🌩',title:'What happened?',detail:[...(reasoning.contributors?.currentStressors||[]),...(reasoning.contributors?.trauma||[])].length?'Context documented':'Needs context'},
+  {icon:'🧠',title:'How did they adapt?',detail:(reasoning.relationalContext?.themes||[]).length?'Adaptation themes emerging':'Needs adaptation evidence'},
+  {icon:'🛡',title:'How are they surviving?',detail:(reasoning.maintainingFactors||[]).length?'Current coping patterns documented':'Needs coping detail'},
+  {icon:'🔄',title:'What keeps it going?',detail:(reasoning.maintainingFactors||[]).length?`${reasoning.maintainingFactors.length} mechanisms supported`:'Needs maintaining factors'},
+  {icon:'✨',title:'Where is hope?',detail:(reasoning.strengths||[]).length?`${reasoning.strengths.length} strengths identified`:'Needs strengths'},
+  {icon:'🎯',title:'Where do we begin?',detail:(reasoning.treatmentTargets||[]).length?`${reasoning.treatmentTargets.length} targets emerging`:'Needs treatment targets'}
+ ];
+ return <section className="clinical-compass-mini"><div className="compass-mini-heading"><strong>🧭 The Lighthouse Clinical Compass</strong><small>See how the clinical picture moves from story to treatment</small></div><div className="compass-mini-flow">{steps.map((step,index)=><div className="compass-mini-step" key={step.title}><span>{step.icon}</span><strong>{step.title}</strong><small>{step.detail}</small>{index<steps.length-1&&<i>→</i>}</div>)}</div></section>;
+}
 function ReasoningTraceGroup({title,items,empty}){
- return <section className="reasoning-trace-group"><h5>{title}</h5>{items.length?items.map((item,index)=><article className="reasoning-evidence-card" key={`${item.label}-${index}`}><div className="reasoning-evidence-head"><strong>{item.label}</strong>{item.confidence&&<span className={`confidence-badge ${item.confidence}`}>{item.confidence} support</span>}</div>{item.evidence?.length?<ul>{item.evidence.slice(0,5).map((value,i)=><li key={i}>{value}</li>)}</ul>:null}</article>):<p className="reasoning-empty">{empty}</p>}</section>;
+ return <section className="reasoning-trace-group"><h5>{title}</h5>{items.length?items.map((item,index)=><article className="reasoning-evidence-card" key={`${item.label}-${index}`}>
+  <div className="reasoning-evidence-head"><strong>{item.label}</strong>{item.confidence&&<span className={`confidence-badge ${item.confidence}`}>{item.confidence} support</span>}</div>
+  {item.evidence?.length?<div className="reasoning-layer evidence-layer"><span>Evidence</span><ul>{item.evidence.slice(0,5).map((value,i)=><li key={i}>{value}</li>)}</ul></div>:null}
+  {item.mechanism&&<div className="reasoning-layer mechanism-layer"><span>Mechanism</span><p>{item.mechanism}</p></div>}
+  {item.meaning&&<div className="reasoning-layer meaning-layer"><span>Clinical meaning</span><p>{item.meaning}</p></div>}
+ </article>):<p className="reasoning-empty">{empty}</p>}</section>;
 }
 function PreviewSection({title,text}){if(!text)return null;return <section className="preview-section"><h4>{title}</h4><p>{text}</p></section>}
 
