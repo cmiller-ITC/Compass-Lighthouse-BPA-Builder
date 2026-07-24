@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
-import { buildClinicalReasoning, buildEvidenceBasedConceptualization, buildClinicalCoachInsights, buildReasoningTreatmentDirection } from "./clinicalReasoning";
+import { buildClinicalReasoning, buildEvidenceBasedConceptualization, buildClinicalCoachInsights, buildReasoningTreatmentDirection, buildCareSeekingNarrative } from "./clinicalReasoning";
 import "./styles.css";
 
 const NAV=[['home','🏠','Home'],['presenting','📝','Presenting'],['symptoms','🧩','Symptom Domains'],['history','📚','History'],['medical','🩺','Medical / Substance'],['social','🌿','Trauma / Social / Strengths'],['mse','🧠','MSE / Risk'],['diagnosis','🔎','Measures / Diagnosis'],['documentation','📄','Documentation']];
@@ -45,7 +45,7 @@ function App(){
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
  const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
- return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.9 Clinical Intelligence Coach</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
+ return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.9.1 Care Pathway Narrative Routing</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
 function Home({data,setModule}){
@@ -56,7 +56,7 @@ function Home({data,setModule}){
   <section className="lighthouse-hero">
    <LighthouseScene progress={journey.overallProgress}/>
    <div className="lighthouse-hero-copy">
-    <div className="eyebrow">Lighthouse Compass 7.9</div>
+    <div className="eyebrow">Lighthouse Compass 7.9.1</div>
     <h1>Helping clinicians illuminate the path forward.</h1>
     <p>A calm, guided clinical workspace that carries one client story from first concern through formulation, diagnosis, and treatment direction.</p>
     <div className="hero-actions">
@@ -771,6 +771,7 @@ function buildMasterClinicalStory(data){
 
  const reasoning=buildClinicalReasoning(data);
  const formulation=buildEvidenceBasedConceptualization(data);
+ const careSeeking=buildCareSeekingNarrative(data);
 
  const concerns=meaningful(p.concerns),course=[];
  if(p.duration)course.push(durationPhrase(p.duration));
@@ -779,7 +780,7 @@ function buildMasterClinicalStory(data){
  if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
 
  return [
-  {title:'Chief Complaint',text:p.patientNarrative.trim()?normalizeClinicalFreeText(p.patientNarrative):(Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare.length:p.reasonSeekingCare?true:false)?`The client is seeking care in response to ${naturalList((Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:[p.reasonSeekingCare]).map(reasonToClinicalPhrase))}.`:''},
+  {title:'Chief Complaint',text:p.patientNarrative.trim()?joinSentences([normalizeClinicalFreeText(p.patientNarrative),...careSeeking.carePathway]):careSeeking.chiefComplaint},
   {title:'History of Present Illness',text:concerns.length?`The primary concerns include ${naturalList(concerns.map(value=>value.toLowerCase()))}${course.length?`, with symptoms ${naturalList(course)}`:''}.`:''},
   {title:'Clinical Symptom Picture',domains:domainStories},
   {title:'Functional Impact',text:functionalImpact},
@@ -1154,12 +1155,13 @@ function buildLiveClinicalStory(data){
   ...active.flatMap(([,domain])=>meaningful(domain.impairment))
  ])];
 
+ const careSeeking=buildCareSeekingNarrative(data);
  let chiefComplaint='';
  if(p.patientNarrative.trim()){
   chiefComplaint=normalizeClientNarrative(p.patientNarrative);
- }else if(reasons.length){
-  const primaryReasons=summarizeSelections(reasons,{limit:3,mapper:reasonToClinicalPhrase});
-  chiefComplaint=`The client is seeking care due to ${primaryReasons}.`;
+  if(careSeeking.carePathway.length)chiefComplaint=`${chiefComplaint} ${careSeeking.carePathway.join(' ')}`;
+ }else if(careSeeking.chiefComplaint){
+  chiefComplaint=careSeeking.chiefComplaint;
  }else if(concerns.length){
   chiefComplaint=`The client is seeking care for ${summarizeSelections(concerns,{limit:3})}.`;
  }else if(goals.length){
@@ -1173,6 +1175,9 @@ function buildLiveClinicalStory(data){
  if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
 
  const hpiParts=[];
+ if(careSeeking.carePathway.length&&p.patientNarrative.trim()){
+  hpiParts.push(careSeeking.carePathway.join(' '));
+ }
  if(concerns.length){
   hpiParts.push(`The primary concerns include ${summarizeSelections(concerns,{limit:5})}${course.length?`, with symptoms ${naturalList(course)}`:''}.`);
  }else if(active.length){

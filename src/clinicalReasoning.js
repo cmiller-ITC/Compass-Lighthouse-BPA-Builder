@@ -347,6 +347,85 @@ function contributorSummary(contributors){
   return {current:unique(current),history};
 }
 
+const REFERRAL_LANGUAGE = {
+  "Diagnostic clarification":"The evaluation was initiated in part to clarify the diagnostic picture and treatment needs.",
+  "Medication-related evaluation or coordination":"Care was initiated in part to support medication evaluation or coordination.",
+  "Referral from another provider":"The client was referred by another healthcare provider for behavioral-health evaluation and treatment.",
+  "School, employer, or EAP referral":"The client entered care following referral through a school, employer, or employee-assistance program.",
+  "Court or probation referral":"The evaluation was initiated following a court- or probation-related referral.",
+  "Family encouragement or concern":"The client sought care in part following encouragement or concern expressed by family.",
+  "Step-down or aftercare following higher level of care":"The client is continuing care following a higher level of treatment."
+};
+
+function carePathwayPhrases(referrals){
+  return meaningful(referrals).map(value=>REFERRAL_LANGUAGE[value]||`Care was initiated in part through ${lower(value)}.`);
+}
+function groupedReasonValues(data){
+  const contributors=collectContributors(data);
+  return {
+    changes:contributors.currentChange.map(item=>item.value),
+    stressors:contributors.currentStressors.map(item=>item.value),
+    referrals:contributors.referralContext.map(item=>item.value),
+    growth:contributors.growthContext.map(item=>item.value)
+  };
+}
+
+export function buildCareSeekingNarrative(data){
+  const grouped=groupedReasonValues(data);
+  const presentation=collectPresentation(data);
+  const sentences=[];
+
+  const changePhrases=grouped.changes.map(value=>{
+    const map={
+      "Symptoms have recently worsened":"a recent worsening of symptoms",
+      "New symptoms have developed":"the emergence of new symptoms",
+      "Symptoms are interfering with daily functioning":"increasing interference with daily functioning",
+      "Difficulty coping independently":"difficulty managing current concerns independently",
+      "Symptoms are no longer manageable":"symptoms that no longer feel manageable",
+      "Returning to treatment after a break":"a return to treatment after a period without services"
+    };
+    return map[value]||lower(value);
+  });
+  const stressorPhrases=grouped.stressors.map(value=>{
+    const map={
+      "Major life transition or adjustment":"a major life transition",
+      "Relationship conflict or separation":"relationship conflict or separation",
+      "Grief, loss, or bereavement":"grief or loss",
+      "Work or school stress":"work- or school-related stress",
+      "Job loss or employment instability":"job loss or employment instability",
+      "Financial stress":"financial strain",
+      "Caregiver or parenting stress":"caregiver or parenting demands",
+      "Medical diagnosis, chronic illness, or pain":"medical or pain-related stress",
+      "Pregnancy, postpartum, or reproductive transition":"a reproductive or postpartum transition",
+      "Housing instability or relocation":"housing instability or relocation",
+      "Legal or court-related stress":"legal or court-related stress"
+    };
+    return map[value]||lower(value);
+  });
+
+  if(changePhrases.length&&stressorPhrases.length){
+    sentences.push(`The client is seeking care due to ${naturalList(changePhrases.slice(0,3))} occurring in the context of ${naturalList(stressorPhrases.slice(0,4))}.`);
+  }else if(changePhrases.length){
+    sentences.push(`The client is seeking care due to ${naturalList(changePhrases.slice(0,4))}.`);
+  }else if(stressorPhrases.length){
+    sentences.push(`The client is seeking care in the context of ${naturalList(stressorPhrases.slice(0,4))}.`);
+  }else if(presentation.concerns.length){
+    sentences.push(`The client is seeking care for ${naturalList(presentation.concerns.slice(0,4).map(lower))}.`);
+  }
+
+  const referralSentences=carePathwayPhrases(grouped.referrals);
+  if(referralSentences.length){
+    sentences.push(...referralSentences.slice(0,2));
+  }
+
+  return {
+    chiefComplaint:sentences.join(" "),
+    precipitatingFactors:[...changePhrases,...stressorPhrases],
+    carePathway:referralSentences,
+    treatmentPurpose:grouped.growth.map(lower)
+  };
+}
+
 export function buildEvidenceBasedConceptualization(data){
   const reasoning = buildClinicalReasoning(data);
   const {presentation,contributors,relationalContext,maintainingFactors,strengths} = reasoning;
@@ -364,6 +443,11 @@ export function buildEvidenceBasedConceptualization(data){
 
   if(context.current.length){
     sentences.push(`Current difficulties are occurring in the context of ${naturalList(context.current.slice(0,5))}.`);
+  }
+
+  const careSeeking=buildCareSeekingNarrative(data);
+  if(careSeeking.carePathway.length){
+    sentences.push(careSeeking.carePathway.join(" "));
   }
 
   if(context.history.length){
@@ -427,6 +511,10 @@ export function buildClinicalCoachInsights(data){
   const sleepFactor=maintainingFactors.find(factor=>factor.id==="sleep");
   if(sleepFactor){
     observations.push("Sleep disruption is supported across the assessment and may represent a cross-cutting treatment target affecting mood, cognition, and emotional regulation.");
+  }
+
+  if(contributors.referralContext.length){
+    observations.push(`The client’s care pathway includes ${naturalList(contributors.referralContext.map(item=>lower(item.value)))}. Distinguish the referral source’s purpose from the client’s own goals and current precipitating concerns.`);
   }
 
   const stressFactor=maintainingFactors.find(factor=>factor.id==="ongoingStress");

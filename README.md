@@ -1,24 +1,20 @@
-# Lighthouse Compass 7.9 — Clinical Intelligence Coach
+# Lighthouse Compass 7.9.1 — Care Pathway Narrative Routing
 
-## Clinical Coach
-- Coach tab now consumes the structured Clinical Reasoning object
-- Surfaces evidence-based clinical observations
-- Identifies specific evidence gaps rather than generic prompts
-- Generates follow-up questions based on supported maintaining factors
-- Highlights cross-cutting issues such as sleep disruption and ongoing stress
-- Keeps relational interpretations tentative and evidence-linked
+## Care-seeking story
+- Referral and continued-care selections now feed the reason-for-care narrative
+- Separates precipitating changes, current stressors, care pathway, and treatment purpose
+- Referral language appears in Chief Complaint, HPI, and Clinical Conceptualization
+- PCP or provider referral is framed as the pathway into care, not as a symptom
+- Diagnostic clarification is framed as an evaluation purpose
+- Medication coordination is framed as a care-coordination purpose
+- Step-down care is framed as continuity following a higher level of treatment
+- Family encouragement, EAP, court, and provider referrals receive distinct language
 
-## Clinical Priorities
-- Adds an Emerging Clinical Priorities panel
-- Shows treatment targets derived from client goals and supported mechanisms
-- Displays the evidence behind each suggested priority
-- Makes the bridge from assessment to treatment planning visible
-
-## Treatment Direction
-- Rebuilt from the reasoning engine
-- Pulls from supported maintaining factors, functional needs, client goals, and strengths
-- Avoids diagnosis-only canned recommendations
-- Creates a stronger foundation for the future Navigator treatment planner
+## Narrative-routing cleanup
+- Growth and recovery selections remain treatment-direction information rather than being treated as stressors
+- Current stressors remain precipitating context
+- Symptom worsening remains current clinical change
+- Coach identifies when referral purpose should be distinguished from the client’s own goals
 
 All generated content requires clinician review and individualization.
 No server-side PHI storage is included.

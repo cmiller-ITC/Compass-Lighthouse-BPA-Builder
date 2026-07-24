@@ -1,4 +1,4 @@
-import { buildEvidenceBasedConceptualization, buildReasoningTreatmentDirection } from "./clinicalReasoning";
+import { buildEvidenceBasedConceptualization, buildReasoningTreatmentDirection, buildCareSeekingNarrative } from "./clinicalReasoning";
 
 
 export const symptomDomainDefinitions = {
@@ -402,13 +402,14 @@ function currentImpairments(data){
 
 function buildChiefComplaint(data){
  const p=data.presenting;
- if(p.patientNarrative.trim())return normalizeClientText(p.patientNarrative);
+ const careSeeking=buildCareSeekingNarrative(data);
+ if(p.patientNarrative.trim()){
+  return [normalizeClientText(p.patientNarrative),...careSeeking.carePathway].filter(Boolean).join(' ');
+ }
+ if(careSeeking.chiefComplaint)return careSeeking.chiefComplaint;
 
- const reasons=asArray(p.reasonSeekingCare);
  const concerns=meaningfulValues(p.concerns);
  const goals=asArray(p.clientRequest);
-
- if(reasons.length)return `The client is seeking care due to ${conciseList(reasons,{limit:3,mapper:reasonToClinicalPhrase})}.`;
  if(concerns.length)return `The client is seeking care for ${conciseList(concerns,{limit:3})}.`;
  if(goals.length)return `The client is seeking support to ${conciseList(goals,{limit:3})}.`;
  return 'Chief complaint information has not yet been entered.';
@@ -427,6 +428,7 @@ function buildHPI(data){
  const domains=activeDomains(data).filter(([,domain])=>domain.symptoms.length||domain.context||domain.notes);
  const paragraphs=[];
  const concerns=meaningfulValues(p.concerns);
+ const careSeeking=buildCareSeekingNarrative(data);
  const course=[];
 
  if(p.duration)course.push(durationPhrase(p.duration));
@@ -439,6 +441,8 @@ function buildHPI(data){
  }else if(domains.length){
   paragraphs.push(`The current presentation includes ${conciseList(domains.map(([key])=>clinicalDomainLabel(key)),{limit:4})}${course.length?`, with symptoms ${listText(course)}`:''}.`);
  }
+
+ if(careSeeking.carePathway.length)paragraphs.push(careSeeking.carePathway.join(' '));
 
  const contexts=domains.map(([,domain])=>domain.context).filter(Boolean);
  if(contexts.length)paragraphs.push(normalizeClinicalText(contexts[0],{context:true}));
