@@ -1,4 +1,4 @@
-
+import { buildClinicalCompass } from "./engines/clinicalCompass";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
 import { buildClinicalReasoning, buildEvidenceBasedConceptualization, buildClinicalCoachInsights, buildReasoningTreatmentDirection, buildCareSeekingNarrative } from "./clinicalReasoning";
@@ -38,6 +38,19 @@ const riskProtective=['None identified','Future orientation','Reasons for living
 
 function App(){
  const [data,dispatch]=useReducer(reducer,initialCaseData);const [module,setModule]=useState('home');const [status,setStatus]=useState('');
+ 
+ const clinicalCompass = useMemo(
+  () => buildClinicalCompass(data),
+  [data]
+);
+
+useEffect(() => {
+  if (import.meta.env.DEV) {
+    console.groupCollapsed("🧭 Lighthouse Clinical Compass");
+    console.log(clinicalCompass);
+    console.groupEnd();
+  }
+}, [clinicalCompass]);
  const set=(path,value)=>dispatch({type:'SET',path,value});const toggle=(path,value)=>dispatch({type:'TOGGLE',path,value});const flash=t=>{setStatus(t);setTimeout(()=>setStatus(''),2200)};
  const outputText=useMemo(()=>Object.entries(data.generated).filter(([,v])=>v).map(([k,v])=>`${titleCase(k)}\n${v}`).join('\n\n────────────────────────────────────────\n\n'),[data.generated]);
  const generate=()=>{dispatch({type:'GENERATE'});setModule('documentation');flash('✓ Assessment narratives generated.')};
