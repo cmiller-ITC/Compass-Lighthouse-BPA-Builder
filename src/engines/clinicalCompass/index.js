@@ -1,18 +1,38 @@
 /**
  * Lighthouse Clinical Compass Engine
- * Foundation release: 8.1a.1
+ * Version 8.1a.3
  *
- * This module will become the central source of structured
- * clinical reasoning for Compass, Replay, Atlas, Navigator,
- * Beacon, Harbor, and Horizon.
+ * This module organizes assessment information into the
+ * Lighthouse Clinical Compass framework.
  */
+
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value === undefined || value === null || value === "") return [];
+  return [value];
+}
+
+function meaningful(values) {
+  const emptyValues = new Set([
+    "",
+    "None reported",
+    "None identified",
+    "Not applicable",
+    "Unknown",
+    "Unknown / not yet assessed",
+  ]);
+
+  return asArray(values).filter(
+    (value) => !emptyValues.has(String(value).trim())
+  );
+}
 
 function createCompassSection(id, title, question) {
   return {
     id,
     title,
     question,
-    status: "foundation",
+    status: "developing",
     completeness: 0,
     evidence: [],
     interpretation: [],
@@ -20,15 +40,98 @@ function createCompassSection(id, title, question) {
   };
 }
 
+function buildStory(caseData) {
+  const presenting = caseData?.presenting ?? {};
+  const trauma = caseData?.trauma ?? {};
+  const medical = caseData?.medical ?? {};
+
+  const reasonsForCare = meaningful(presenting.reasonSeekingCare);
+  const currentConcerns = meaningful(presenting.concerns);
+  const traumaExperiences = meaningful(trauma.experiences);
+  const medicalConditions = meaningful(medical.conditions);
+
+  const patientNarrative = String(
+    presenting.patientNarrative ?? ""
+  ).trim();
+
+  const evidence = [
+    ...reasonsForCare.map((value) => ({
+      category: "Reason for seeking care",
+      value,
+      source: "presenting.reasonSeekingCare",
+    })),
+
+    ...currentConcerns.map((value) => ({
+      category: "Current concern",
+      value,
+      source: "presenting.concerns",
+    })),
+
+    ...traumaExperiences.map((value) => ({
+      category: "Relevant historical experience",
+      value,
+      source: "trauma.experiences",
+    })),
+
+    ...medicalConditions.map((value) => ({
+      category: "Medical context",
+      value,
+      source: "medical.conditions",
+    })),
+  ];
+
+  if (patientNarrative) {
+    evidence.push({
+      category: "Client narrative",
+      value: patientNarrative,
+      source: "presenting.patientNarrative",
+    });
+  }
+
+  const completeness = Math.min(
+    100,
+    Math.round(
+      [
+        reasonsForCare.length > 0,
+        currentConcerns.length > 0 || patientNarrative.length > 0,
+        traumaExperiences.length > 0,
+        medicalConditions.length > 0,
+      ].filter(Boolean).length * 25
+    )
+  );
+
+  return {
+    id: "story",
+    title: "What Happened?",
+    question: "What experiences shaped this person’s current story?",
+    status: evidence.length > 0 ? "developing" : "not-started",
+    completeness,
+    evidence,
+    currentStressors: reasonsForCare,
+    currentConcerns,
+    traumaContext: traumaExperiences,
+    medicalContext: medicalConditions,
+    patientNarrative,
+    interpretation:
+      evidence.length > 0
+        ? [
+            "Compass has identified current and historical context that may help explain why the client is seeking care now.",
+          ]
+        : [],
+    clinicalMeaning:
+      evidence.length > 0
+        ? [
+            "These findings provide context for understanding the current presentation but should not be interpreted as causal without additional assessment.",
+          ]
+        : [],
+  };
+}
+
 export function buildClinicalCompass(caseData = {}) {
   return {
-    version: "8.1a.1",
+    version: "8.1a.3",
 
-    story: createCompassSection(
-      "story",
-      "What Happened?",
-      "What experiences shaped this person’s story?"
-    ),
+    story: buildStory(caseData),
 
     adaptations: createCompassSection(
       "adaptations",

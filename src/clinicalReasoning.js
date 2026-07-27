@@ -344,11 +344,22 @@ function factorMechanism(factor){
 export function enrichMaintainingFactors(factors){
   return factors.map(factor=>({...factor,evidenceSummary:factorEvidenceSummary(factor),mechanism:factorMechanism(factor)}));
 }
-export function buildMaintainingFactorNarratives(factors){
-  return enrichMaintainingFactors(factors).slice(0,4).map(factor=>{
-    const certainty=factor.confidence==="emerging"?"may be contributing to":"appears to be maintained";
-    return `Current distress ${certainty}, in part, through ${factor.mechanism}.`;
-  });
+export function buildMaintainingFactorNarratives(factors) {
+  return enrichMaintainingFactors(factors)
+    .slice(0, 4)
+    .map((factor) => {
+      const mechanism = String(factor.mechanism || "")
+        .trim()
+        .replace(/[.]+$/, "");
+
+      if (!mechanism) return "";
+
+      const sentence =
+        mechanism.charAt(0).toUpperCase() + mechanism.slice(1);
+
+      return `${sentence}.`;
+    })
+    .filter(Boolean);
 }
 
 export function collectStrengths(data){
@@ -478,54 +489,141 @@ export function buildCareSeekingNarrative(data){
   };
 }
 
-export function buildEvidenceBasedConceptualization(data){
+export function buildStructuredConceptualization(data) {
   const reasoning = buildClinicalReasoning(data);
-  const {presentation,contributors,relationalContext,maintainingFactors,strengths} = reasoning;
-  const domainLabels = presentation.domains.map(domain => domain.label);
-  const currentItems = domainLabels.length ? domainLabels : presentation.concerns.map(lower);
+
+  const {
+    presentation,
+    contributors,
+    relationalContext,
+    maintainingFactors,
+    strengths,
+  } = reasoning;
+
+  const domainLabels = presentation.domains.map(
+    (domain) => domain.label
+  );
+
+  const currentItems = domainLabels.length
+    ? domainLabels
+    : presentation.concerns.map(lower);
+
   const context = contributorSummary(contributors);
-  const sentences = [];
+  const careSeeking = buildCareSeekingNarrative(data);
 
-  if(currentItems.length){
+  const sections = {
+    currentPresentation: "",
+    currentContext: "",
+    carePathway: "",
+    historicalFactors: "",
+    relationalContext: "",
+    maintainingFactors: "",
+    strengthsAndHope: "",
+  };
+
+  if (currentItems.length) {
     const impairment = presentation.impairment.length
-      ? ` with associated impairment in ${naturalList(presentation.impairment.slice(0,5).map(lower))}`
+      ? ` with associated impairment in ${naturalList(
+          presentation.impairment
+            .slice(0, 5)
+            .map(lower)
+        )}`
       : "";
-    sentences.push(`The client is currently presenting with ${naturalList(currentItems.slice(0,5))}${impairment}.`);
+
+    sections.currentPresentation =
+      `The client is currently presenting with ` +
+      `${naturalList(currentItems.slice(0, 5))}` +
+      `${impairment}.`;
   }
 
-  if(context.current.length){
-    sentences.push(`Current difficulties are occurring in the context of ${naturalList(context.current.slice(0,5))}.`);
+  if (context.current.length) {
+    sections.currentContext =
+      `Current difficulties are occurring in the context of ` +
+      `${naturalList(context.current.slice(0, 5))}.`;
   }
 
-  const careSeeking=buildCareSeekingNarrative(data);
-  if(careSeeking.carePathway.length){
-    sentences.push(careSeeking.carePathway.join(" "));
+  if (careSeeking.carePathway.length) {
+    sections.carePathway =
+      careSeeking.carePathway.join(" ");
   }
 
-  if(context.history.length){
-    sentences.push(`Background factors that may be relevant to the present-day presentation include ${naturalList(context.history)}.`);
+  if (context.history.length) {
+    sections.historicalFactors =
+      `Historical factors that appear clinically relevant to ` +
+      `the present-day presentation include ` +
+      `${naturalList(context.history)}.`;
   }
 
-  const relationalThemes=(relationalContext?.themes||[]).filter(theme=>theme.id!=="supportiveRelationships");
-  if(relationalThemes.length){
-    const labels=relationalThemes.slice(0,3).map(theme=>theme.label);
-    sentences.push(`Documented family and relational experiences may be relevant to current patterns involving ${naturalList(labels)}.`);
-  }
-  if(relationalContext?.supportLevel && /limited|no current|mixed|source of stress/i.test(relationalContext.supportLevel)){
-    sentences.push(`The client’s current family support appears ${lower(relationalContext.supportLevel)}, which may affect access to emotional or practical support.`);
+  const relationalThemes = (
+    relationalContext?.themes || []
+  ).filter(
+    (theme) => theme.id !== "supportiveRelationships"
+  );
+
+  const relationalSentences = [];
+
+  if (relationalThemes.length) {
+    const labels = relationalThemes
+      .slice(0, 3)
+      .map((theme) => theme.label);
+
+    relationalSentences.push(
+      `These family and relational experiences may help explain ` +
+      `current patterns involving ${naturalList(labels)}.`
+    );
   }
 
-  if(maintainingFactors.length){
-    sentences.push(...buildMaintainingFactorNarratives(maintainingFactors));
-  }else if(currentItems.length){
-    sentences.push("Maintaining factors require further clarification before a more specific formulation can be made.");
+  if (
+    relationalContext?.supportLevel &&
+    /limited|no current|mixed|source of stress/i.test(
+      relationalContext.supportLevel
+    )
+  ) {
+    relationalSentences.push(
+      `Current family support appears ` +
+      `${lower(relationalContext.supportLevel)}, which may affect ` +
+      `access to emotional or practical support.`
+    );
   }
 
-  if(strengths.length){
-    sentences.push(`${naturalList(strengths.slice(0,5).map(item => lower(item.value)))} represent meaningful strengths and treatment assets.`);
+  sections.relationalContext =
+    relationalSentences.join(" ");
+
+  if (maintainingFactors.length) {
+    sections.maintainingFactors =
+      buildMaintainingFactorNarratives(
+        maintainingFactors
+      ).join(" ");
+  } else if (currentItems.length) {
+    sections.maintainingFactors =
+      "Maintaining factors require further clarification " +
+      "before a more specific formulation can be made.";
   }
 
-  return sentences.join(" ") || "Clinical conceptualization requires additional assessment information.";
+  if (strengths.length) {
+    sections.strengthsAndHope =
+      `${naturalList(
+        strengths
+          .slice(0, 5)
+          .map((item) => lower(item.value))
+      )} represent meaningful strengths and treatment assets.`;
+  }
+
+  return sections;
+}
+
+export function buildEvidenceBasedConceptualization(data) {
+  const sections = buildStructuredConceptualization(data);
+
+  const narrative = Object.values(sections)
+    .map((section) => String(section || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    narrative ||
+    "Clinical conceptualization requires additional assessment information."
+  );
 }
 
 

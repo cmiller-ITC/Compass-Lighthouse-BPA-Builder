@@ -284,6 +284,7 @@ function ClinicalSidePanel({data,section='presenting'}){
  const [focusMode,setFocusMode]=useState(false);
  const scrollRef=useRef(null);
  const intelligence=buildSectionIntelligence(data,section);
+ const clinicalCompass=buildClinicalCompass(data);
  const masterStory=buildMasterClinicalStory(data);
  const journey=buildAssessmentJourney(data,section);
  const finalReview=buildFinalComarReview(data);
@@ -389,13 +390,88 @@ function ClinicalCompassMini({reasoning}){
  ];
  return <section className="clinical-compass-mini"><div className="compass-mini-heading"><strong>🧭 The Lighthouse Clinical Compass</strong><small>See how the clinical picture moves from story to treatment</small></div><div className="compass-mini-flow">{steps.map((step,index)=><div className="compass-mini-step" key={step.title}><span>{step.icon}</span><strong>{step.title}</strong><small>{step.detail}</small>{index<steps.length-1&&<i>→</i>}</div>)}</div></section>;
 }
-function ReasoningTraceGroup({title,items,empty}){
- return <section className="reasoning-trace-group"><h5>{title}</h5>{items.length?items.map((item,index)=><article className="reasoning-evidence-card" key={`${item.label}-${index}`}>
-  <div className="reasoning-evidence-head"><strong>{item.label}</strong>{item.confidence&&<span className={`confidence-badge ${item.confidence}`}>{item.confidence} support</span>}</div>
-  {item.evidence?.length?<div className="reasoning-layer evidence-layer"><span>Evidence</span><ul>{item.evidence.slice(0,5).map((value,i)=><li key={i}>{value}</li>)}</ul></div>:null}
-  {item.mechanism&&<div className="reasoning-layer mechanism-layer"><span>Mechanism</span><p>{item.mechanism}</p></div>}
-  {item.meaning&&<div className="reasoning-layer meaning-layer"><span>Clinical meaning</span><p>{item.meaning}</p></div>}
- </article>):<p className="reasoning-empty">{empty}</p>}</section>;
+function ReasoningTraceGroup({ title, items, empty }) {
+  const itemCount = items?.length || 0;
+
+  return (
+    <details className="reasoning-trace-group" open>
+      <summary className="reasoning-trace-group-summary">
+        <span>{title}</span>
+
+        <small>
+          {itemCount
+            ? `${itemCount} identified`
+            : "Needs more information"}
+        </small>
+      </summary>
+
+      <div className="reasoning-trace-group-body">
+        {itemCount ? (
+          items.map((item, index) => (
+            <article
+              className="reasoning-evidence-card"
+              key={`${item.label}-${index}`}
+            >
+              <div className="reasoning-evidence-head">
+                <strong>{item.label}</strong>
+
+                {item.confidence && (
+                  <span
+                    className={`confidence-badge ${item.confidence}`}
+                  >
+                    {item.confidence} support
+                  </span>
+                )}
+              </div>
+
+              {item.evidence?.length ? (
+                <div className="reasoning-layer evidence-layer">
+                  <span className="reasoning-layer-title">
+                    Evidence
+                  </span>
+
+                  <div className="reasoning-evidence-chips">
+                    {item.evidence
+                      .slice(0, 6)
+                      .map((value, evidenceIndex) => (
+                        <span
+                          className="reasoning-evidence-chip"
+                          key={evidenceIndex}
+                        >
+                          {value}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {item.mechanism ? (
+                <div className="reasoning-layer mechanism-layer">
+                  <span className="reasoning-layer-title">
+                    How it may function
+                  </span>
+
+                  <p>{item.mechanism}</p>
+                </div>
+              ) : null}
+
+              {item.meaning ? (
+                <div className="reasoning-layer meaning-layer">
+                  <span className="reasoning-layer-title">
+                    Why it matters clinically
+                  </span>
+
+                  <p>{item.meaning}</p>
+                </div>
+              ) : null}
+            </article>
+          ))
+        ) : (
+          <p className="reasoning-empty">{empty}</p>
+        )}
+      </div>
+    </details>
+  );
 }
 function PreviewSection({title,text}){if(!text)return null;return <section className="preview-section"><h4>{title}</h4><p>{text}</p></section>}
 
