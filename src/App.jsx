@@ -1,12 +1,12 @@
 import { buildClinicalCompass } from "./engines/clinicalCompass";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
-import { buildClinicalReasoning, buildEvidenceBasedConceptualization, buildClinicalCoachInsights, buildReasoningTreatmentDirection, buildCareSeekingNarrative } from "./clinicalReasoning";
+import { buildClinicalReasoning, buildEvidenceBasedConceptualization, buildStructuredConceptualization, buildClinicalCoachInsights, buildReasoningTreatmentDirection, buildCareSeekingNarrative } from "./clinicalReasoning";
 import "./styles.css";
 
 const NAV=[['home','🏠','Home'],['presenting','📝','Presenting'],['symptoms','🧩','Symptom Domains'],['history','📚','History'],['medical','🩺','Medical / Substance'],['social','🌿','Trauma / Social / Strengths'],['mse','🧠','MSE / Risk'],['diagnosis','🔎','Measures / Diagnosis'],['documentation','📄','Documentation']];
 const concernOptions=[
-'None reported / no current behavioral-health concern',
+'No current behavioral-health symptoms or concerns reported',
 'Depression / low mood','Anxiety','Panic symptoms','Bipolar / mood instability',
 'Trauma-related concerns','OCD symptoms','ADHD / executive functioning',
 'Psychosis / perceptual concerns','Eating / body-image concerns','Substance-use concerns',
@@ -247,10 +247,26 @@ function Presenting({data,set,toggle}){const p=data.presenting;
     priorityLabel="Most important treatment outcomes"
    />
   </div>
-  <TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/>
+   <Card title="Current Presenting Concerns">
+<div className="presenting-prompt-strip presenting-prompt-stack">
+  <div className="presenting-prompt-title">
+    💬 Suggested opening language
+  </div>
+
+  <p>
+    “What symptoms, concerns, or difficulties are affecting you the most right now?”
+  </p>
+
+  <small>
+    Select concerns that are active during the current episode.
+    Document prior or resolved concerns in the History section.
+  </small>
+</div>
+
+<Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card>
+<TextArea label="Client’s Own Words / Patient-Specific Presenting Narrative" value={p.patientNarrative} onChange={v=>set('presenting.patientNarrative',v)}/>
   <div className="presenting-prompt-strip"><span>💬</span><div><strong>Suggested language</strong><p>“Several things may be contributing to your decision to seek help. Which of these are affecting you right now?” Then ask, “Of everything you selected, which one or two would make the biggest difference if they improved?”</p></div></div>
  </Card>
- <Card title="Primary Areas of Concern"><Checks options={concernOptions} selected={p.concerns} onToggle={v=>toggle('presenting.concerns',v)}/></Card>
  <Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card>
  <Card title="Functional Impairment"><div className="section-kicker">Connect symptoms to daily life and medical necessity</div><Checks options={impairmentOptions} selected={p.impairments} onToggle={v=>toggle('presenting.impairments',v)}/></Card>
  </div><ClinicalSidePanel data={data} section="presenting"/></div></Page>}
