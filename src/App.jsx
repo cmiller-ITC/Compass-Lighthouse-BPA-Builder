@@ -1063,7 +1063,84 @@ function buildTebraDocumentationObject(data) {
         .filter(Boolean)
         .join(" — ")
     );
+const psychiatricHistoryData = data.psychiatricHistory || {};
 
+const priorDiagnoses = Array.isArray(psychiatricHistoryData.diagnoses)
+  ? psychiatricHistoryData.diagnoses.filter(
+      value =>
+        value &&
+        ![
+          "None reported",
+          "Unknown / records unavailable"
+        ].includes(value)
+    )
+  : [];
+
+const priorServices = Array.isArray(psychiatricHistoryData.services)
+  ? psychiatricHistoryData.services.filter(
+      value =>
+        value &&
+        ![
+          "None reported",
+          "Unknown / records unavailable"
+        ].includes(value)
+    )
+  : [];
+
+const psychiatricHistoryNarrative = [
+  priorDiagnoses.length
+    ? `Prior psychiatric diagnoses include ${naturalList(
+        priorDiagnoses.map(value => value.toLowerCase())
+      )}.`
+    : psychiatricHistoryData.diagnoses?.includes("None reported")
+      ? "The client reports no prior psychiatric diagnoses."
+      : "",
+
+  priorServices.length
+    ? `Previous behavioral-health services include ${naturalList(
+        priorServices.map(value => value.toLowerCase())
+      )}.`
+    : psychiatricHistoryData.services?.includes("None reported")
+      ? "The client reports no prior behavioral-health treatment."
+      : "",
+
+  psychiatricHistoryData.hospitalization &&
+  !["None reported", "Unknown"].includes(
+    psychiatricHistoryData.hospitalization
+  )
+    ? `Psychiatric hospitalization history is reported as ${psychiatricHistoryData.hospitalization.toLowerCase()}.`
+    : psychiatricHistoryData.hospitalization === "None reported"
+      ? "The client reports no prior psychiatric hospitalizations."
+      : "",
+
+  psychiatricHistoryData.suicideAttempts &&
+  psychiatricHistoryData.suicideAttempts !== "None reported"
+    ? `History of suicide attempts is reported as ${psychiatricHistoryData.suicideAttempts.toLowerCase()}.`
+    : psychiatricHistoryData.suicideAttempts === "None reported"
+      ? "The client reports no prior suicide attempts."
+      : "",
+
+  psychiatricHistoryData.nssi &&
+  psychiatricHistoryData.nssi !== "None reported"
+    ? `Nonsuicidal self-injury history is reported as ${psychiatricHistoryData.nssi.toLowerCase()}.`
+    : psychiatricHistoryData.nssi === "None reported"
+      ? "The client reports no history of nonsuicidal self-injury."
+      : "",
+
+  psychiatricHistoryData.treatmentResponse &&
+  psychiatricHistoryData.treatmentResponse !== "Unknown"
+    ? `Prior treatment response is described as ${psychiatricHistoryData.treatmentResponse.toLowerCase()}.`
+    : "",
+
+  psychiatricHistoryData.details
+    ? normalizeClinicalFreeText(
+        psychiatricHistoryData.details,
+        { context: true }
+      )
+    : ""
+]
+  .filter(Boolean)
+  .join(" ");
   return {
     chiefComplaint:
       story.chiefComplaint ||
@@ -1074,7 +1151,7 @@ function buildTebraDocumentationObject(data) {
       findStorySection("History of Present Illness"),
 
 psychiatricHistory:
-  data.generated.psychiatricHistory || "",
+  psychiatricHistoryNarrative,
 
     socialHistory:
       data.generated.socialHistory || "",
