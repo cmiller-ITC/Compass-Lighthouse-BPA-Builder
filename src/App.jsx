@@ -978,6 +978,7 @@ function buildDomainNarrative(domain){
 }
 
 function buildMasterClinicalStory(data){
+ const presenting=normalizePresentingData(data);
  const p=data.presenting,d=data.diagnosis,domains=liveDomainEvidence(data);
  const domainStories=domains.map(domain=>({
   title:domain.label,
@@ -985,7 +986,7 @@ function buildMasterClinicalStory(data){
   paragraphs:buildDomainNarrative(domain)
  })).filter(domain=>domain.paragraphs.length);
 
- const impacts=[...new Set([...meaningful(p.impairments),...domains.flatMap(domain=>domain.impairment)])];
+ const impacts=[...new Set([...presenting.impairments.values,...domains.flatMap(domain=>domain.impairment)])];
  const functionalImpact=impacts.length?`Symptoms are interfering with ${naturalList(impacts.map(value=>value.toLowerCase()))}.`:'';
 
  const psychiatric=naturalDisposition(data.psychiatricHistory.diagnoses,{none:'The client reports no prior psychiatric diagnoses.',unknown:'Prior psychiatric history is currently unknown or unavailable.',present:items=>`Prior psychiatric history includes ${naturalList(items.map(value=>value.toLowerCase()))}.`});
@@ -1010,14 +1011,14 @@ function buildMasterClinicalStory(data){
  const formulation=buildEvidenceBasedConceptualization(data);
  const careSeeking=buildCareSeekingNarrative(data);
 
- const concerns=meaningful(p.concerns),course=[];
- if(p.duration)course.push(durationPhrase(p.duration));
- if(p.frequency)course.push(frequencyPhrase(p.frequency));
- if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
- if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+ const concerns=presenting.concerns.values,course=[];
+ if(presenting.duration)course.push(durationPhrase(presenting.duration));
+ if(presenting.frequency)course.push(frequencyPhrase(presenting.frequency));
+ if(presenting.severity)course.push(`${presenting.severity.toLowerCase()} in severity`);
+ if(presenting.course)course.push(`currently ${presenting.course.toLowerCase()}`);
 
  return [
-  {title:'Chief Complaint',text:p.patientNarrative.trim()?joinSentences([normalizeClinicalFreeText(p.patientNarrative),...careSeeking.carePathway]):careSeeking.chiefComplaint},
+  {title:'Chief Complaint',text:presenting.patientNarrative?joinSentences([presenting.patientNarrative,...careSeeking.carePathway]):careSeeking.chiefComplaint},
   {title:'History of Present Illness',text:concerns.length?`The primary concerns include ${naturalList(concerns.map(value=>value.toLowerCase()))}${course.length?`, with symptoms ${naturalList(course)}`:''}.`:''},
   {title:'Clinical Symptom Picture',domains:domainStories},
   {title:'Functional Impact',text:functionalImpact},
@@ -1030,6 +1031,7 @@ function buildMasterClinicalStory(data){
 }
 
 function buildTebraDocumentationObject(data) {
+  const presenting = normalizePresentingData(data);
   const story = buildLiveClinicalStory(data);
   const masterStory = buildMasterClinicalStory(data);
 
@@ -1144,10 +1146,12 @@ const psychiatricHistoryNarrative = [
   return {
     chiefComplaint:
       story.chiefComplaint ||
+      presenting.patientNarrative ||
       findStorySection("Chief Complaint"),
 
     hpi:
       story.hpi ||
+      (presenting.concerns.values.length ? `The primary concerns include ${naturalList(presenting.concerns.values.map(value => value.toLowerCase()))}.` : "") ||
       findStorySection("History of Present Illness"),
 
 psychiatricHistory:
@@ -1209,10 +1213,8 @@ psychiatricHistory:
       "",
 
     goals:
-      selectionList(data.presenting.clientRequest).length
-        ? naturalList(
-            selectionList(data.presenting.clientRequest)
-          )
+      presenting.goals.values.length
+        ? naturalList(presenting.goals.values)
         : ""
   };
 }
@@ -1569,21 +1571,74 @@ function normalizeClientNarrative(value){
   .replace(/^The client describes The client\s+/i,'The client ')
   .replace(/^The client reports Patient\s+/i,'The client ');
 }
+function normalizePresentingValue(value){
+ const text=safeText(value);
+ if(!text){return {text:'',hasValue:false,isExplicit:false};}
+ const explicitStatuses=[
+  'None reported','Not applicable','None identified','None identified yet',
+  'None reported / no current behavioral-health concern','Unknown / records unavailable',
+  'Unknown / family history unavailable','Unknown / not yet assessed',
+  'Not applicable / no current trauma symptoms','No trauma disclosed','Trauma history deferred','Deferred'
+ ];
+ if(explicitStatuses.includes(text)||text.startsWith('Unknown')||text.startsWith('Not applicable')||text.startsWith('Deferred')){
+  return {text:'',hasValue:false,isExplicit:true};
+ }
+ return {text,hasValue:true,isExplicit:false};
+}
+function normalizePresentingSelections(values=[]){
+ const normalized=selectionList(values).map(item=>normalizePresentingValue(item));
+ return {
+  values:normalized.filter(item=>item.hasValue).map(item=>item.text),
+  explicit:normalized.filter(item=>item.isExplicit).map(item=>item.text),
+  hasValues:normalized.some(item=>item.hasValue),
+  hasExplicit:normalized.some(item=>item.isExplicit)
+ };
+}
+function normalizePresentingData(data){
+ const p=data.presenting||{};
+ const domains=Object.entries(p.domains||{}).map(([key,domain])=>{
+  const symptoms=normalizePresentingSelections(domain?.symptoms||[]).values;
+  const impairment=normalizePresentingSelections(domain?.impairment||[]).values;
+  return {
+   key,
+   symptoms,
+   duration:normalizePresentingValue(domain?.duration).hasValue?safeText(domain?.duration):'',
+   frequency:normalizePresentingValue(domain?.frequency).hasValue?safeText(domain?.frequency):'',
+   severity:normalizePresentingValue(domain?.severity).hasValue?safeText(domain?.severity):'',
+   impairment,
+   context:normalizePresentingValue(domain?.context).hasValue?normalizeClinicalFreeText(domain?.context,{context:true}):'',
+   notes:normalizePresentingValue(domain?.notes).hasValue?normalizeClinicalFreeText(domain?.notes):''
+  };
+ });
+ const patientNarrative=normalizePresentingValue(p.patientNarrative).hasValue?normalizeClientNarrative(p.patientNarrative):'';
+ return {
+  reasons:normalizePresentingSelections(p.reasonSeekingCare),
+  goals:normalizePresentingSelections(p.clientRequest),
+  concerns:normalizePresentingSelections(p.concerns),
+  impairments:normalizePresentingSelections(p.impairments),
+  patientNarrative,
+  duration:normalizePresentingValue(p.duration).hasValue?safeText(p.duration):'',
+  frequency:normalizePresentingValue(p.frequency).hasValue?safeText(p.frequency):'',
+  severity:normalizePresentingValue(p.severity).hasValue?safeText(p.severity):'',
+  course:normalizePresentingValue(p.course).hasValue?safeText(p.course):'',
+  domains
+ };
+}
 function buildLiveClinicalStory(data){
+ const presenting=normalizePresentingData(data);
  const p=data.presenting;
- const active=Object.entries(p.domains).filter(([,domain])=>domain.symptoms.length||domain.context||domain.notes);
- const reasons=selectionList(p.reasonSeekingCare);
- const goals=selectionList(p.clientRequest);
- const concerns=meaningful(p.concerns);
+ const active=presenting.domains.filter((domain)=>domain.symptoms.length||domain.context||domain.notes);
+ const goals=presenting.goals.values;
+ const concerns=presenting.concerns.values;
  const impacts=[...new Set([
-  ...meaningful(p.impairments),
-  ...active.flatMap(([,domain])=>meaningful(domain.impairment))
+  ...presenting.impairments.values,
+  ...active.flatMap((domain)=>domain.impairment)
  ])];
 
  const careSeeking=buildCareSeekingNarrative(data);
  let chiefComplaint='';
- if(p.patientNarrative.trim()){
-  chiefComplaint=normalizeClientNarrative(p.patientNarrative);
+ if(presenting.patientNarrative){
+  chiefComplaint=presenting.patientNarrative;
   if(careSeeking.carePathway.length)chiefComplaint=`${chiefComplaint} ${careSeeking.carePathway.join(' ')}`;
  }else if(careSeeking.chiefComplaint){
   chiefComplaint=careSeeking.chiefComplaint;
@@ -1594,10 +1649,10 @@ function buildLiveClinicalStory(data){
  }
 
  const course=[];
- if(p.duration)course.push(durationPhrase(p.duration));
- if(p.frequency)course.push(frequencyPhrase(p.frequency));
- if(p.severity)course.push(`${p.severity.toLowerCase()} in severity`);
- if(p.course)course.push(`currently ${p.course.toLowerCase()}`);
+ if(presenting.duration)course.push(durationPhrase(presenting.duration));
+ if(presenting.frequency)course.push(frequencyPhrase(presenting.frequency));
+ if(presenting.severity)course.push(`${presenting.severity.toLowerCase()} in severity`);
+ if(presenting.course)course.push(`currently ${presenting.course.toLowerCase()}`);
 
  const hpiParts=[];
  if(careSeeking.carePathway.length&&p.patientNarrative.trim()){
@@ -1615,8 +1670,8 @@ function buildLiveClinicalStory(data){
  if(notes.length)hpiParts.push(normalizeClinicalFreeText(notes[0],{fragmentLead:'The client describes'}));
  const hpi=hpiParts.join(' ');
 
- const clinicalPicture=active.slice(0,5).map(([key,domain])=>{
-  const label=clinicalDomainLabel(key);
+ const clinicalPicture=active.slice(0,5).map((domain)=>{
+  const label=clinicalDomainLabel(domain.key);
   const features=domain.symptoms.slice(0,6).map(item=>item.toLowerCase());
   if(!features.length)return'';
   const qualifiers=[
