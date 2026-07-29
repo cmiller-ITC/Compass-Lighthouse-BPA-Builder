@@ -308,7 +308,8 @@ function ClinicalSidePanel({data,section='presenting'}){
  const scrollRef=useRef(null);
  const intelligence=buildSectionIntelligence(data,section);
  const clinicalCompass=buildClinicalCompass(data);
- const masterStory=buildMasterClinicalStory(data);
+ const masterStory=(data);
+ const tebraDocumentation=buildTebraDocumentationObject(data);
  const journey=buildAssessmentJourney(data,section);
  const finalReview=buildFinalComarReview(data);
  const headerScore=activeTab==='journey'?journey.overallProgress:activeTab==='final'?finalReview.score:intelligence.quality.score;
@@ -346,7 +347,13 @@ function ClinicalSidePanel({data,section='presenting'}){
        {tabs.map(([id,icon,label])=><button key={id} type="button" className={activeTab===id?'active':''} onClick={()=>chooseTab(id)} role="tab" aria-selected={activeTab===id}><span>{icon}</span><em>{label}</em></button>)}
       </div>
       <div className="intelligence-tab-content" ref={scrollRef}>
-       {activeTab==='narrative'&&<SectionNarrative intelligence={intelligence} masterStory={masterStory}/>}
+       {activeTab==='narrative'&&(
+  <SectionNarrative
+    intelligence={intelligence}
+    masterStory={masterStory}
+    tebraDocumentation={tebraDocumentation}
+  />
+)}
        {activeTab==='coach'&&<SectionCoach intelligence={intelligence}/>}
        {activeTab==='journey'&&<AssessmentJourney journey={journey}/>}
        {activeTab==='quality'&&<SectionQuality intelligence={intelligence}/>}
@@ -361,13 +368,112 @@ function ClinicalSidePanel({data,section='presenting'}){
  </>;
 }
 
-function SectionNarrative({intelligence,masterStory}){
- const hasMaster=masterStory.some(item=>item.text||item.domains?.length);
- return hasMaster?<div className="document-preview">
-  <div className="master-story-label">Current Clinical Story</div>
-  {masterStory.map(item=><NarrativeStorySection key={item.title} item={item}/>)}
-  {intelligence.narratives.some(item=>item.text)&&<details className="section-contribution"><summary><span>Section contribution</span><small>Show the evidence gathered on this page</small></summary><div>{intelligence.narratives.map(item=><PreviewSection key={`section-${item.title}`} title={item.title} text={item.text}/>)}</div></details>}
- </div>:<div className="empty-intelligence"><strong>Your clinical story will appear here.</strong><span>As the interview develops, Lighthouse will organize the client’s information into a concise, chart-ready story.</span></div>;
+function SectionNarrative({
+  intelligence,
+  masterStory,
+  tebraDocumentation
+}) {
+  const safeMasterStory = Array.isArray(masterStory)
+  ? masterStory
+  : [];
+
+const hasMaster = safeMasterStory.some(
+  item => item.text || item.domains?.length
+);
+
+  const tebraSections = [
+    ["Chief Complaint", tebraDocumentation.chiefComplaint],
+    ["History of Present Illness", tebraDocumentation.hpi],
+    ["Psychiatric History", tebraDocumentation.psychiatricHistory],
+    ["Family History", tebraDocumentation.familyHistory],
+    ["Social History", tebraDocumentation.socialHistory],
+    ["Mental Status Examination", tebraDocumentation.mse],
+    ["Medications", tebraDocumentation.medications],
+    ["Tests / Screening Measures", tebraDocumentation.tests],
+    ["DSM-5 Diagnosis", tebraDocumentation.dsm5],
+    [
+      "Psychiatric Impression / Clinical Conceptualization",
+      tebraDocumentation.psychiatricImpression
+    ],
+    ["Assessment", tebraDocumentation.assessment],
+    ["Plan", tebraDocumentation.plan],
+    ["Goals", tebraDocumentation.goals]
+  ];
+
+  const availableTebraSections = tebraSections.filter(
+    ([, text]) => String(text || "").trim()
+  );
+
+  if (!hasMaster && !availableTebraSections.length) {
+    return (
+      <div className="empty-intelligence">
+        <strong>Your clinical story will appear here.</strong>
+        <span>
+          As the interview develops, Lighthouse will organize the client’s
+          information into a concise, chart-ready story.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="document-preview">
+      {hasMaster && (
+        <>
+          <div className="master-story-label">
+            Current Clinical Story
+          </div>
+
+        {safeMasterStory.map(item => (
+            <NarrativeStorySection
+              key={item.title}
+              item={item}
+            />
+          ))}
+
+          {intelligence.narratives.some(item => item.text) && (
+            <details className="section-contribution">
+              <summary>
+                <span>Section contribution</span>
+                <small>
+                  Show the evidence gathered on this page
+                </small>
+              </summary>
+
+              <div>
+                {intelligence.narratives.map(item => (
+                  <PreviewSection
+                    key={`section-${item.title}`}
+                    title={item.title}
+                    text={item.text}
+                  />
+                ))}
+              </div>
+            </details>
+          )}
+        </>
+      )}
+
+      <details className="section-contribution" open>
+        <summary>
+          <span>📋 EHR Documentation Preview</span>
+          <small>
+            Structured in the order used for the intake record
+          </small>
+        </summary>
+
+        <div>
+          {availableTebraSections.map(([title, text]) => (
+            <PreviewSection
+              key={`tebra-${title}`}
+              title={title}
+              text={text}
+            />
+          ))}
+        </div>
+      </details>
+    </div>
+  );
 }
 function NarrativeStorySection({item}){
  if(item.domains?.length)return <section className="preview-section symptom-story-section"><h4>{item.title}</h4><div className="domain-story-stack">{item.domains.map(domain=><article className="domain-story-card" key={domain.title}><h5>{domain.icon} {domain.title}</h5>{domain.paragraphs.map((paragraph,index)=><p key={index}>{paragraph}</p>)}</article>)}</div></section>;
@@ -921,6 +1027,117 @@ function buildMasterClinicalStory(data){
   {title:'Medical Necessity',text:d.medicalNecessity},
   {title:'Treatment Direction',text:d.treatmentFocus?normalizeClinicalFreeText(d.treatmentFocus):buildReasoningTreatmentDirection(data)}
  ].filter(item=>item.text||item.domains?.length);
+}
+
+function buildTebraDocumentationObject(data) {
+  const story = buildLiveClinicalStory(data);
+  const masterStory = buildMasterClinicalStory(data);
+
+  const findStorySection = (title) =>
+    masterStory.find((section) => section.title === title)?.text || "";
+
+  const currentMedications = data.medical.medications
+    .filter((medication) => medication.name)
+    .map((medication) =>
+      [
+        medication.name,
+        medication.dose,
+        medication.frequency,
+        medication.indication
+          ? `for ${medication.indication}`
+          : ""
+      ]
+        .filter(Boolean)
+        .join(" ")
+    );
+
+  const screeningResults = data.measures
+    .filter((measure) => measure.name || measure.score)
+    .map((measure) =>
+      [
+        measure.name,
+        measure.score ? `score: ${measure.score}` : "",
+        measure.interpretation,
+        measure.notes
+      ]
+        .filter(Boolean)
+        .join(" — ")
+    );
+
+  return {
+    chiefComplaint:
+      story.chiefComplaint ||
+      findStorySection("Chief Complaint"),
+
+    hpi:
+      story.hpi ||
+      findStorySection("History of Present Illness"),
+
+psychiatricHistory:
+  data.generated.psychiatricHistory || "",
+
+    socialHistory:
+      data.generated.socialHistory || "",
+
+    familyHistory:
+      data.generated.familyHistory || "",
+
+    mse:
+      data.generated.mse || "",
+
+    medications:
+      currentMedications.length
+        ? currentMedications.join("\n")
+        : data.generated.medications || "",
+
+    tests:
+      screeningResults.length
+        ? screeningResults.join("\n")
+        : data.generated.measures || "",
+
+    dsm5:
+      [
+        data.diagnosis.primary,
+        data.diagnosis.secondary
+          ? `Secondary: ${data.diagnosis.secondary}`
+          : "",
+        data.diagnosis.ruleOut
+          ? `Rule out / continue to assess: ${data.diagnosis.ruleOut}`
+          : "",
+        data.diagnosis.status,
+        data.diagnosis.confidence
+          ? `Diagnostic confidence: ${data.diagnosis.confidence}`
+          : ""
+      ]
+        .filter(Boolean)
+        .join("\n"),
+
+    psychiatricImpression:
+      findStorySection("Clinical Conceptualization") ||
+      data.generated.clinicalFormulation ||
+      "",
+
+    assessment:
+      [
+        data.diagnosis.diagnosticRationale,
+        data.diagnosis.medicalNecessity,
+        data.diagnosis.locRationale
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+
+    plan:
+      data.diagnosis.treatmentFocus ||
+      findStorySection("Treatment Direction") ||
+      "",
+
+    goals:
+      selectionList(data.presenting.clientRequest).length
+        ? naturalList(
+            selectionList(data.presenting.clientRequest)
+          )
+        : ""
+  };
 }
 
 function buildSectionIntelligence(data,section){
