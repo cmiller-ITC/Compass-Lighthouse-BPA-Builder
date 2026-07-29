@@ -828,7 +828,8 @@ function buildFinalComarReview(data){
 }
 
 function buildEvidenceMap(data){
- const activeDomains=Object.entries(data.presenting.domains).filter(([,d])=>d.symptoms.length);
+ const normalizedDomains=normalizeSymptomDomainData(data);
+ const activeDomains=Object.entries(normalizedDomains).filter(([,d])=>d.symptoms.length||d.context||d.notes||d.impairment.length||Object.values(d.answers||{}).some(Boolean));
  const measures=data.measures.filter(m=>m.name&&m.score);
  const medical=selectionStatus(data.medical.conditions);
  const family=selectionStatus(data.familyHistory.conditions);
@@ -902,6 +903,44 @@ function meaningful(values=[]){
   'Not applicable / no current trauma symptoms','No trauma disclosed','Trauma history deferred'];
  return values.filter(v=>!excluded.includes(v));
 }
+function normalizeSymptomDomainValue(value){
+ const text=safeText(value);
+ if(!text){return {text:'',hasValue:false,isExplicit:false};}
+ const explicitStatuses=[
+  'None reported','Not applicable','None identified','None identified yet',
+  'None reported / no current behavioral-health concern','Unknown / records unavailable',
+  'Unknown / family history unavailable','Unknown / not yet assessed',
+  'Not applicable / no current trauma symptoms','No trauma disclosed','Trauma history deferred','Deferred'
+ ];
+ if(explicitStatuses.includes(text)||text.startsWith('Unknown')||text.startsWith('Not applicable')||text.startsWith('Deferred')){
+  return {text:'',hasValue:false,isExplicit:true};
+ }
+ return {text,hasValue:true,isExplicit:false};
+}
+function normalizeSymptomDomainValues(values=[]){
+ const normalized=selectionList(values).map(item=>normalizeSymptomDomainValue(item));
+ return {
+  values:normalized.filter(item=>item.hasValue).map(item=>item.text),
+  explicit:normalized.filter(item=>item.isExplicit).map(item=>item.text)
+ };
+}
+function normalizeSymptomDomainEntry(domain={}){
+ const normalizedSymptoms=normalizeSymptomDomainValues(domain?.symptoms||[]);
+ const normalizedImpairment=normalizeSymptomDomainValues(domain?.impairment||[]);
+ return {
+  symptoms:normalizedSymptoms.values,
+  duration:normalizeSymptomDomainValue(domain?.duration).hasValue?safeText(domain?.duration):'',
+  frequency:normalizeSymptomDomainValue(domain?.frequency).hasValue?safeText(domain?.frequency):'',
+  severity:normalizeSymptomDomainValue(domain?.severity).hasValue?safeText(domain?.severity):'',
+  impairment:normalizedImpairment.values,
+  context:normalizeSymptomDomainValue(domain?.context).hasValue?normalizeClinicalFreeText(domain?.context,{context:true}):'',
+  notes:normalizeSymptomDomainValue(domain?.notes).hasValue?normalizeClinicalFreeText(domain?.notes):'',
+  answers:Object.fromEntries(Object.entries(domain?.answers||{}).filter(([,value])=>safeText(value)))
+ };
+}
+function normalizeSymptomDomainData(data){
+ return Object.fromEntries(Object.entries(data?.presenting?.domains||{}).map(([key,domain])=>[key,normalizeSymptomDomainEntry(domain)]));
+}
 function naturalDisposition(values,{none,unknown,notApplicable,deferred,present}){
  if(values.includes('None reported')||values.includes('None reported / no current behavioral-health concern'))return none||'No concerns were reported.';
  if(values.some(v=>String(v).startsWith('Unknown')))return unknown||'This information is currently unknown or unavailable.';
@@ -912,9 +951,10 @@ function naturalDisposition(values,{none,unknown,notApplicable,deferred,present}
 }
 function joinSentences(parts){return parts.map(v=>String(v||'').trim()).filter(Boolean).map(chartSentence).join(' ')}
 function liveDomainEvidence(data){
- const domains=Object.entries(data.presenting.domains)
-  .filter(([,d])=>d.symptoms.length||d.context.trim()||d.notes.trim())
-  .map(([key,d])=>({key,label:clinicalDomainLabel(key),symptoms:d.symptoms,context:d.context.trim(),notes:d.notes.trim(),impairment:d.impairment.filter(v=>!['None reported','Not applicable'].includes(v)),duration:d.duration,frequency:d.frequency,severity:d.severity}));
+ const normalizedDomains=normalizeSymptomDomainData(data);
+ const domains=Object.entries(normalizedDomains)
+  .filter(([,d])=>d.symptoms.length||d.context||d.notes||d.impairment.length||Object.values(d.answers||{}).some(Boolean))
+  .map(([key,d])=>({key,label:clinicalDomainLabel(key),symptoms:d.symptoms,context:d.context,notes:d.notes,impairment:d.impairment,duration:d.duration,frequency:d.frequency,severity:d.severity}));
  const traumaSymptoms=(data.trauma?.symptoms||[]).filter(v=>!['None reported','Not applicable / no current trauma symptoms'].includes(v));
  const alreadyHasTrauma=domains.some(domain=>domain.key==='trauma');
  if(!alreadyHasTrauma&&(traumaSymptoms.length||String(data.trauma?.details||'').trim())){
@@ -955,19 +995,19 @@ function buildDomainNarrative(domain){
  const symptomSentence=(()=>{
   if(!symptoms.length)return'';
   switch(domain.key){
-   case 'trauma': return `The client describes trauma-related symptoms characterized by ${naturalList(symptoms)}${qualifierText}.`;
-   case 'ocd': return `Obsessive-compulsive symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'adhd': return `Executive-functioning and attention difficulties include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'panic': return `Panic symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'bipolar': return `Mood-episode features include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'psychosis': return `Psychotic-spectrum symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'painHealth': return `Pain- and health-related concerns include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'adjustment': return `Adjustment-related symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'substance': return `Substance-related concerns include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'eating': return `Eating- and body-image-related symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'mood': return `Depressive symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   case 'anxiety': return `Anxiety symptoms include ${naturalList(symptoms)}${qualifierText}.`;
-   default: return `${domain.label} include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'trauma': return `Selected trauma-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'ocd': return `Selected obsessive-compulsive features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'adhd': return `Selected executive-functioning and attention features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'panic': return `Selected panic-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'bipolar': return `Selected mood-episode features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'psychosis': return `Selected psychosis-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'painHealth': return `Selected pain- and health-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'adjustment': return `Selected adjustment-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'substance': return `Selected substance-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'eating': return `Selected eating- and body-image-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'mood': return `Selected mood-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   case 'anxiety': return `Selected anxiety-related features include ${naturalList(symptoms)}${qualifierText}.`;
+   default: return `Selected features in this domain include ${naturalList(symptoms)}${qualifierText}.`;
   }
  })();
  return uniqueClinicalSentences([
@@ -1030,10 +1070,25 @@ function buildMasterClinicalStory(data){
  ].filter(item=>item.text||item.domains?.length);
 }
 
+function buildSymptomDomainDocumentationSummary(data){
+  const normalized=Object.entries(normalizeSymptomDomainData(data)).filter(([,domain])=>domain.symptoms.length||domain.context||domain.notes);
+  if(!normalized.length)return '';
+  const summaries=normalized.slice(0,4).map(([key,domain])=>{
+    const label=clinicalDomainLabel(key);
+    const featureText=domain.symptoms.length?`reported features include ${naturalList(domain.symptoms.map(value=>value.toLowerCase()))}`:'reported features are present';
+    const details=[featureText];
+    if(domain.context)details.push(`context: ${domain.context}`);
+    if(domain.notes)details.push(`notes: ${domain.notes}`);
+    return `${label}: ${details.join('; ')}`;
+  });
+  return summaries.length?`Symptom-domain findings include ${naturalList(summaries)}.`:'';
+}
+
 function buildTebraDocumentationObject(data) {
   const presenting = normalizePresentingData(data);
   const story = buildLiveClinicalStory(data);
   const masterStory = buildMasterClinicalStory(data);
+  const symptomDomainSummary = buildSymptomDomainDocumentationSummary(data);
 
   const findStorySection = (title) =>
     masterStory.find((section) => section.title === title)?.text || "";
@@ -1151,6 +1206,7 @@ const psychiatricHistoryNarrative = [
 
     hpi:
       story.hpi ||
+      symptomDomainSummary ||
       (presenting.concerns.values.length ? `The primary concerns include ${naturalList(presenting.concerns.values.map(value => value.toLowerCase()))}.` : "") ||
       findStorySection("History of Present Illness"),
 
