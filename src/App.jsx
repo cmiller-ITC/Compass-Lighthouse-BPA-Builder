@@ -1198,6 +1198,19 @@ const psychiatricHistoryNarrative = [
 ]
   .filter(Boolean)
   .join(" ");
+  const familyHistoryData = data.familyHistory || {};
+const familyHistoryConditions = familyHistoryData.conditions || [];
+
+const familyHistoryNarrative =
+  familyHistoryConditions.includes("None reported")
+    ? "No family psychiatric or substance-use history was reported."
+    : familyHistoryConditions.includes("Unknown / family history unavailable")
+      ? "Family psychiatric and substance-use history is unknown or unavailable."
+      : familyHistoryConditions.length
+        ? `Reported family psychiatric and substance-use history includes ${naturalList(
+            familyHistoryConditions.map(condition => condition.toLowerCase())
+          )}.`
+        : "";
   return {
     chiefComplaint:
       story.chiefComplaint ||
@@ -1216,8 +1229,8 @@ psychiatricHistory:
     socialHistory:
       data.generated.socialHistory || "",
 
-    familyHistory:
-      data.generated.familyHistory || "",
+familyHistory:
+    familyHistoryNarrative,
 
     mse:
       data.generated.mse || "",
