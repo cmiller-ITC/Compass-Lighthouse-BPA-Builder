@@ -1211,6 +1211,31 @@ const familyHistoryNarrative =
             familyHistoryConditions.map(condition => condition.toLowerCase())
           )}.`
         : "";
+        const social = data.social || {};
+        const supports = social.supports?.trim();
+
+const socialHistoryNarrative = joinSentences([
+  social.housing &&
+    `Housing is described as ${social.housing.toLowerCase()}.`,
+
+  social.employment &&
+    `Employment status is described as ${social.employment.toLowerCase()}.`,
+
+  social.finances &&
+    `Financial stress is described as ${social.finances.toLowerCase()}.`,
+
+  social.transportation &&
+    `Transportation is described as ${social.transportation.toLowerCase()}.`,
+
+  social.relationships &&
+    `Relationship context is described as ${social.relationships.toLowerCase()}.`,
+
+  social.legal &&
+    `Legal stress is described as ${social.legal.toLowerCase()}.`,
+
+supports &&
+  `The client describes the following support system: ${supports}.`
+]);
   return {
     chiefComplaint:
       story.chiefComplaint ||
@@ -1226,8 +1251,8 @@ const familyHistoryNarrative =
 psychiatricHistory:
   psychiatricHistoryNarrative,
 
-    socialHistory:
-      data.generated.socialHistory || "",
+socialHistory:
+    socialHistoryNarrative,
 
 familyHistory:
     familyHistoryNarrative,
