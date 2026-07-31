@@ -1242,11 +1242,15 @@ supports &&
       presenting.patientNarrative ||
       findStorySection("Chief Complaint"),
 
-    hpi:
-      story.hpi ||
-      symptomDomainSummary ||
-      (presenting.concerns.values.length ? `The primary concerns include ${naturalList(presenting.concerns.values.map(value => value.toLowerCase()))}.` : "") ||
-      findStorySection("History of Present Illness"),
+hpi:
+  [
+    story.hpi,
+    symptomDomainSummary,
+    findStorySection("History of Present Illness"),
+  ]
+    .filter(Boolean)
+    .filter((value, index, array) => array.indexOf(value) === index)
+    .join(" "),
 
 psychiatricHistory:
   psychiatricHistoryNarrative,
@@ -1755,14 +1759,39 @@ function buildLiveClinicalStory(data){
  if(concerns.length){
   hpiParts.push(`The primary concerns include ${summarizeSelections(concerns,{limit:5})}${course.length?`, with symptoms ${naturalList(course)}`:''}.`);
  }else if(active.length){
-  const labels=active.map(([key])=>clinicalDomainLabel(key).toLowerCase());
-  hpiParts.push(`The current presentation includes ${summarizeSelections(labels,{limit:4})}${course.length?`, with symptoms ${naturalList(course)}`:''}.`);
+const labels = active.map((domain) =>
+  clinicalDomainLabel(domain.key).toLowerCase()
+);
+
+hpiParts.push(
+  `The current presentation includes ${summarizeSelections(labels, { limit: 4 })}${
+    course.length ? `, with symptoms ${naturalList(course)}` : ""
+  }.`
+);
+
+const contexts = active
+  .map((domain) => domain.context)
+  .filter(Boolean);
+
+if (contexts.length) {
+  hpiParts.push(
+    normalizeClinicalFreeText(contexts[0], { context: true })
+  );
+}
+
+const notes = active
+  .map((domain) => domain.notes)
+  .filter(Boolean);
+
+if (notes.length) {
+  hpiParts.push(
+    normalizeClinicalFreeText(notes[0], {
+      fragmentLead: "The client describes",
+    })
+  );
+} 
  }
- const contexts=active.map(([,domain])=>domain.context).filter(Boolean);
- if(contexts.length)hpiParts.push(normalizeClinicalFreeText(contexts[0],{context:true}));
- const notes=active.map(([,domain])=>domain.notes).filter(Boolean);
- if(notes.length)hpiParts.push(normalizeClinicalFreeText(notes[0],{fragmentLead:'The client describes'}));
- const hpi=hpiParts.join(' ');
+const hpi=hpiParts.join(' ');
 
  const clinicalPicture=active.slice(0,5).map((domain)=>{
   const label=clinicalDomainLabel(domain.key);
