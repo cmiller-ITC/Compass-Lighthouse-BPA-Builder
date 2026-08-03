@@ -308,7 +308,7 @@ function ClinicalSidePanel({data,section='presenting'}){
  const scrollRef=useRef(null);
  const intelligence=buildSectionIntelligence(data,section);
  const clinicalCompass=buildClinicalCompass(data);
-  const masterStory = buildMasterClinicalStory(data);
+ const masterStory = buildMasterClinicalStory(data);
  const tebraDocumentation=buildTebraDocumentationObject(data);
  const journey=buildAssessmentJourney(data,section);
  const finalReview=buildFinalComarReview(data);
@@ -1057,13 +1057,28 @@ function buildMasterClinicalStory(data){
  if(presenting.severity)course.push(`${presenting.severity.toLowerCase()} in severity`);
  if(presenting.course)course.push(`currently ${presenting.course.toLowerCase()}`);
 
+ const brain = {
+  presenting,
+  domains,
+  domainStories,
+  impacts,
+  functionalImpact,
+  psychosocial,
+  reasoning,
+  formulation,
+  careSeeking,
+  concerns,
+  course,
+};
+
  return [
   {title:'Chief Complaint',text:presenting.patientNarrative?joinSentences([presenting.patientNarrative,...careSeeking.carePathway]):careSeeking.chiefComplaint},
   {title:'History of Present Illness',text:concerns.length?`The primary concerns include ${naturalList(concerns.map(value=>value.toLowerCase()))}${course.length?`, with symptoms ${naturalList(course)}`:''}.`:''},
-  {title:'Clinical Symptom Picture',domains:domainStories},
-  {title:'Functional Impact',text:functionalImpact},
-  {title:'Psychosocial & Clinical Context',text:psychosocial},
-  {title:'Clinical Conceptualization',text:formulation,reasoning},
+  {title:'Clinical Symptom Picture', domains: brain.domainStories},
+  {title:'Functional Impact',text: brain.functionalImpact},
+  {title:'Psychosocial & Clinical Context',text: brain.psychosocial},
+  {title:'Clinical Conceptualization',text: brain.formulation,
+reasoning: brain.reasoning},
   {title:'Diagnostic Support',text:d.primary?joinSentences([`The current clinical impression is ${d.primary}${d.confidence?`, with ${d.confidence.toLowerCase()} confidence`:''}.`,d.diagnosticRationale]):''},
   {title:'Medical Necessity',text:d.medicalNecessity},
   {title:'Treatment Direction',text:d.treatmentFocus?normalizeClinicalFreeText(d.treatmentFocus):buildReasoningTreatmentDirection(data)}

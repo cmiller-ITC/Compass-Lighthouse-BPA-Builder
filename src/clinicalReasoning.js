@@ -722,6 +722,19 @@ export function buildClinicalCoachInsights(data){
   };
 }
 
+function toGerund(text){
+  return text
+    .replace(/^reduce\b/i,"reducing")
+    .replace(/^increase\b/i,"increasing")
+    .replace(/^improve\b/i,"improving")
+    .replace(/^strengthen\b/i,"strengthening")
+    .replace(/^develop\b/i,"developing")
+    .replace(/^build\b/i,"building")
+    .replace(/^identify\b/i,"identifying")
+    .replace(/^maintain\b/i,"maintaining")
+    .replace(/^enhance\b/i,"enhancing");
+}
+
 export function buildReasoningTreatmentDirection(data){
   const reasoning=buildClinicalReasoning(data);
   const targets=reasoning.treatmentTargets.slice(0,5);
@@ -730,7 +743,7 @@ export function buildReasoningTreatmentDirection(data){
   const sentences=[];
 
   if(targets.length){
-    sentences.push(`Initial treatment will focus on ${naturalList(targets.map(target=>target.label))}.`);
+    sentences.push(`Initial treatment will focus on ${naturalList(targets.map(target => toGerund(target.label)))}.`);
   }else if(goals.length){
     sentences.push(`Initial treatment priorities will be developed around the client’s goals of ${naturalList(goals)}.`);
   }else{
