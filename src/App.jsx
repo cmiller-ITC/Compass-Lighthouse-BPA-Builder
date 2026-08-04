@@ -1057,6 +1057,36 @@ function buildMasterClinicalStory(data){
  if(presenting.severity)course.push(`${presenting.severity.toLowerCase()} in severity`);
  if(presenting.course)course.push(`currently ${presenting.course.toLowerCase()}`);
 
+ const psychiatricHistory = {
+  diagnoses: data.psychiatricHistory?.diagnoses || [],
+  services: data.psychiatricHistory?.services || [],
+  hospitalization: data.psychiatricHistory?.hospitalization || "",
+  suicideAttempts: data.psychiatricHistory?.suicideAttempts || "",
+  selfInjury: data.psychiatricHistory?.selfInjury || "",
+  treatmentResponse: data.psychiatricHistory?.treatmentResponse || "",
+  details: data.psychiatricHistory?.details || "",
+};
+
+const familyHistory = {
+  conditions: data.familyHistory?.conditions || [],
+  relationshipPatterns: data.familyHistory?.relationshipPatterns || [],
+  supportLevel: data.familyHistory?.supportLevel || "",
+  currentImpact: data.familyHistory?.currentImpact || "",
+  currentInterpersonalPatterns:
+    data.familyHistory?.currentInterpersonalPatterns || [],
+  details: data.familyHistory?.details || "",
+};
+
+const socialHistory = {
+  housing: data.social?.housing || "",
+  employment: data.social?.employment || "",
+  finances: data.social?.finances || "",
+  transportation: data.social?.transportation || "",
+  relationships: data.social?.relationships || "",
+  legal: data.social?.legal || "",
+  supports: data.social?.supports || "",
+};
+
  const brain = {
   presenting,
   domains,
@@ -1064,6 +1094,9 @@ function buildMasterClinicalStory(data){
   impacts,
   functionalImpact,
   psychosocial,
+  psychiatricHistory,
+  familyHistory,
+  socialHistory,
   reasoning,
   formulation,
   careSeeking,
@@ -1227,7 +1260,10 @@ const familyHistoryNarrative =
           )}.`
         : "";
         const social = data.social || {};
-        const supports = social.supports?.trim();
+        const supports =
+  typeof social.supports === "string"
+    ? social.supports.trim()
+    : "";
 
 const socialHistoryNarrative = joinSentences([
   social.housing &&
