@@ -246,10 +246,9 @@ function Presenting({data,set,toggle}){const p=data.presenting;
   </div>
 </div>
   <div className="section-kicker">Identify the major themes contributing to the decision to seek care now</div>
-  <div className="presenting-intro-grid">
+  <div>
    <div className="presenting-guide-card"><span>1</span><div><strong>Select the themes</strong><p>More than one reason may be contributing to the client’s decision to seek care.</p></div></div>
-   <div className="presenting-guide-card"><span>2</span><div><strong>Clarify what matters most</strong><p>Ask which one or two concerns feel most urgent, disruptive, or important today.</p></div></div>
-  </div>
+     </div>
   <div className="presenting-choice-grid">
    <ClinicalChoiceGroups
     label="Why Now?"
@@ -258,14 +257,6 @@ function Presenting({data,set,toggle}){const p=data.presenting;
     onToggle={v=>toggle('presenting.reasonSeekingCare',v)}
     groups={reasonSeekingCareGroups}
     priorityLabel="Primary reasons for seeking care"
-   />
-   <ClinicalChoiceGroups
-    label="What Would the Client Like to Be Different?"
-    helper="Which broad outcomes does the client hope treatment will support?"
-    values={requestSelections}
-    onToggle={v=>toggle('presenting.clientRequest',v)}
-    groups={clientRequestGroups}
-    priorityLabel="Most important treatment outcomes"
    />
   </div>
    <Card title="Current Presenting Concerns">
@@ -290,6 +281,14 @@ function Presenting({data,set,toggle}){const p=data.presenting;
  </Card>
  <Card title="Overall Clinical Qualifiers"><Grid columns={4}><Select label="Duration" value={p.duration} onChange={v=>set('presenting.duration',v)} options={['Less than 1 month','1–6 months','More than 6 months','More than 1 year','Chronic / longstanding']}/><Select label="Frequency" value={p.frequency} onChange={v=>set('presenting.frequency',v)} options={['Occasional','Weekly','Most days','Daily','Nearly constant']}/><Select label="Severity" value={p.severity} onChange={v=>set('presenting.severity',v)} options={['Mild','Moderate','Moderately severe','Severe']}/><Select label="Course" value={p.course} onChange={v=>set('presenting.course',v)} options={['Improving','Stable','Fluctuating','Worsening']}/></Grid></Card>
  <Card title="Functional Impairment"><div className="section-kicker">Connect symptoms to daily life and medical necessity</div><Checks options={impairmentOptions} selected={p.impairments} onToggle={v=>toggle('presenting.impairments',v)}/></Card>
+ <ClinicalChoiceGroups
+    label="What Would the Client Like to Be Different?"
+    helper="Which broad outcomes does the client hope treatment will support?"
+    values={requestSelections}
+    onToggle={v=>toggle('presenting.clientRequest',v)}
+    groups={clientRequestGroups}
+    priorityLabel="Most important treatment outcomes"
+   />
  </div><ClinicalSidePanel data={data} section="presenting"/></div></Page>}
 
 const symptomGroupLibrary={
