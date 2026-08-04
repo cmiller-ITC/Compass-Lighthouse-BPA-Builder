@@ -491,7 +491,82 @@ textarea{min-height:118px;line-height:1.62}
 .checks input{width:17px;height:17px}
 @media(max-width:900px){.presenting-intro-grid{grid-template-columns:1fr}}
 
+/* Lighthouse Guided Interview Card */
 
+.clinical-goal-card{
+  margin:0 0 20px;
+  padding:20px 22px;
+  border:1px solid #ddd3ea;
+  border-left:6px solid #6f4fa3;
+  border-radius:16px;
+  background:linear-gradient(135deg,#fbf9ff 0%,#fffaf3 100%);
+  box-shadow:0 8px 22px rgba(68,42,98,.07);
+}
+
+.clinical-goal-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+  color:#4d3370;
+  font-size:15px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.clinical-goal-text{
+  margin-bottom:15px;
+  color:#40394a;
+  font-size:14px;
+  line-height:1.6;
+}
+
+.clinical-goal-list{
+  padding-top:13px;
+  border-top:1px solid #e7dfef;
+}
+
+.clinical-goal-list strong{
+  display:block;
+  margin-bottom:8px;
+  color:#5c3f82;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.clinical-goal-list ul{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px 18px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.clinical-goal-list li{
+  position:relative;
+  padding-left:18px;
+  color:#5f5768;
+  font-size:13px;
+  line-height:1.4;
+}
+
+.clinical-goal-list li::before{
+  content:"✓";
+  position:absolute;
+  left:0;
+  top:0;
+  color:#4f918e;
+  font-weight:900;
+}
+
+@media(max-width:900px){
+  .clinical-goal-list ul{
+    grid-template-columns:1fr;
+  }
+}
 /* Compass 7.5 — Premium Selection Polish */
 .card{position:relative;overflow:hidden}
 .card-heading{display:flex;align-items:center;gap:12px;margin-bottom:18px}

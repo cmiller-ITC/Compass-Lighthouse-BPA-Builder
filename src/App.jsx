@@ -223,7 +223,28 @@ function Presenting({data,set,toggle}){const p=data.presenting;
  const reasonSelections=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:(p.reasonSeekingCare?[p.reasonSeekingCare]:[]);
  const requestSelections=Array.isArray(p.clientRequest)?p.clientRequest:(p.clientRequest?[p.clientRequest]:[]);
  return <Page><div className="workspace-grid"><div>
- <Card title="What Brought the Client In Today?">
+ <Card title="Presenting Concerns">
+  <div className="clinical-goal-card">
+  <div className="clinical-goal-title">
+    🎯 Clinical Goal
+  </div>
+
+  <div className="clinical-goal-text">
+    Understand why the client is seeking treatment now, identify the primary concerns affecting daily life, and establish what meaningful change would look like from the client's perspective.
+  </div>
+
+  <div className="clinical-goal-list">
+    <strong>Listen For</strong>
+
+    <ul>
+      <li>Why treatment is being sought now</li>
+      <li>Current symptoms and distress</li>
+      <li>Functional impact</li>
+      <li>Recent changes or triggering events</li>
+      <li>The client's own hopes for treatment</li>
+    </ul>
+  </div>
+</div>
   <div className="section-kicker">Identify the major themes contributing to the decision to seek care now</div>
   <div className="presenting-intro-grid">
    <div className="presenting-guide-card"><span>1</span><div><strong>Select the themes</strong><p>More than one reason may be contributing to the client’s decision to seek care.</p></div></div>

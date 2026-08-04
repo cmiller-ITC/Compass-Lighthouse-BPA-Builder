@@ -44,6 +44,612 @@ Only after answering those questions should diagnoses, treatment planning, and d
 
 ---
 
+# Clinical Experience Philosophy
+
+## Lighthouse Compass Is a Clinical Interview System
+
+Lighthouse Compass is not designed primarily as a form, checklist, or documentation generator.
+
+It is designed to guide clinicians through a thoughtful, trauma-informed, evidence-informed biopsychosocial interview while documentation is generated in the background.
+
+The clinician-facing workflow should follow the natural progression of an excellent clinical conversation rather than the order of fields in an electronic health record.
+
+The client should experience the assessment as an unfolding story.
+
+The clinician should understand:
+
+- What question each section is trying to answer
+- Why each question matters clinically
+- What information to listen for
+- How the information connects to formulation
+- How each section transitions naturally into the next
+- Which documentation and clinical outputs are being created
+
+The clinician should never feel as though they are simply completing required fields.
+
+They should feel supported in understanding the person sitting in front of them.
+
+> **Documentation is the byproduct of excellent clinical interviewing—not the primary task.**
+
+---
+
+# Standardizing Clinical Excellence
+
+Lighthouse Compass exists to standardize excellence without making clinical interviews rigid or impersonal.
+
+When used consistently across an organization, Lighthouse should help ensure that every biopsychosocial assessment is:
+
+- Comprehensive
+- Person-centered
+- Trauma-informed
+- Clinically meaningful
+- Regulatory-ready
+- Connected to diagnosis
+- Connected to medical necessity
+- Connected to treatment planning
+- Consistent across clinicians
+- Flexible enough to preserve clinical judgment
+
+The platform should support experienced clinicians while also providing enough structure, prompting, and education to guide newer clinicians.
+
+Consistency should not mean sameness.
+
+Lighthouse standardizes the quality and completeness of the clinical process while allowing each clinician to remain responsive to the individual client.
+
+---
+
+# The Lighthouse Experience Principles
+
+## 1. Every Page Answers One Clinical Question
+
+Each page or major section should have one clearly defined purpose.
+
+Examples:
+
+- **Presenting** → Why is this person seeking care now?
+- **Symptoms** → What is happening currently?
+- **Clinical Qualifiers** → How long has it been happening, how severe is it, and how is it affecting functioning?
+- **Desired Change** → What does the client hope will become different?
+- **Psychiatric History** → Has this happened before, and what has helped or not helped?
+- **Family and Developmental History** → What vulnerabilities, relationships, and developmental experiences shaped the person?
+- **Trauma** → What experiences may have shaped current protective responses?
+- **Medical and Substance History** → What biological, medication, pain, sleep, or substance-related factors affect the clinical picture?
+- **Social History** → What environment must recovery occur within?
+- **Strengths** → What resources can recovery stand upon?
+- **Mental Status Examination** → What is the clinician observing today?
+- **Risk** → Is the client safe, and what protective actions are needed?
+- **Diagnosis** → What best explains the available clinical evidence?
+- **Treatment** → Where should care begin?
+
+If a page cannot answer one clear clinical question, it should be reconsidered or redesigned.
+
+---
+
+## 2. Every Section Has a Clearly Defined Clinical Purpose
+
+Each section should help the clinician understand:
+
+- Why the information is being gathered
+- What clinical question it answers
+- How the information will be used
+- Which downstream outputs it informs
+
+A brief section introduction may include:
+
+### Clinical Goal
+
+What the clinician is trying to understand.
+
+### Why This Matters
+
+How the information contributes to diagnosis, medical necessity, formulation, treatment planning, safety, or regulatory documentation.
+
+### Listen For
+
+Important clinical themes, patterns, discrepancies, risks, strengths, and maintaining mechanisms.
+
+### Generated Outputs
+
+Which narratives, documentation sections, or clinical insights will use the information.
+
+---
+
+## 3. Every Action Has an Understandable Intention
+
+Every field, checkbox, prompt, and selection should serve a meaningful purpose.
+
+No information should be collected simply because it is traditionally included in an assessment.
+
+Each action should contribute to one or more of the following:
+
+- Understanding the client's story
+- Identifying current symptoms
+- Clarifying diagnostic evidence
+- Understanding functional impairment
+- Identifying risk
+- Identifying strengths and protective factors
+- Building the clinical conceptualization
+- Establishing medical necessity
+- Determining level of care
+- Developing treatment priorities
+- Creating documentation
+- Supporting quality review
+
+> **Every click must have a purpose that the clinician can understand.**
+
+---
+
+## 4. The Interview Should Feel Like a Conversation, Not an Interrogation
+
+The workflow should support rapport, curiosity, collaboration, and emotional safety.
+
+Questions should build naturally upon one another.
+
+The clinician should not be forced to jump abruptly between unrelated topics simply because that is how an EHR organizes its fields.
+
+The client should feel heard before being redirected.
+
+The interface should support presence with the client rather than compete for the clinician's attention.
+
+---
+
+## 5. Every Section Transitions Naturally Into the Next
+
+Lighthouse should help clinicians move between topics without creating abrupt or disjointed shifts.
+
+Examples of transition language may include:
+
+> “Now that I understand what brought you in, I’d like to learn more about how these concerns are affecting your daily life.”
+
+> “You’ve helped me understand what has been happening recently. I’d also like to understand whether you have experienced anything similar in the past.”
+
+> “Thank you for sharing that history. I’d like to understand more about the relationships and experiences that have shaped you.”
+
+> “Now that we have discussed some difficult experiences, I’d like to learn more about the people, strengths, and resources that support you.”
+
+> “We’ve talked about what has been difficult. I’d like to shift toward what you hope will become different through treatment.”
+
+Transitions should preserve rapport and help the assessment feel like one coherent story.
+
+---
+
+## 6. Desired Change Follows Understanding of the Current Problem
+
+The question:
+
+> “What would you like to be different?”
+
+should occur after the clinician has explored:
+
+- Why the client is seeking care now
+- The current presenting concerns
+- The client's own description of the problem
+- Symptom patterns
+- Duration
+- Frequency
+- Severity
+- Course
+- Functional impairment
+- Important triggers or contexts
+
+This sequence allows the clinician to hear and understand the problem before moving toward goals, hope, and treatment direction.
+
+The desired-change section should act as a natural bridge between assessment and collaborative treatment planning.
+
+---
+
+## 7. The Software Quietly Teaches
+
+Lighthouse should provide guidance without overwhelming the clinician or interrupting the therapeutic relationship.
+
+Embedded support may include:
+
+- Conversation starters
+- Follow-up questions
+- Suggested scripts
+- Clinical goals
+- What to listen for
+- Diagnostic considerations
+- Common maintaining mechanisms
+- Documentation implications
+- Helpful transitions
+- Missing-information prompts
+- Regulatory reminders
+- Clinical pearls
+
+Guidance should be layered and unobtrusive.
+
+Experienced clinicians should be able to move efficiently.
+
+Learners should be able to access greater explanation and support.
+
+---
+
+## 8. The Clinician Should Always Know What Comes Next
+
+Every section should communicate:
+
+- Where the clinician is in the interview
+- What the current section is trying to accomplish
+- What remains incomplete
+- What documentation is being generated
+- What the next natural conversation will be
+
+Navigation should mirror the clinical journey rather than feel like a collection of disconnected forms.
+
+---
+
+## 9. Every Action Contributes to the Clinical Brain
+
+Information should never exist in isolation.
+
+Every meaningful selection should contribute to the centralized Clinical Brain and may inform:
+
+- The Current Clinical Story
+- Chief Complaint
+- History of Present Illness
+- Psychiatric History
+- Medical History
+- Family History
+- Social History
+- Mental Status Examination
+- Risk formulation
+- Clinical conceptualization
+- Diagnostic reasoning
+- Medical necessity
+- Level-of-care justification
+- Treatment direction
+- Goals
+- Clinical coaching
+- Quality review
+- Future progress notes
+- Outcome tracking
+
+The clinician should never need to enter the same information repeatedly for different outputs.
+
+---
+
+## 10. Documentation Is Generated After Understanding
+
+The workflow should prioritize:
+
+1. Listening
+2. Clarifying
+3. Organizing evidence
+4. Understanding patterns
+5. Building a formulation
+6. Developing treatment direction
+7. Generating documentation
+
+Documentation should reflect the clinical understanding developed through the interview.
+
+It should not dictate how the interview must occur.
+
+---
+
+# Clinical Conversation Framework
+
+The biopsychosocial assessment should unfold as a coherent clinical story.
+
+## Chapter 1 — Why Today?
+
+### Central Question
+
+Why is the client seeking care now?
+
+### Explore
+
+- Referral context
+- Recent changes
+- Current stressors
+- Main concerns
+- Changes in functioning
+- Motivation for treatment
+- Why treatment is being sought at this particular time
+
+### Primary Outputs
+
+- Chief Complaint
+- Referral Context
+- Presenting Narrative
+
+---
+
+## Chapter 2 — What Is Happening?
+
+### Central Question
+
+What is the client currently experiencing?
+
+### Explore
+
+- Presenting concerns
+- Symptom domains
+- Patient-specific examples
+- Triggers
+- Patterns
+- Duration
+- Frequency
+- Severity
+- Course
+- Functional impairment
+- Safety concerns
+
+### Primary Outputs
+
+- History of Present Illness
+- Symptom Picture
+- Functional Impact
+- Initial Medical-Necessity Evidence
+
+---
+
+## Chapter 3 — What Would the Client Like to Be Different?
+
+### Central Question
+
+What would meaningful improvement look like to the client?
+
+### Explore
+
+- Desired changes
+- Client-defined goals
+- Treatment priorities
+- Values
+- Motivation
+- Hope
+- Readiness
+- Quality-of-life outcomes
+
+### Primary Outputs
+
+- Client Goals
+- Treatment Priorities
+- Collaborative Direction
+- Initial Outcome Targets
+
+---
+
+## Chapter 4 — How Did We Get Here?
+
+### Central Question
+
+What history and experiences shaped the current presentation?
+
+### Explore
+
+- Psychiatric history
+- Previous treatment
+- Family history
+- Developmental experiences
+- Attachment
+- Trauma
+- Loss
+- Medical history
+- Pain
+- Sleep
+- Substance use
+- Medication history
+- Cultural and identity factors
+
+### Primary Outputs
+
+- Psychiatric History
+- Medical History
+- Family History
+- Trauma Context
+- Predisposing and Precipitating Factors
+
+---
+
+## Chapter 5 — What Environment Must Recovery Occur Within?
+
+### Central Question
+
+What aspects of the client's current life support or complicate recovery?
+
+### Explore
+
+- Housing
+- Employment
+- Education
+- Finances
+- Transportation
+- Relationships
+- Caregiving
+- Legal concerns
+- Culture
+- Spirituality
+- Identity
+- Community
+- Support systems
+
+### Primary Outputs
+
+- Social History
+- Environmental Context
+- Barriers to Care
+- Support-System Summary
+- Perpetuating and Protective Factors
+
+---
+
+## Chapter 6 — What Can Recovery Stand On?
+
+### Central Question
+
+What strengths and protective resources already exist?
+
+### Explore
+
+- Personal strengths
+- Values
+- Resilience
+- Insight
+- Motivation
+- Skills
+- Supportive relationships
+- Previous successes
+- Meaning and purpose
+- Treatment engagement
+- Readiness for change
+
+### Primary Outputs
+
+- Strengths Narrative
+- Protective Factors
+- Treatment Resources
+- Sources of Hope
+
+---
+
+## Chapter 7 — What Is the Clinician Observing Today?
+
+### Central Question
+
+What does the current clinical presentation reveal?
+
+### Explore
+
+- Mental Status Examination
+- Risk
+- Screening measures
+- Behavioral observations
+- Clinical discrepancies
+- Safety needs
+- Current level of stability
+
+### Primary Outputs
+
+- Mental Status Examination
+- Risk Formulation
+- Screening Results
+- Safety Plan
+- Level-of-Care Evidence
+
+---
+
+## Chapter 8 — What Does the Whole Story Mean?
+
+### Central Question
+
+How can the available information be organized into a coherent clinical understanding?
+
+### Explore
+
+- Predisposing factors
+- Precipitating factors
+- Perpetuating mechanisms
+- Protective factors
+- Diagnostic evidence
+- Differential diagnoses
+- Functional impairment
+- Risk
+- Strengths
+- Medical necessity
+
+### Primary Outputs
+
+- Clinical Conceptualization
+- Diagnostic Rationale
+- Assessment
+- Medical Necessity
+- Level-of-Care Justification
+
+---
+
+## Chapter 9 — Where Do We Begin?
+
+### Central Question
+
+What should happen next?
+
+### Explore
+
+- Treatment priorities
+- Client goals
+- Recommended approaches
+- Frequency
+- Level of care
+- Referrals
+- Safety planning
+- Measurement strategy
+- Initial interventions
+- Follow-up
+
+### Primary Outputs
+
+- Plan
+- Goals
+- Treatment Recommendations
+- Referrals
+- Monitoring Plan
+- Treatment-Planning Foundation
+
+---
+
+# Guided Interview Experience
+
+Each major section should eventually support four layers of guidance.
+
+## Layer 1 — Purpose
+
+A brief explanation of what the clinician is trying to understand.
+
+## Layer 2 — Conversation Starters
+
+Natural, patient-centered language that can help begin the discussion.
+
+## Layer 3 — Listen For
+
+Clinical themes, patterns, risk indicators, strengths, discrepancies, and contextual factors.
+
+## Layer 4 — Transition
+
+Suggested language that helps move naturally into the next section.
+
+These layers should be available without making the interface crowded.
+
+Guidance may appear through expandable panels, tooltips, learner mode, or contextual coaching.
+
+---
+
+# Clinical Experience Standard
+
+A clinician using Lighthouse Compass should be able to answer the following questions at all times:
+
+- Where am I in the assessment?
+- What am I trying to understand?
+- Why does this information matter?
+- What should I listen for?
+- What information is still missing?
+- What documentation is being created?
+- What conversation comes next?
+- How does this information connect to the client's overall story?
+
+If the platform cannot answer these questions clearly, the workflow should be improved.
+
+---
+
+# Non-Negotiable Experience Standard
+
+Every new feature must accomplish at least one of the following:
+
+- Reduce clinician cognitive load
+- Improve the quality of the clinical interview
+- Strengthen clinical reasoning
+- Improve documentation quality
+- Improve regulatory readiness
+- Improve treatment planning
+- Improve patient care
+- Support clinician learning
+- Support clinical supervision
+- Reduce clinician burnout
+
+If a feature does none of these things, it does not belong in Lighthouse Compass.
+
+---
+
 # The Lighthouse Compass Clinical Model™
 
 Lighthouse Compass is built around one central belief:
@@ -593,3 +1199,58 @@ Documentation is simply one output.
 The true product is better clinical reasoning.
 
 Everything else follows from that.
+
+---
+
+# Narrative Polish Backlog
+
+The following items are intentionally deferred until the primary clinical workflow is complete. These represent refinement tasks rather than architectural changes.
+
+## Narrative Style
+
+- Normalize verb tense throughout generated narratives.
+- Ensure parallel sentence construction.
+- Reduce repetitive phrasing.
+- Prefer active voice whenever appropriate.
+- Remove filler and unnecessary hedging.
+- Improve clinician readability.
+- Eliminate generic statements lacking clinical value.
+- Increase patient-specific language whenever possible.
+
+## Clinical Writing Standards
+
+Narratives should read as though written by an experienced behavioral-health clinician.
+
+Every sentence should either:
+
+• describe evidence
+
+• explain clinical meaning
+
+• support medical necessity
+
+• guide treatment
+
+If a sentence accomplishes none of those goals, it should be revised or removed.
+
+## Future Review
+
+Before Version 8:
+
+Review every generated narrative individually for:
+
+✓ readability
+
+✓ flow
+
+✓ grammar
+
+✓ verb tense
+
+✓ regulatory language
+
+✓ duplication
+
+✓ patient specificity
+
+✓ medical necessity
