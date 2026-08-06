@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import ExecutiveSummaryCard from './ExecutiveSummaryCard';
+import CompassExecutiveSummaryCard from './CompassExecutiveSummaryCard';
 
 export default function CompassIntelligencePanelView({
   data,
@@ -176,7 +176,7 @@ export default function CompassIntelligencePanelView({
               className="intelligence-tab-content"
               ref={scrollRef}
             >
-            <ExecutiveSummaryCard summary={executiveSummary} />
+            <CompassExecutiveSummaryCard summary={executiveSummary} />
             
               {activeTab === 'narrative' && (
                 <SectionNarrative

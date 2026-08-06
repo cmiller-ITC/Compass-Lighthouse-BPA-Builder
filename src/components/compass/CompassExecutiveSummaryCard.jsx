@@ -1,4 +1,4 @@
-export default function ExecutiveSummaryCard({
+export default function CompassExecutiveSummaryCard({
   title = 'Executive Summary',
   summary,
   emptyMessage = 'Compass is still gathering enough information to form an executive summary.',
