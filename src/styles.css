@@ -950,3 +950,425 @@ textarea{min-height:118px;line-height:1.62}
   font-size: 10px;
   line-height: 1.45;
 }
+
+/* =========================================================
+   COMPASS ROOMS
+   Clinical thinking journey
+   ========================================================= */
+
+.compass-rooms {
+  padding: 16px 14px 14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(253, 250, 244, 0.98) 0%,
+      rgba(249, 247, 242, 0.96) 100%
+    );
+  border-bottom: 1px solid rgba(90, 61, 125, 0.10);
+}
+
+.compass-rooms-header {
+  margin-bottom: 12px;
+}
+
+.compass-rooms-header .side-label {
+  color: #6b4a8e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.compass-rooms-header p {
+  margin: 4px 0 0;
+  color: #756f78;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.compass-room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.compass-room-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 42px 1fr 18px;
+  align-items: center;
+  gap: 10px;
+
+  padding: 11px 12px;
+
+  appearance: none;
+  border: 1px solid rgba(103, 78, 126, 0.13);
+  border-radius: 15px;
+
+  background: rgba(255, 255, 255, 0.72);
+  color: #342942;
+
+  text-align: left;
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 12px rgba(58, 42, 73, 0.035);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.compass-room-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 78, 126, 0.24);
+
+  box-shadow:
+    0 6px 18px rgba(58, 42, 73, 0.07);
+}
+
+.compass-room-card.active {
+  border-color: rgba(91, 62, 130, 0.42);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 239, 252, 0.96),
+      rgba(253, 249, 243, 0.96)
+    );
+
+  box-shadow:
+    0 7px 20px rgba(74, 51, 101, 0.09);
+}
+
+.compass-room-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(111, 78, 148, 0.10);
+
+  font-size: 19px;
+}
+
+.compass-room-card:nth-child(2) .compass-room-icon {
+  background: rgba(119, 148, 106, 0.15);
+}
+
+.compass-room-card:nth-child(3) .compass-room-icon {
+  background: rgba(198, 157, 65, 0.15);
+}
+
+.compass-room-card:nth-child(4) .compass-room-icon {
+  background: rgba(143, 169, 119, 0.15);
+}
+
+.compass-room-card:nth-child(5) .compass-room-icon {
+  background: rgba(124, 91, 152, 0.11);
+}
+
+.compass-room-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.compass-room-copy strong {
+  color: #443252;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.compass-room-copy small {
+  color: #7d7780;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.compass-room-arrow {
+  color: #9a8da3;
+  font-size: 20px;
+  font-weight: 400;
+  text-align: right;
+}
+
+.compass-room-card.active .compass-room-arrow {
+  color: #67468a;
+}
+/* =========================================================
+   OBSERVATION ROOM
+   Calm, reflective clinical workspace
+   ========================================================= */
+
+.compass-room-workspace {
+  padding: 16px 14px 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(253, 250, 245, 0.98) 0%,
+      rgba(249, 247, 243, 0.96) 100%
+    );
+}
+
+.observation-room {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Room Intro ---------- */
+
+.room-intro {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  align-items: start;
+
+  padding: 16px;
+
+  border: 1px solid rgba(101, 75, 130, 0.14);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 239, 251, 0.92),
+      rgba(253, 249, 242, 0.94)
+    );
+
+  box-shadow:
+    0 6px 18px rgba(60, 45, 76, 0.05);
+}
+
+.room-intro-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(101, 74, 141, 0.11);
+
+  font-size: 20px;
+}
+
+.room-intro .side-label {
+  margin-bottom: 4px;
+
+  color: #6d4d90;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.room-intro h2 {
+  margin: 0 0 6px;
+
+  color: #352a40;
+
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.room-intro p {
+  margin: 0;
+
+  color: #6f6973;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ---------- Room Sections ---------- */
+
+.room-section {
+  padding: 15px;
+
+  border: 1px solid rgba(101, 80, 120, 0.11);
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.76);
+
+  box-shadow:
+    0 4px 14px rgba(52, 41, 65, 0.035);
+}
+
+.room-section-heading {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 9px;
+  align-items: start;
+
+  margin-bottom: 12px;
+}
+
+.room-section-heading > span {
+  width: 26px;
+  height: 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(111, 78, 148, 0.09);
+
+  color: #67498a;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.room-section-heading h3 {
+  margin: 0 0 3px;
+
+  color: #44334f;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.room-section-heading p {
+  margin: 0;
+
+  color: #817983;
+
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* ---------- Themes ---------- */
+
+.room-theme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.room-theme-card {
+  padding: 11px 12px;
+
+  border-left: 3px solid rgba(105, 75, 145, 0.48);
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(244, 238, 250, 0.72),
+      rgba(255, 255, 255, 0.58)
+    );
+}
+
+.room-theme-card strong {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #4d3a58;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.room-theme-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.room-theme-card li {
+  margin: 3px 0;
+
+  color: #5f5962;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ---------- Simple Lists ---------- */
+
+.room-simple-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.room-simple-list li {
+  margin: 5px 0;
+
+  color: #5f5962;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ---------- Strengths ---------- */
+
+.observation-room
+.room-section:nth-of-type(2) {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(241, 247, 238, 0.92),
+      rgba(255, 253, 247, 0.86)
+    );
+
+  border-color: rgba(119, 148, 106, 0.18);
+}
+
+.observation-room
+.room-section:nth-of-type(2)
+.room-section-heading > span {
+  background: rgba(119, 148, 106, 0.14);
+  color: #59754f;
+}
+
+/* ---------- Compass Is Wondering ---------- */
+
+.room-wondering {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(252, 247, 234, 0.96),
+      rgba(250, 244, 252, 0.90)
+    );
+
+  border-color: rgba(198, 157, 65, 0.20);
+}
+
+.room-wondering
+.room-section-heading > span {
+  background: rgba(198, 157, 65, 0.16);
+  color: #9a741d;
+}
+
+/* ---------- Small-screen breathing room ---------- */
+
+@media (max-width: 1200px) {
+  .room-intro {
+    padding: 14px;
+  }
+
+  .room-section {
+    padding: 13px;
+  }
+
+  .room-intro h2 {
+    font-size: 19px;
+  }
+}

@@ -1,25 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 import CompassExecutiveSummaryCard from './CompassExecutiveSummaryCard';
+import CompassRooms from './CompassRooms';
+import ObservationRoom from './ObservationRoom';
 
 export default function CompassIntelligencePanelView({
   data,
   section = 'presenting',
   builders,
   views,
+  onOpenRoom,
 }) {
   const [activeTab, setActiveTab] = useState('narrative');
   const [collapsed, setCollapsed] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [activeRoom, setActiveRoom] = useState(null);
   const scrollRef = useRef(null);
 
-  const {
-    buildSectionIntelligence,
-    buildClinicalCompass,
-    buildMasterClinicalStory,
-    buildTebraDocumentationObject,
-    buildAssessmentJourney,
-    buildFinalComarReview,
-  } = builders;
+const {
+  buildSectionIntelligence,
+  buildClinicalCompass,
+  buildClinicalConnections,
+  buildMasterClinicalStory,
+  buildTebraDocumentationObject,
+  buildAssessmentJourney,
+  buildFinalComarReview,
+} = builders;
 
   const {
     SectionNarrative,
@@ -31,6 +36,7 @@ export default function CompassIntelligencePanelView({
 
   const intelligence = buildSectionIntelligence(data, section);
   const clinicalCompass = buildClinicalCompass(data);
+  const clinicalConnections = buildClinicalConnections(data);
   const masterStory = buildMasterClinicalStory(data);
   const executiveSummary =
   masterStory?.executiveSummary ||
@@ -52,12 +58,12 @@ export default function CompassIntelligencePanelView({
         : intelligence.quality.score;
 
   const tabs = [
-    ['narrative', '📝', 'Story'],
-    ['coach', '💡', 'Coach'],
-    ['journey', '🧭', 'Journey'],
-    ['quality', '⭐', 'Quality'],
-    ['final', '📋', 'Final'],
-  ];
+  ['narrative', '📝', 'Story'],
+  ['coach', '💡', 'Coach'],
+  ['journey', '🧭', 'Journey'],
+  ['quality', '⭐', 'Quality'],
+  ['final', '📋', 'Final'],
+];
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -73,6 +79,19 @@ export default function CompassIntelligencePanelView({
       setCollapsed(false);
     }
   };
+
+  const roomToTab = {
+  observation: 'narrative',
+  understanding: 'coach',
+  navigation: 'journey',
+  growth: 'quality',
+  reflection: 'final',
+};
+
+const chooseRoom = (roomId) => {
+  setActiveRoom(roomId);
+  chooseTab(roomToTab[roomId]);
+};
 
   return (
     <>
@@ -153,6 +172,13 @@ export default function CompassIntelligencePanelView({
               </div>
             </div>
 
+            {!activeRoom && (
+  <CompassRooms
+    activeRoom={activeRoom}
+    onRoomChange={chooseRoom}
+  />
+)}
+{activeRoom !== 'observation' && (
             <div
               className="intelligence-tabs five-tabs"
               role="tablist"
@@ -171,14 +197,59 @@ export default function CompassIntelligencePanelView({
                 </button>
               ))}
             </div>
-
+)}
             <div
               className="intelligence-tab-content"
               ref={scrollRef}
             >
+              {activeRoom === 'observation' && (
+<ObservationRoom
+  executiveSummary={executiveSummary}
+  clinicalConnections={clinicalConnections}
+  onBack={() => setActiveRoom(null)}
+/>
+)}
             <CompassExecutiveSummaryCard summary={executiveSummary} />
-            
-              {activeTab === 'narrative' && (
+           
+{clinicalConnections.themes.length > 0 && (
+  <div className="intelligence-section">
+    <h3>Clinical Themes</h3>
+
+    {clinicalConnections.themes.map((theme, index) => (
+      <div key={index}>
+        <strong>{theme.label}</strong>
+        <ul>
+          {theme.findings.map((finding, findingIndex) => (
+            <li key={findingIndex}>{finding}</li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+)}
+
+{clinicalConnections.strengths.length > 0 && (
+  <div className="intelligence-section intelligence-strengths">
+    <h3>Clinical Strengths</h3>
+
+    <ul>
+      {clinicalConnections.strengths.map((strength, index) => (
+        <li key={index}>{strength}</li>
+      ))}
+    </ul>
+  </div>
+)}
+            {clinicalConnections.missingInformation.length > 0 && (
+  <div className="intelligence-section">
+    <h3>Missing Information</h3>
+    <ul>
+      {clinicalConnections.missingInformation.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  </div>
+)}
+              {activeRoom !== 'observation' && activeTab === 'narrative' && (
                 <SectionNarrative
                   intelligence={intelligence}
                   masterStory={masterStory}

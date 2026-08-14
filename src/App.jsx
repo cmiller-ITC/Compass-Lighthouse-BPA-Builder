@@ -1,4 +1,5 @@
 import CompassIntelligencePanelView from './components/compass/CompassIntelligencePanel';
+import { buildClinicalConnections } from "./engines/clinicalCompass/connectionEngine";
 import { buildClinicalCompass } from "./engines/clinicalCompass";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { initialCaseData, reducer, symptomDomainDefinitions } from "./caseState";
@@ -39,7 +40,7 @@ const riskProtective=['None identified','Future orientation','Reasons for living
 
 function App(){
  const [data,dispatch]=useReducer(reducer,initialCaseData);const [module,setModule]=useState('home');const [status,setStatus]=useState('');
- 
+ const [workspaceRoom, setWorkspaceRoom] = useState(null);
  const clinicalCompass = useMemo(
   () => buildClinicalCompass(data),
   [data]
@@ -58,7 +59,12 @@ useEffect(() => {
  const clear=()=>{dispatch({type:'RESET'});setModule('home');flash('✓ Compass cleared.')};
  const copy=async(text=outputText)=>{if(!text)return flash('Generate the assessment first.');try{await navigator.clipboard.writeText(text)}catch{const e=document.createElement('textarea');e.value=text;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}flash('✓ Copied.')};
  const print=()=>{if(!outputText)return flash('Generate the assessment first.');const w=window.open('','_blank','width=920,height=700');if(!w)return flash('Please allow pop-ups to print.');const safe=outputText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');w.document.write(`<!doctype html><html><head><title>Lighthouse Compass Assessment</title><style>@page{size:letter;margin:.65in}body{font-family:Arial;color:#111}pre{white-space:pre-wrap;font-family:Arial;line-height:1.5}</style></head><body><h1>Lighthouse Compass Assessment</h1><pre>${safe}</pre></body></html>`);w.document.close();setTimeout(()=>w.print(),250)};
- const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting data={data} set={set} toggle={toggle}/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
+ const content={home:<Home data={data} setModule={setModule}/>,presenting:<Presenting
+  data={data}
+  set={set}
+  toggle={toggle}
+  onOpenRoom={setWorkspaceRoom}
+/>,symptoms:<SymptomDomains data={data} set={set} toggle={toggle} dispatch={dispatch}/>,history:<History data={data} set={set} toggle={toggle}/>,medical:<Medical data={data} set={set} toggle={toggle} dispatch={dispatch}/>,social:<Social data={data} set={set} toggle={toggle}/>,mse:<MseRisk data={data} set={set} toggle={toggle}/>,diagnosis:<Diagnosis data={data} set={set} dispatch={dispatch}/>,documentation:<Documentation data={data} outputs={data.generated} copy={copy} dispatch={dispatch}/>}[module];
  return <div className="app"><aside><div className="brand">🧭 Lighthouse Compass</div><div className="version">7.10 Narrative Intelligence 2.0</div><nav>{NAV.map(([id,icon,label])=><button key={id} className={module===id?'active':''} onClick={()=>setModule(id)}>{icon} {label}</button>)}</nav><div className="no-phi">No PHI storage<br/>Clinician-guided decision support</div></aside><main><header><div><small>Lighthouse Clinical Suite</small><strong>{NAV.find(x=>x[0]===module)?.[2]}</strong></div><div className="actions"><button onClick={generate}>✨ Generate</button><button className="light" onClick={()=>copy()}>📄 Copy</button><button className="light" onClick={print}>🖨 Print</button><button className="light" onClick={clear}>↺ Clear</button></div></header>{status&&<div className="status">{status}</div>}{content}</main></div>;
 }
 
@@ -220,7 +226,7 @@ function ClinicalChoiceGroups({label,helper,values,onToggle,groups,priorityLabel
  </section>
 }
 
-function Presenting({data,set,toggle}){const p=data.presenting;
+function Presenting({data,set,toggle,onOpenRoom}){const p=data.presenting;
  const reasonSelections=Array.isArray(p.reasonSeekingCare)?p.reasonSeekingCare:(p.reasonSeekingCare?[p.reasonSeekingCare]:[]);
  const requestSelections=Array.isArray(p.clientRequest)?p.clientRequest:(p.clientRequest?[p.clientRequest]:[]);
  return <Page><div className="workspace-grid"><div>
@@ -290,7 +296,11 @@ function Presenting({data,set,toggle}){const p=data.presenting;
     groups={clientRequestGroups}
     priorityLabel="Most important treatment outcomes"
    />
- </div><CompassIntelligencePanel data={data} section="presenting"/></div></Page>}
+ </div><CompassIntelligencePanel
+  data={data}
+  section="presenting"
+  onOpenRoom={onOpenRoom}
+/> </div></Page>}
 
 const symptomGroupLibrary={
 mood:[['Mood & Self-Perception',['Depressed mood','Hopelessness','Worthlessness / excessive guilt']],['Interest & Motivation',['Loss of interest / pleasure','Social withdrawal']],['Energy & Cognition',['Fatigue / low energy','Difficulty concentrating']],['Biological / Behavioral',['Sleep disturbance','Appetite / weight changes','Psychomotor agitation / slowing']],['Safety',['Suicidal ideation']]],
@@ -322,19 +332,24 @@ function SymptomDomains({data,set,toggle,dispatch}){const readiness=getPresentin
   }}
 /><DomainCoach domainKey={key} domain={d}/></div></details>})}</div></Card></div><CompassIntelligencePanel data={data} section="symptoms"/></div></Page>}
 
-function CompassIntelligencePanel({ data, section = 'presenting' }) {
+function CompassIntelligencePanel({
+  data,
+  section = 'presenting',
+  onOpenRoom,
+}) {
   return (
     <CompassIntelligencePanelView
       data={data}
       section={section}
-      builders={{
-        buildSectionIntelligence,
-        buildClinicalCompass,
-        buildMasterClinicalStory,
-        buildTebraDocumentationObject,
-        buildAssessmentJourney,
-        buildFinalComarReview,
-      }}
+builders={{
+  buildSectionIntelligence,
+  buildClinicalCompass,
+  buildClinicalConnections,
+  buildMasterClinicalStory,
+  buildTebraDocumentationObject,
+  buildAssessmentJourney,
+  buildFinalComarReview,
+}}
       views={{
         SectionNarrative,
         SectionCoach,
