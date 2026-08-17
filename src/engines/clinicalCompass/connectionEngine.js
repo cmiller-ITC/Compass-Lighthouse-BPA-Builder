@@ -83,8 +83,20 @@ function extractStrengths(data = {}) {
 function detectMissingInformation(data = {}) {
   const missingInformation = [];
 
+  const presentingConcerns = data?.presenting?.concerns || [];
+  const impairments = data?.presenting?.impairments || [];
+  const psychiatricDiagnoses =
+    data?.psychiatricHistory?.diagnoses || [];
+  const medicalConditions = data?.medical?.conditions || [];
+  const traumaExperiences = data?.trauma?.experiences || [];
+  const traumaSymptoms = data?.trauma?.symptoms || [];
+  const socialNeeds = data?.social?.needs || [];
+
+  // Core intake completeness
   if (!hasValue(data?.presenting?.clientRequest)) {
-    missingInformation.push("Client-identified goals or requested help");
+    missingInformation.push(
+      "Client-identified goals or requested help"
+    );
   }
 
   if (!hasValue(data?.presenting?.patientNarrative)) {
@@ -95,8 +107,51 @@ function detectMissingInformation(data = {}) {
     missingInformation.push("Current social supports");
   }
 
-  if (!hasValue(data?.psychiatricHistory?.treatmentResponse)) {
-    missingInformation.push("Response to prior mental health treatment");
+  if (
+    psychiatricDiagnoses.length > 0 &&
+    !hasValue(data?.psychiatricHistory?.treatmentResponse)
+  ) {
+    missingInformation.push(
+      "Response to prior mental health treatment"
+    );
+  }
+
+  // Clinical clarification checks
+  if (
+    presentingConcerns.length > 0 &&
+    impairments.length === 0
+  ) {
+    missingInformation.push(
+      "Functional impact of the presenting concerns"
+    );
+  }
+
+  if (
+    (traumaExperiences.length > 0 ||
+      traumaSymptoms.length > 0) &&
+    !hasValue(data?.presenting?.patientNarrative)
+  ) {
+    missingInformation.push(
+      "Context for how trauma-related experiences or symptoms connect to the current presentation"
+    );
+  }
+
+  if (
+    socialNeeds.length > 0 &&
+    !hasValue(data?.social?.supports)
+  ) {
+    missingInformation.push(
+      "Available supports or protective relationships related to identified psychosocial needs"
+    );
+  }
+
+  if (
+    medicalConditions.length > 0 &&
+    presentingConcerns.length > 0
+  ) {
+    missingInformation.push(
+      "Whether medical conditions, pain, medications, or physical symptoms may be contributing to the current presentation"
+    );
   }
 
   const measures = data?.measures || [];
@@ -110,7 +165,9 @@ function detectMissingInformation(data = {}) {
   }
 
   return {
-    missingInformation,
+    missingInformation: [
+      ...new Set(missingInformation)
+    ],
     completedMeasures
   };
 }
