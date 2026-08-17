@@ -6,8 +6,14 @@ export default function ObservationRoom({
 }) {
   const themes = clinicalConnections?.themes || [];
   const strengths = clinicalConnections?.strengths || [];
-  const missingInformation =
-    clinicalConnections?.missingInformation || [];
+const assessmentGaps =
+  clinicalConnections?.assessmentGaps || [];
+
+const clarificationNeeds =
+  clinicalConnections?.clarificationNeeds || [];
+
+const missingInformation =
+  clinicalConnections?.missingInformation || [];
 
   return (
     <div className="compass-room-workspace observation-room">
@@ -70,25 +76,45 @@ export default function ObservationRoom({
         </section>
       )}
 
-      {missingInformation.length > 0 && (
-        <section className="room-section room-wondering">
-          <div className="room-section-heading">
-            <span>?</span>
-            <div>
-              <h3>Compass Is Wondering...</h3>
-              <p>
-                Information that may help bring the picture into better focus.
-              </p>
-            </div>
-          </div>
+{assessmentGaps.length > 0 && (
+  <section className="room-section">
+    <div className="room-section-heading">
+      <span>📋</span>
+      <div>
+        <h3>Assessment Gaps</h3>
+        <p>
+          Information that has not yet been collected.
+        </p>
+      </div>
+    </div>
 
-          <ul className="room-simple-list">
-            {missingInformation.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+    <ul className="room-simple-list">
+      {assessmentGaps.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  </section>
+)}
+
+{clarificationNeeds.length > 0 && (
+  <section className="room-section room-wondering">
+    <div className="room-section-heading">
+      <span>?</span>
+      <div>
+        <h3>Compass Is Wondering...</h3>
+        <p>
+          Questions that may help bring the clinical picture into better focus.
+        </p>
+      </div>
+    </div>
+
+    <ul className="room-simple-list">
+      {clarificationNeeds.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  </section>
+)}
     </div>
   );
 }

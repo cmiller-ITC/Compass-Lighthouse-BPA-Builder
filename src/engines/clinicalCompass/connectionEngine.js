@@ -81,7 +81,8 @@ function extractStrengths(data = {}) {
 }
 
 function detectMissingInformation(data = {}) {
-  const missingInformation = [];
+  const assessmentGaps = [];
+  const clarificationNeeds = [];
 
   const presentingConcerns = data?.presenting?.concerns || [];
   const impairments = data?.presenting?.impairments || [];
@@ -92,66 +93,21 @@ function detectMissingInformation(data = {}) {
   const traumaSymptoms = data?.trauma?.symptoms || [];
   const socialNeeds = data?.social?.needs || [];
 
-  // Core intake completeness
+  // Assessment gaps:
+  // Information that has not yet been collected.
+
   if (!hasValue(data?.presenting?.clientRequest)) {
-    missingInformation.push(
+    assessmentGaps.push(
       "Client-identified goals or requested help"
     );
   }
 
   if (!hasValue(data?.presenting?.patientNarrative)) {
-    missingInformation.push("Patient narrative");
+    assessmentGaps.push("Patient narrative");
   }
 
   if (!hasValue(data?.social?.supports)) {
-    missingInformation.push("Current social supports");
-  }
-
-  if (
-    psychiatricDiagnoses.length > 0 &&
-    !hasValue(data?.psychiatricHistory?.treatmentResponse)
-  ) {
-    missingInformation.push(
-      "Response to prior mental health treatment"
-    );
-  }
-
-  // Clinical clarification checks
-  if (
-    presentingConcerns.length > 0 &&
-    impairments.length === 0
-  ) {
-    missingInformation.push(
-      "Functional impact of the presenting concerns"
-    );
-  }
-
-  if (
-    (traumaExperiences.length > 0 ||
-      traumaSymptoms.length > 0) &&
-    !hasValue(data?.presenting?.patientNarrative)
-  ) {
-    missingInformation.push(
-      "Context for how trauma-related experiences or symptoms connect to the current presentation"
-    );
-  }
-
-  if (
-    socialNeeds.length > 0 &&
-    !hasValue(data?.social?.supports)
-  ) {
-    missingInformation.push(
-      "Available supports or protective relationships related to identified psychosocial needs"
-    );
-  }
-
-  if (
-    medicalConditions.length > 0 &&
-    presentingConcerns.length > 0
-  ) {
-    missingInformation.push(
-      "Whether medical conditions, pain, medications, or physical symptoms may be contributing to the current presentation"
-    );
+    assessmentGaps.push("Current social supports");
   }
 
   const measures = data?.measures || [];
@@ -161,13 +117,78 @@ function detectMissingInformation(data = {}) {
   );
 
   if (completedMeasures.length === 0) {
-    missingInformation.push("Baseline symptom measures");
+    assessmentGaps.push("Baseline symptom measures");
   }
 
+  // Clarification needs:
+  // Questions that become clinically relevant because of
+  // information already present elsewhere in the assessment.
+
+  if (
+    psychiatricDiagnoses.length > 0 &&
+    !hasValue(data?.psychiatricHistory?.treatmentResponse)
+  ) {
+    clarificationNeeds.push(
+      "Response to prior mental health treatment"
+    );
+  }
+
+  if (
+    presentingConcerns.length > 0 &&
+    impairments.length === 0
+  ) {
+    clarificationNeeds.push(
+      "Functional impact of the presenting concerns"
+    );
+  }
+
+  if (
+    (traumaExperiences.length > 0 ||
+      traumaSymptoms.length > 0) &&
+    !hasValue(data?.presenting?.patientNarrative)
+  ) {
+    clarificationNeeds.push(
+      "Context for how trauma-related experiences or symptoms connect to the current presentation"
+    );
+  }
+
+  if (
+    socialNeeds.length > 0 &&
+    !hasValue(data?.social?.supports)
+  ) {
+    clarificationNeeds.push(
+      "Available supports or protective relationships related to identified psychosocial needs"
+    );
+  }
+
+  if (
+    medicalConditions.length > 0 &&
+    presentingConcerns.length > 0
+  ) {
+    clarificationNeeds.push(
+      "Whether medical conditions, pain, medications, or physical symptoms may be contributing to the current presentation"
+    );
+  }
+
+  const uniqueAssessmentGaps = [
+    ...new Set(assessmentGaps)
+  ];
+
+  const uniqueClarificationNeeds = [
+    ...new Set(clarificationNeeds)
+  ];
+
   return {
+    assessmentGaps: uniqueAssessmentGaps,
+    clarificationNeeds: uniqueClarificationNeeds,
+
+    // Preserve the existing combined property so the current
+    // Compass UI continues working until we separate the display.
     missingInformation: [
-      ...new Set(missingInformation)
+      ...uniqueAssessmentGaps,
+      ...uniqueClarificationNeeds
     ],
+
     completedMeasures
   };
 }
@@ -176,10 +197,12 @@ export function buildClinicalConnections(data = {}) {
   const themes = extractThemes(data);
   const strengths = extractStrengths(data);
 
-  const {
-    missingInformation,
-    completedMeasures
-  } = detectMissingInformation(data);
+const {
+  assessmentGaps,
+  clarificationNeeds,
+  missingInformation,
+  completedMeasures
+} = detectMissingInformation(data);
 
   const availableSignalCount =
     themes.length +
@@ -196,9 +219,11 @@ export function buildClinicalConnections(data = {}) {
     themes,
     strengths,
     risks: [],
-    inconsistencies: [],
-    missingInformation,
-    diagnosticSignals: [],
+inconsistencies: [],
+assessmentGaps,
+clarificationNeeds,
+missingInformation,
+diagnosticSignals: [],
     treatmentSignals: [],
     confidence,
     updatedAt: new Date()
