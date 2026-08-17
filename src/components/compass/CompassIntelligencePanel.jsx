@@ -178,6 +178,15 @@ const chooseRoom = (roomId) => {
     onRoomChange={chooseRoom}
   />
 )}
+{activeRoom && (
+  <button
+    type="button"
+    className="compass-room-back"
+    onClick={() => chooseRoom(null)}
+  >
+    ← Back to Rooms
+  </button>
+)}
 {activeRoom !== 'observation' && (
             <div
               className="intelligence-tabs five-tabs"

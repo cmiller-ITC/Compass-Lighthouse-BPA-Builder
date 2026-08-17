@@ -40,6 +40,8 @@ export default function CompassRooms({
       <div className="compass-rooms-header">
         <div className="side-label">Compass Rooms</div>
         <p>Your clinical thinking journey</p>
+
+       
       </div>
 
       <div className="compass-room-list">
