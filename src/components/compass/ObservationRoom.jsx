@@ -1,19 +1,44 @@
-import CompassExecutiveSummaryCard from './CompassExecutiveSummaryCard';
+import { buildObservation } from '../../engines/clinicalCompass/ObservationEngine';
 
 export default function ObservationRoom({
-  executiveSummary,
+  data,
   clinicalConnections,
 }) {
+
+  const presenting = data?.presenting || {};
+
+  const observation = buildObservation(data);
+
+  const concerns = Array.isArray(presenting.concerns)
+    ? presenting.concerns
+    : [];
+
+  const reasonSeekingCare = Array.isArray(presenting.reasonSeekingCare)
+    ? presenting.reasonSeekingCare
+    : [];
+
+  const patientNarrative =
+    typeof presenting.patientNarrative === 'string'
+      ? presenting.patientNarrative.trim()
+      : '';
+
   const themes = clinicalConnections?.themes || [];
   const strengths = clinicalConnections?.strengths || [];
-const assessmentGaps =
-  clinicalConnections?.assessmentGaps || [];
+  const assessmentGaps = clinicalConnections?.assessmentGaps || [];
+  const clarificationNeeds = clinicalConnections?.clarificationNeeds || [];
+  const missingInformation = clinicalConnections?.missingInformation || [];
 
-const clarificationNeeds =
-  clinicalConnections?.clarificationNeeds || [];
+  const informationNeeds = [
+  ...new Set([
+    ...assessmentGaps,
+    ...missingInformation,
+  ]),
+];
 
-const missingInformation =
-  clinicalConnections?.missingInformation || [];
+  const hasPresentingData =
+    concerns.length > 0 ||
+    reasonSeekingCare.length > 0 ||
+    patientNarrative.length > 0;
 
   return (
     <div className="compass-room-workspace observation-room">
@@ -30,33 +55,67 @@ const missingInformation =
         </div>
       </div>
 
-      <CompassExecutiveSummaryCard summary={executiveSummary} />
-
-      {themes.length > 0 && (
+      {hasPresentingData && (
         <section className="room-section">
           <div className="room-section-heading">
-            <span>◌</span>
+            <span>👂</span>
             <div>
-              <h3>Current Picture</h3>
-              <p>Patterns emerging from the information gathered so far.</p>
+              <h3>What We've Heard So Far</h3>
+              <p>
+                Current information gathered from the presenting concerns.
+              </p>
             </div>
           </div>
 
-          <div className="room-theme-list">
-            {themes.map((theme, index) => (
-              <div className="room-theme-card" key={index}>
-                <strong>{theme.label}</strong>
+          {concerns.length > 0 && (
+            <div className="room-theme-card">
+              <strong>Current concerns</strong>
+              <ul>
+                {concerns.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-                <ul>
-                  {(theme.findings || []).map((finding, findingIndex) => (
-                    <li key={findingIndex}>{finding}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          {reasonSeekingCare.length > 0 && (
+            <div className="room-theme-card">
+              <strong>Why now?</strong>
+              <ul>
+                {reasonSeekingCare.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {patientNarrative && (
+            <div className="room-theme-card">
+              <strong>Client's own words</strong>
+              <p>{patientNarrative}</p>
+            </div>
+          )}
         </section>
       )}
+
+{observation.summary && (
+  <section className="room-section">
+    <div className="room-section-heading">
+      <span>◌</span>
+      <div>
+        <h3>Emerging Clinical Picture</h3>
+        <p>
+          A provisional synthesis of what appears to be emerging from the
+          information gathered so far.
+        </p>
+      </div>
+    </div>
+
+    <div className="room-theme-card">
+      <p>{observation.summary}</p>
+    </div>
+  </section>
+)}
 
       {strengths.length > 0 && (
         <section className="room-section">
@@ -76,45 +135,47 @@ const missingInformation =
         </section>
       )}
 
-{assessmentGaps.length > 0 && (
+
+      {clarificationNeeds.length > 0 && (
+        <section className="room-section room-wondering">
+          <div className="room-section-heading">
+            <span>?</span>
+            <div>
+              <h3>Compass Is Wondering...</h3>
+              <p>
+                Questions that may help bring the clinical picture into better focus.
+              </p>
+            </div>
+          </div>
+
+          <ul className="room-simple-list">
+            {clarificationNeeds.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+{informationNeeds.length > 0 && (
   <section className="room-section">
     <div className="room-section-heading">
-      <span>📋</span>
+      <span>🧩</span>
       <div>
-        <h3>Assessment Gaps</h3>
+        <h3>What We Still Need</h3>
         <p>
-          Information that has not yet been collected.
+          Information that would help complete the current clinical picture.
         </p>
       </div>
     </div>
 
     <ul className="room-simple-list">
-      {assessmentGaps.map((item, index) => (
+      {informationNeeds.map((item, index) => (
         <li key={index}>{item}</li>
       ))}
     </ul>
   </section>
 )}
 
-{clarificationNeeds.length > 0 && (
-  <section className="room-section room-wondering">
-    <div className="room-section-heading">
-      <span>?</span>
-      <div>
-        <h3>Compass Is Wondering...</h3>
-        <p>
-          Questions that may help bring the clinical picture into better focus.
-        </p>
-      </div>
-    </div>
-
-    <ul className="room-simple-list">
-      {clarificationNeeds.map((item, index) => (
-        <li key={index}>{item}</li>
-      ))}
-    </ul>
-  </section>
-)}
     </div>
   );
 }

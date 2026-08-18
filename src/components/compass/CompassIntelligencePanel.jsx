@@ -191,36 +191,18 @@ const chooseRoom = (roomId) => {
     ← Back to Rooms
   </button>
 )}
-{!activeRoom && (
-            <div
-              className="intelligence-tabs five-tabs"
-              role="tablist"
-            >
-              {tabs.map(([id, icon, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={activeTab === id ? 'active' : ''}
-                  onClick={() => chooseTab(id)}
-                  role="tab"
-                  aria-selected={activeTab === id}
-                >
-                  <span>{icon}</span>
-                  <em>{label}</em>
-                </button>
-              ))}
-            </div>
-)}
+
             <div
               className="intelligence-tab-content"
               ref={scrollRef}
             >
-              {activeRoom === 'observation' && (
-<ObservationRoom
-  executiveSummary={executiveSummary}
-  clinicalConnections={clinicalConnections}
-  onBack={() => setActiveRoom(null)}
-/>
+{activeRoom === 'observation' && (
+  <ObservationRoom
+    data={data}
+    executiveSummary={executiveSummary}
+    clinicalConnections={clinicalConnections}
+    onBack={() => setActiveRoom(null)}
+  />
 )}
 {activeRoom === 'understanding' && (
   <UnderstandingRoom />
