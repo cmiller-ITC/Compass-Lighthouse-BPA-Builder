@@ -187,7 +187,7 @@ const chooseRoom = (roomId) => {
     ← Back to Rooms
   </button>
 )}
-{activeRoom !== 'observation' && (
+{!activeRoom && (
             <div
               className="intelligence-tabs five-tabs"
               role="tablist"

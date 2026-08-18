@@ -989,13 +989,17 @@ textarea{min-height:118px;line-height:1.62}
 .compass-room-list {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
+
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .compass-room-card {
   width: 100%;
   display: grid;
-  grid-template-columns: 42px 1fr 18px;
+  grid-template-columns: 28px 42px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
 
@@ -1020,7 +1024,52 @@ textarea{min-height:118px;line-height:1.62}
     border-color 160ms ease,
     background 160ms ease;
 }
+.compass-room-number {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6b4a8e;
+  letter-spacing: 0.08em;
+}
 
+.compass-room-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compass-room-purpose {
+  font-size: 10px;
+  font-weight: 800;
+  color: #6b4a8e;
+  letter-spacing: 0.04em;
+}
+
+.compass-room-copy strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.compass-room-copy small {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #756f78;
+}
+
+.compass-room-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b4a8e;
+  white-space: nowrap;
+}
+
+.compass-room-arrow {
+  font-size: 18px;
+  line-height: 1;
+}
 .compass-room-card:hover {
   transform: translateY(-1px);
   border-color: rgba(103, 78, 126, 0.24);
