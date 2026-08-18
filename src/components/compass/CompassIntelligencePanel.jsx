@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import CompassExecutiveSummaryCard from './CompassExecutiveSummaryCard';
 import CompassRooms from './CompassRooms';
 import ObservationRoom from './ObservationRoom';
+import UnderstandingRoom from './UnderstandingRoom';
+import NavigationRoom from './NavigationRoom';
+import GrowthRoom from './GrowthRoom';
+import ReflectionRoom from './ReflectionRoom';
 
 export default function CompassIntelligencePanelView({
   data,
@@ -218,7 +222,22 @@ const chooseRoom = (roomId) => {
   onBack={() => setActiveRoom(null)}
 />
 )}
-            <CompassExecutiveSummaryCard summary={executiveSummary} />
+{activeRoom === 'understanding' && (
+  <UnderstandingRoom />
+)}
+
+{activeRoom === 'navigation' && (
+  <NavigationRoom />
+)}
+
+{activeRoom === 'growth' && (
+  <GrowthRoom />
+)}
+
+{activeRoom === 'reflection' && (
+  <ReflectionRoom />
+)}
+<CompassExecutiveSummaryCard summary={executiveSummary} />
            
 {clinicalConnections.themes.length > 0 && (
   <div className="intelligence-section">
