@@ -237,6 +237,8 @@ const chooseRoom = (roomId) => {
 {activeRoom === 'reflection' && (
   <ReflectionRoom />
 )}
+{!activeRoom && (
+  <>
 <CompassExecutiveSummaryCard summary={executiveSummary} />
            
 {clinicalConnections.themes.length > 0 && (
@@ -303,6 +305,8 @@ const chooseRoom = (roomId) => {
                   section={section}
                 />
               )}
+                </>
+)}
             </div>
 
             <div className="panel-footer">
